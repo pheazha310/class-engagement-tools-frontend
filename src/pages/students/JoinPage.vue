@@ -20,12 +20,10 @@
         </button>
       </div>
     </header>
-
     <main class="main-content">
       <div class="content-wrapper">
         <h1 class="title">Join Your Class</h1>
         <p class="subtitle">Enter the 6-digit code shared by your teacher to get started.</p>
-
         <div class="card">
           <label class="label">ACTIVITY CODE</label>
 
@@ -54,7 +52,6 @@
               maxlength="30"
             />
           </div>
-
           <button class="join-button" @click="joinSession" :disabled="isLoading">
             <span>{{ isLoading ? 'Joining...' : 'Join Activity' }}</span>
             <svg v-if="!isLoading" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -65,9 +62,7 @@
             </svg>
           </button>
 
-          <p v-if="error" class="error-message">
-            {{ error }}
-          </p>
+          <p v-if="error" class="error-message">{{ error }}</p>
         </div>
 
         <div class="divider">
@@ -85,25 +80,43 @@
         </button>
       </div>
     </main>
+    <div v-if="toastVisible" class="toast" :class="toastType">
+      <div class="toast-content">{{ toastMessage }}</div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-
 const codeDigits = ref<string[]>(Array(6).fill(''))
 const codeInputRefs = ref<(HTMLInputElement | null)[]>([])
 const displayName = ref('')
 const error = ref('')
 const isLoading = ref(false)
 
+const toastVisible = ref(false)
+const toastMessage = ref('')
+const toastType = ref<'success' | 'info' | 'error'>('info')
+let toastTimer: number | undefined
+
+const showToast = (message: string, type: 'success' | 'info' | 'error' = 'info') => {
+  toastMessage.value = message
+  toastType.value = type
+  toastVisible.value = true
+  if (toastTimer) window.clearTimeout(toastTimer)
+  toastTimer = window.setTimeout(() => {
+    toastVisible.value = false
+  }, 3000)
+}
+onBeforeUnmount(() => {
+  if (toastTimer) window.clearTimeout(toastTimer)
+})
 const setCodeInputRef = (el: unknown, index: number) => {
   codeInputRefs.value[index] = (el as HTMLInputElement | null)
 }
-
 const handleInput = (event: Event, index: number) => {
   const target = event.target as HTMLInputElement
   const value = target.value
@@ -119,7 +132,6 @@ const handleInput = (event: Event, index: number) => {
     codeInputRefs.value[index + 1]?.focus()
   }
 }
-
 const handleKeydown = (event: KeyboardEvent, index: number) => {
   // Handle backspace
   if (event.key === 'Backspace' && !codeDigits.value[index] && index > 0) {
@@ -137,7 +149,6 @@ const handlePaste = (event: ClipboardEvent) => {
       codeDigits.value[index] = digit
     }
   })
-
   // Focus the next empty input or the last input
   const nextEmptyIndex = digits.length
   if (nextEmptyIndex < 6) {
@@ -146,15 +157,12 @@ const handlePaste = (event: ClipboardEvent) => {
     codeInputRefs.value[5]?.focus()
   }
 }
-
 const validateInputs = (): boolean => {
   const code = codeDigits.value.join('')
-
   if (!code || code.length !== 6) {
     error.value = 'Please enter the complete 6-digit class code.'
     return false
   }
-
   if (!displayName.value.trim()) {
     error.value = 'Please enter your name.'
     return false
@@ -173,10 +181,8 @@ const joinSession = async () => {
   if (!validateInputs()) {
     return
   }
-
   isLoading.value = true
   error.value = ''
-
   try {
     const code = codeDigits.value.join('')
 
@@ -184,8 +190,7 @@ const joinSession = async () => {
     await simulateApiCall(code, displayName.value.trim())
 
     // Success - navigate to session
-    alert(`Successfully joined session: ${code}\nDisplay name: ${displayName.value.trim()}`)
-    // router.push(`/session/${code}?name=${encodeURIComponent(displayName.value.trim())}`)
+    showToast(`Successfully joined session: ${code}\nDisplay name: ${displayName.value.trim()}`, 'success')
   } catch (err) {
     // Handle different error types
     if (err instanceof Error) {
@@ -193,17 +198,16 @@ const joinSession = async () => {
     } else {
       error.value = 'Failed to join session. Please try again.'
     }
+    showToast(error.value, 'error')
   } finally {
     isLoading.value = false
   }
 }
-
 const simulateApiCall = (code: string, name: string): Promise<void> => {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
       // Simulate different error scenarios for testing
       const lowerCode = code.toLowerCase()
-
       if (lowerCode === 'expired' || lowerCode === 'old123') {
         reject(new Error('This session has expired. Please ask your teacher for a new code.'))
       } else if (lowerCode === 'invalid' || lowerCode === 'bad999') {
@@ -219,13 +223,11 @@ const simulateApiCall = (code: string, name: string): Promise<void> => {
     }, 1000) // Simulate network delay
   })
 }
-
 const scanQRCode = () => {
   // In a real app, this would open a QR code scanner
-  window.alert('QR Code scanner would open here. This would use the device camera to scan a QR code containing the session code.')
+  showToast('QR Code scanner would open here.\nThis would use the device camera to scan a QR code containing the session code.', 'info')
   // Implement QR code scanning functionality using a library like vue-qrcode-reader
 }
-
 onMounted(() => {
   // Auto-focus first input on mount
   codeInputRefs.value[0]?.focus()
@@ -241,7 +243,6 @@ onMounted(() => {
   position: relative;
   overflow: hidden;
 }
-
 /* Decorative background elements */
 .join-page::before {
   content: '';
@@ -253,6 +254,35 @@ onMounted(() => {
   background: radial-gradient(circle at 30% 70%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
               radial-gradient(circle at 70% 30%, rgba(99, 102, 241, 0.08) 0%, transparent 50%);
   pointer-events: none;
+}
+.toast {
+  position: fixed;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  max-width: calc(100vw - 24px);
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: pre-line;
+  background: rgba(17, 24, 39, 0.92);
+  color: rgb(103, 101, 101);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.toast.success {
+  background: white;
+}
+
+.toast.info {
+  background: rgba(79, 70, 229, 0.95);
+}
+
+.toast.error {
+  background: rgba(220, 38, 38, 0.95);
 }
 
 .header {
@@ -603,3 +633,4 @@ onMounted(() => {
   }
 }
 </style>
+
