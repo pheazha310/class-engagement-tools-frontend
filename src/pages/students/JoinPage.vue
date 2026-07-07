@@ -52,7 +52,7 @@
               maxlength="30"
             />
           </div>
-          <button class="join-button" @click="joinSession" :disabled="isLoading">
+          <button class="join-button" @click="handleJoin" :disabled="isLoading">
             <span>{{ isLoading ? 'Joining...' : 'Join Activity' }}</span>
             <svg v-if="!isLoading" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/>
@@ -80,60 +80,45 @@
         </button>
       </div>
     </main>
-    <div v-if="toastVisible" class="toast" :class="toastType">
-      <div class="toast-content">{{ toastMessage }}</div>
-    </div>
+    <AppToast />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useToast } from '@/composables/useToast'
+import AppToast from '@/components/AppToast.vue'
+import { joinSession as joinSessionApi } from '@/services/join'
 
 const router = useRouter()
+const { showToast } = useToast()
+
 const codeDigits = ref<string[]>(Array(6).fill(''))
 const codeInputRefs = ref<(HTMLInputElement | null)[]>([])
 const displayName = ref('')
 const error = ref('')
 const isLoading = ref(false)
 
-const toastVisible = ref(false)
-const toastMessage = ref('')
-const toastType = ref<'success' | 'info' | 'error'>('info')
-let toastTimer: number | undefined
-
-const showToast = (message: string, type: 'success' | 'info' | 'error' = 'info') => {
-  toastMessage.value = message
-  toastType.value = type
-  toastVisible.value = true
-  if (toastTimer) window.clearTimeout(toastTimer)
-  toastTimer = window.setTimeout(() => {
-    toastVisible.value = false
-  }, 3000)
-}
-onBeforeUnmount(() => {
-  if (toastTimer) window.clearTimeout(toastTimer)
-})
 const setCodeInputRef = (el: unknown, index: number) => {
   codeInputRefs.value[index] = (el as HTMLInputElement | null)
 }
+
 const handleInput = (event: Event, index: number) => {
   const target = event.target as HTMLInputElement
   const value = target.value
 
-  // Only allow alphanumeric characters
   if (value && !/^[a-zA-Z0-9]$/.test(value)) {
     codeDigits.value[index] = ''
     return
   }
 
-  // Auto-focus next input
   if (value && index < 5) {
     codeInputRefs.value[index + 1]?.focus()
   }
 }
+
 const handleKeydown = (event: KeyboardEvent, index: number) => {
-  // Handle backspace
   if (event.key === 'Backspace' && !codeDigits.value[index] && index > 0) {
     codeInputRefs.value[index - 1]?.focus()
   }
@@ -149,7 +134,6 @@ const handlePaste = (event: ClipboardEvent) => {
       codeDigits.value[index] = digit
     }
   })
-  // Focus the next empty input or the last input
   const nextEmptyIndex = digits.length
   if (nextEmptyIndex < 6) {
     codeInputRefs.value[nextEmptyIndex]?.focus()
@@ -157,6 +141,7 @@ const handlePaste = (event: ClipboardEvent) => {
     codeInputRefs.value[5]?.focus()
   }
 }
+
 const validateInputs = (): boolean => {
   const code = codeDigits.value.join('')
   if (!code || code.length !== 6) {
@@ -177,7 +162,7 @@ const validateInputs = (): boolean => {
   return true
 }
 
-const joinSession = async () => {
+const handleJoin = async () => {
   if (!validateInputs()) {
     return
   }
@@ -185,51 +170,33 @@ const joinSession = async () => {
   error.value = ''
   try {
     const code = codeDigits.value.join('')
+    const response = await joinSessionApi({ code, displayName: displayName.value.trim() })
 
-    // Simulate API call to validate code and create temporary session
-    await simulateApiCall(code, displayName.value.trim())
-
-    // Success - navigate to session
-    showToast(`Successfully joined session: ${code}\nDisplay name: ${displayName.value.trim()}`, 'success')
+    showToast(`Successfully joined session: ${code}`, 'success')
+    router.push({
+      path: '/session',
+      query: {
+        code,
+        name: displayName.value.trim(),
+        sessionId: response.sessionId,
+      },
+    })
   } catch (err) {
-    // Handle different error types
     if (err instanceof Error) {
       error.value = err.message
     } else {
       error.value = 'Failed to join session. Please try again.'
     }
-    showToast(error.value, 'error')
   } finally {
     isLoading.value = false
   }
 }
-const simulateApiCall = (code: string, name: string): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      // Simulate different error scenarios for testing
-      const lowerCode = code.toLowerCase()
-      if (lowerCode === 'expired' || lowerCode === 'old123') {
-        reject(new Error('This session has expired. Please ask your teacher for a new code.'))
-      } else if (lowerCode === 'invalid' || lowerCode === 'bad999') {
-        reject(new Error('Invalid class code. Please check and try again.'))
-      } else if (lowerCode === 'ended' || lowerCode === 'done456') {
-        reject(new Error('This session has ended. Thank you for participating!'))
-      } else if (lowerCode === 'full' || lowerCode === 'max789') {
-        reject(new Error('This session is full. Please try again later.'))
-      } else {
-        // Success case
-        resolve()
-      }
-    }, 1000) // Simulate network delay
-  })
-}
+
 const scanQRCode = () => {
-  // In a real app, this would open a QR code scanner
   showToast('QR Code scanner would open here.\nThis would use the device camera to scan a QR code containing the session code.', 'info')
-  // Implement QR code scanning functionality using a library like vue-qrcode-reader
 }
+
 onMounted(() => {
-  // Auto-focus first input on mount
   codeInputRefs.value[0]?.focus()
 })
 </script>
@@ -243,7 +210,7 @@ onMounted(() => {
   position: relative;
   overflow: hidden;
 }
-/* Decorative background elements */
+
 .join-page::before {
   content: '';
   position: absolute;
@@ -254,35 +221,6 @@ onMounted(() => {
   background: radial-gradient(circle at 30% 70%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
               radial-gradient(circle at 70% 30%, rgba(99, 102, 241, 0.08) 0%, transparent 50%);
   pointer-events: none;
-}
-.toast {
-  position: fixed;
-  top: 18px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 9999;
-  max-width: calc(100vw - 24px);
-  padding: 12px 16px;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  white-space: pre-line;
-  background: rgba(17, 24, 39, 0.92);
-  color: rgb(103, 101, 101);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.toast.success {
-  background: white;
-}
-
-.toast.info {
-  background: rgba(79, 70, 229, 0.95);
-}
-
-.toast.error {
-  background: rgba(220, 38, 38, 0.95);
 }
 
 .header {
@@ -536,58 +474,6 @@ onMounted(() => {
   transform: translateY(0);
 }
 
-.footer {
-  background: white;
-  border-top: 1px solid #e5e7eb;
-  padding: 24px 40px;
-  position: relative;
-  z-index: 1;
-}
-
-.footer-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.footer-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.footer-logo {
-  font-size: 16px;
-  font-weight: 700;
-  color: #4f46e5;
-}
-
-.copyright {
-  font-size: 14px;
-  color: #6b7280;
-}
-
-.footer-links {
-  display: flex;
-  gap: 24px;
-}
-
-.footer-link {
-  color: #6b7280;
-  text-decoration: none;
-  font-size: 14px;
-  transition: color 0.2s;
-}
-
-.footer-link:hover {
-  color: #4f46e5;
-}
-
-/* Responsive adjustments */
 @media (max-width: 640px) {
   .header {
     padding: 12px 16px;
@@ -618,19 +504,5 @@ onMounted(() => {
     height: 46px;
     font-size: 18px;
   }
-
-  .footer {
-    padding: 20px;
-  }
-
-  .footer-content {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .footer-links {
-    gap: 16px;
-  }
 }
 </style>
-
