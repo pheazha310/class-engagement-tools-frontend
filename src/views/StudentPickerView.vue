@@ -1,10 +1,16 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
 interface FeatureCard {
   title: string
   description: string
   gradient: string
   icon: string
   actionLabel: string
+  route?: string
+  isLive?: boolean
 }
 
 const features: FeatureCard[] = [
@@ -14,6 +20,8 @@ const features: FeatureCard[] = [
     gradient: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
     icon: 'single',
     actionLabel: 'Pick Random',
+    route: '/single-student-picker',
+    isLive: true,
   },
   {
     title: 'Multiple Student Picker',
@@ -44,6 +52,12 @@ const features: FeatureCard[] = [
     actionLabel: 'Pick Image',
   },
 ]
+
+function openFeature(feature: FeatureCard) {
+  if (feature.route) {
+    router.push(feature.route)
+  }
+}
 </script>
 
 <template>
@@ -73,6 +87,8 @@ const features: FeatureCard[] = [
           v-for="feature in features"
           :key="feature.title"
           class="card"
+          :class="{ 'card--live': feature.isLive }"
+          @click="openFeature(feature)"
         >
           <!-- Card header with gradient icon -->
           <div class="card__header" :style="{ background: feature.gradient }">
@@ -120,7 +136,9 @@ const features: FeatureCard[] = [
                 <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
               </svg>
             </div>
-            <div class="card__badge">UI Preview</div>
+            <div class="card__badge" :class="{ 'card__badge--live': feature.isLive }">
+              {{ feature.isLive ? 'Live' : 'Preview' }}
+            </div>
           </div>
 
           <!-- Preview area showing mockup UI -->
@@ -188,7 +206,7 @@ const features: FeatureCard[] = [
 
           <!-- Card footer -->
           <div class="card__footer">
-            <span class="card__status">UI Preview Only</span>
+            <span class="card__status">{{ feature.isLive ? 'Click to Open' : 'Coming Soon' }}</span>
             <svg class="card__arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="5" y1="12" x2="19" y2="12" />
               <polyline points="12 5 19 12 12 19" />
@@ -319,6 +337,11 @@ const features: FeatureCard[] = [
   color: rgba(255, 255, 255, 0.9);
   border-radius: 0.4rem;
   backdrop-filter: blur(4px);
+}
+
+.card__badge--live {
+  background: rgba(34, 197, 94, 0.7);
+  color: white;
 }
 
 /* Preview area */
