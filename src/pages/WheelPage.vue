@@ -1,8 +1,10 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import WheelCanvas from '@/components/WheelCanvas.vue'
+import ParticipantListEditor from '@/components/ParticipantListEditor.vue'
 import type { Participant } from '@/types/wheel'
 
-const participants: Participant[] = [
+const participants = ref<Participant[]>([
   { id: 1, name: 'Alice' },
   { id: 2, name: 'Bob' },
   { id: 3, name: 'Charlie' },
@@ -11,7 +13,7 @@ const participants: Participant[] = [
   { id: 6, name: 'Frank' },
   { id: 7, name: 'Grace' },
   { id: 8, name: 'Henry' },
-]
+])
 
 function handleSpinComplete(participant: Participant) {
   console.log('Selected participant:', participant)
@@ -25,7 +27,8 @@ function handleSpinError(error: Error) {
 <template>
   <div class="page">
     <h1 class="title">Random Wheel</h1>
-    <p class="subtitle">Click the button to spin and select a random participant</p>
+    <p class="subtitle">Manage participants and spin to select one randomly</p>
+    <ParticipantListEditor v-model:participants="participants" />
     <WheelCanvas
       :participants="participants"
       @spin-complete="handleSpinComplete"
@@ -39,24 +42,25 @@ function handleSpinError(error: Error) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   min-height: 100vh;
   padding: 24px;
   background: #0f0f1a;
+  gap: 24px;
 }
 
 .title {
   font-size: 32px;
   font-weight: 800;
   color: #fff;
-  margin: 0 0 8px;
+  margin: 0;
   text-align: center;
 }
 
 .subtitle {
   font-size: 16px;
   color: #888;
-  margin: 0 0 32px;
+  margin: 0;
   text-align: center;
 }
 </style>
