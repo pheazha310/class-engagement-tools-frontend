@@ -8,6 +8,21 @@ const router = createRouter({
       redirect: '/polls',
     },
     {
+      path: '/login',
+      name: 'login',
+      component: () => import('@/pages/Login.vue'),
+    },
+    {
+      path: '/register',
+      name: 'register',
+      component: () => import('@/pages/Register.vue'),
+    },
+    {
+      path: '/live-voting',
+      name: 'live-voting',
+      component: () => import('@/pages/LiveClassroomVoting.vue'),
+    },
+    {
       path: '/polls',
       name: 'teacher-polls',
       component: () => import('@/pages/TeacherPollList.vue'),
