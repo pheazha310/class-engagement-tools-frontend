@@ -1,23 +1,17 @@
 <script setup lang="ts">
 import { ref, computed, onBeforeUnmount } from 'vue'
-import type { Participant } from '@/types/wheel'
+import type { Participant, WheelTheme } from '@/types/wheel'
 import { spinWheel } from '@/services/wheel'
 
 const props = defineProps<{
   participants: Participant[]
+  theme: WheelTheme
 }>()
 
 const emit = defineEmits<{
   spinComplete: [participant: Participant]
   spinError: [error: Error]
 }>()
-
-const colors = [
-  '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4',
-  '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F',
-  '#BB8FCE', '#85C1E9', '#F8C471', '#82E0AA',
-  '#F1948A', '#85C1E9', '#AED6F1', '#A3E4D7',
-]
 
 const size = 400
 const center = size / 2
@@ -57,7 +51,7 @@ const slices = computed(() => {
     const pos = labelPosition(center, center, radius, midAngle)
     return {
       path: describeArc(center, center, radius, startAngle, endAngle),
-      color: colors[i % colors.length],
+      color: props.theme.colors[i % props.theme.colors.length],
       labelX: pos.x,
       labelY: pos.y,
       labelAngle: (midAngle * 180) / Math.PI,
@@ -123,66 +117,70 @@ onBeforeUnmount(() => {
 })
 </script>
 
-<template>
-  <div class="wheel-wrapper">
-    <div class="wheel-container">
-      <svg
-        :viewBox="`0 0 ${size} ${size}`"
-        class="wheel-svg"
-        role="img"
-        aria-label="Spinning wheel"
-      >
-        <circle :cx="center" :cy="center" :r="radius + 10" fill="#1a1a2e" />
-        <g :transform="`rotate(${rotation}, ${center}, ${center})`">
-          <path
-            v-for="(slice, i) in slices"
-            :key="i"
-            :d="slice.path"
-            :fill="slice.color"
-            stroke="#1a1a2e"
-            stroke-width="2"
-          />
-          <text
-            v-for="(slice, i) in slices"
-            :key="`label-${i}`"
-            :x="slice.labelX"
-            :y="slice.labelY"
-            text-anchor="middle"
-            dominant-baseline="central"
-            :transform="`rotate(${slice.labelAngle}, ${slice.labelX}, ${slice.labelY})`"
-            fill="#fff"
-            font-size="14"
-            font-weight="bold"
-            class="slice-label"
-          >
-            {{ participants[i]?.name }}
-          </text>
-        </g>
-        <polygon :points="pointerPoints" fill="#e94560" stroke="#c0392b" stroke-width="2" />
-        <circle :cx="center" :cy="center" r="12" fill="#fff" />
-      </svg>
-    </div>
-
-    <div class="wheel-controls">
-      <button
-        class="spin-button"
-        :disabled="spinning || participants.length === 0"
-        @click="spin"
-      >
-        {{ spinning ? 'Spinning...' : 'Spin the Wheel' }}
-      </button>
-
-      <div v-if="error" class="error-message">
-        {{ error }}
+  <template>
+    <div class="wheel-wrapper" :style="{ background: theme.backgroundColor }">
+      <div class="wheel-container">
+        <svg
+          :viewBox="`0 0 ${size} ${size}`"
+          class="wheel-svg"
+          role="img"
+          aria-label="Spinning wheel"
+        >
+          <circle :cx="center" :cy="center" :r="radius + 10" :fill="theme.wheelBackground" />
+          <g :transform="`rotate(${rotation}, ${center}, ${center})`">
+            <path
+              v-for="(slice, i) in slices"
+              :key="i"
+              :d="slice.path"
+              :fill="slice.color"
+              :stroke="theme.sliceStroke"
+              stroke-width="2"
+            />
+            <text
+              v-for="(slice, i) in slices"
+              :key="`label-${i}`"
+              :x="slice.labelX"
+              :y="slice.labelY"
+              text-anchor="middle"
+              dominant-baseline="central"
+              :transform="`rotate(${slice.labelAngle}, ${slice.labelX}, ${slice.labelY})`"
+              :fill="theme.textColor"
+              font-size="14"
+              font-weight="bold"
+              class="slice-label"
+            >
+              {{ participants[i]?.name }}
+            </text>
+          </g>
+          <polygon :points="pointerPoints" :fill="theme.pointerColor" :stroke="theme.pointerStroke" stroke-width="2" />
+          <circle :cx="center" :cy="center" r="12" :fill="theme.centerColor" />
+        </svg>
       </div>
 
-      <div v-if="selected && !spinning" class="result-message">
-        <span class="result-label">Selected:</span>
-        <span class="result-name">{{ selected.name }}</span>
+      <div class="wheel-controls">
+        <button
+          class="spin-button"
+          :disabled="spinning || participants.length === 0"
+          :style="{
+            background: `linear-gradient(135deg, ${theme.buttonGradient[0]}, ${theme.buttonGradient[1]})`,
+            boxShadow: `0 4px 15px ${theme.buttonShadow}`,
+          }"
+          @click="spin"
+        >
+          {{ spinning ? 'Spinning...' : 'Spin the Wheel' }}
+        </button>
+
+        <div v-if="error" class="error-message" :style="{ color: theme.pointerColor }">
+          {{ error }}
+        </div>
+
+        <div v-if="selected && !spinning" class="result-message" :style="{ background: theme.wheelBackground, border: `1px solid ${theme.sliceStroke}` }">
+          <span class="result-label">Selected:</span>
+          <span class="result-name" :style="{ color: theme.pointerColor }">{{ selected.name }}</span>
+        </div>
       </div>
     </div>
-  </div>
-</template>
+  </template>
 
 <style scoped>
 .wheel-wrapper {

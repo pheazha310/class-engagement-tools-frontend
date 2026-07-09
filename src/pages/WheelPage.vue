@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import WheelCanvas from '@/components/WheelCanvas.vue'
 import ParticipantListEditor from '@/components/ParticipantListEditor.vue'
-import type { Participant } from '@/types/wheel'
+import WheelThemePicker from '@/components/WheelThemePicker.vue'
+import type { Participant, WheelTheme } from '@/types/wheel'
+import { wheelThemes, getThemeById, defaultThemeId } from '@/types/wheel'
 
 const participants = ref<Participant[]>([
   { id: 1, name: 'Alice' },
@@ -15,6 +17,33 @@ const participants = ref<Participant[]>([
   { id: 8, name: 'Henry' },
 ])
 
+const storageKey = 'wheel-selected-theme-id'
+const selectedTheme = ref<WheelTheme>(getThemeById(defaultThemeId)!)
+
+function loadTheme() {
+  const stored = localStorage.getItem(storageKey)
+  if (stored) {
+    const theme = getThemeById(stored)
+    if (theme) {
+      selectedTheme.value = theme
+      return
+    }
+  }
+  selectedTheme.value = getThemeById(defaultThemeId)!
+}
+
+function saveTheme(theme: WheelTheme) {
+  localStorage.setItem(storageKey, theme.id)
+}
+
+watch(selectedTheme, (theme) => {
+  saveTheme(theme)
+})
+
+onMounted(() => {
+  loadTheme()
+})
+
 function handleSpinComplete(participant: Participant) {
   console.log('Selected participant:', participant)
 }
@@ -24,24 +53,26 @@ function handleSpinError(error: Error) {
 }
 </script>
 
-<template>
-  <div class="page">
-    <h1 class="title">Random Wheel</h1>
-    <p class="subtitle">Manage participants and spin to select one randomly</p>
-    <div class="layout">
-      <div class="wheel-column">
-        <WheelCanvas
-          :participants="participants"
-          @spin-complete="handleSpinComplete"
-          @spin-error="handleSpinError"
-        />
-      </div>
-      <div class="editor-column">
-        <ParticipantListEditor v-model:participants="participants" />
+  <template>
+    <div class="page" :style="{ background: selectedTheme.backgroundColor }">
+      <h1 class="title">Random Wheel</h1>
+      <p class="subtitle">Manage participants and spin to select one randomly</p>
+      <div class="layout">
+        <div class="wheel-column">
+          <WheelCanvas
+            :participants="participants"
+            :theme="selectedTheme"
+            @spin-complete="handleSpinComplete"
+            @spin-error="handleSpinError"
+          />
+        </div>
+        <div class="editor-column">
+          <WheelThemePicker v-model="selectedTheme" :themes="wheelThemes" />
+          <ParticipantListEditor v-model:participants="participants" />
+        </div>
       </div>
     </div>
-  </div>
-</template>
+  </template>
 
 <style scoped>
 .page {
@@ -51,7 +82,6 @@ function handleSpinError(error: Error) {
   justify-content: flex-start;
   min-height: 100vh;
   padding: 24px;
-  background: #0f0f1a;
   gap: 24px;
 }
 
