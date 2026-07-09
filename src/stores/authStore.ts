@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { authService } from '@/services/authService'
+import { ensureCsrfCookie } from '@/services/api'
 import type { User, LoginCredentials, RegisterCredentials } from '@/services/authService'
 
 export const useAuthStore = defineStore('auth', () => {
@@ -12,6 +13,7 @@ export const useAuthStore = defineStore('auth', () => {
     loading.value = true
     error.value = null
     try {
+      await ensureCsrfCookie()
       await authService.login(credentials)
       await fetchUser()
     } catch (e: any) {

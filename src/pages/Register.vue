@@ -1,157 +1,136 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { watch, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useRegistrationStore } from '@/stores/registrationStore'
 import { useAuthStore } from '@/stores/authStore'
-import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import Stepper from '@/components/Stepper.vue'
+import StepCreateAccount from '@/components/StepCreateAccount.vue'
+import StepSelectRole from '@/components/StepSelectRole.vue'
+import StepSelectLocation from '@/components/StepSelectLocation.vue'
+import StepSelectSchool from '@/components/StepSelectSchool.vue'
+import StepReview from '@/components/StepReview.vue'
 
 const router = useRouter()
-const store = useAuthStore()
+const store = useRegistrationStore()
+const authStore = useAuthStore()
 
-const name = ref('')
-const email = ref('')
-const password = ref('')
-const passwordConfirmation = ref('')
-const role = ref<'teacher' | 'student'>('student')
-const showPassword = ref(false)
+const steps = ['Create Account', 'Select Role', 'Location', 'School', 'Review']
+const redirectCountdown = ref(3)
 
-async function handleRegister() {
-  try {
-    await store.register({
-      name: name.value,
-      email: email.value,
-      password: password.value,
-      password_confirmation: passwordConfirmation.value,
-      role: role.value,
-    })
-    router.push('/polls')
-  } catch {
-    // error handled in store
-  }
-}
+watch(
+  () => store.success,
+  (val) => {
+    if (val) {
+      const timer = setInterval(() => {
+        redirectCountdown.value--
+        if (redirectCountdown.value <= 0) {
+          clearInterval(timer)
+          const role = store.data.role
+          store.reset()
+          if (role === 'teacher') {
+            router.push('/teacher/dashboard')
+          } else {
+            router.push('/student/dashboard')
+          }
+        }
+      }, 1000)
+    }
+  },
+)
 </script>
 
 <template>
-  <div class="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-white px-4 py-12">
-    <div class="w-full max-w-md">
-      <div class="mb-8 text-center">
-        <h1 class="text-3xl font-bold text-gray-900">Create Account</h1>
-        <p class="mt-2 text-gray-500">Join the classroom engagement platform</p>
-      </div>
+  <div class="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-gradient-to-br from-gray-50 via-white to-blue-50/30 px-4 py-12">
+    <div class="w-full max-w-2xl">
+      <!-- Success State -->
+      <Transition
+        enter-active-class="transition-all duration-500"
+        leave-active-class="transition-all duration-300"
+        enter-from-class="scale-90 opacity-0"
+        leave-to-class="scale-90 opacity-0"
+      >
+        <div v-if="store.success" class="relative overflow-hidden rounded-3xl bg-white shadow-xl shadow-blue-100/50 border border-blue-100/50 p-12 text-center">
+          <!-- Confetti decorations -->
+          <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 via-emerald-500 to-blue-500" />
+          <div class="absolute -top-4 -left-4 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl" />
+          <div class="absolute -bottom-8 -right-8 w-32 h-32 bg-emerald-500/5 rounded-full blur-3xl" />
 
-      <div class="rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
-        <form @submit.prevent="handleRegister" class="space-y-5">
-          <div>
-            <label for="name" class="block text-sm font-medium text-gray-700">Full Name</label>
-            <input
-              id="name"
-              v-model="name"
-              type="text"
-              required
-              autocomplete="name"
-              placeholder="John Doe"
-              class="mt-1 block w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 transition focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-            />
-          </div>
+          <div class="relative">
+            <div class="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-green-400 to-emerald-500 shadow-lg shadow-green-200 animate-scale-check">
+              <svg class="h-10 w-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
 
-          <div>
-            <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-            <input
-              id="email"
-              v-model="email"
-              type="email"
-              required
-              autocomplete="email"
-              placeholder="you@example.com"
-              class="mt-1 block w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 transition focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-            />
-          </div>
+            <div class="animate-fade-in-up">
+              <h1 class="text-3xl font-bold text-gray-900 mb-2">Registration Successful!</h1>
+              <p class="text-gray-500 mb-1">Welcome to the Class Engagement Tools Platform.</p>
+              <p class="text-sm text-gray-400">
+                Redirecting to your dashboard in
+                <span class="font-semibold text-blue-600">{{ redirectCountdown }}s</span>
+              </p>
 
-          <div>
-            <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-            <div class="relative mt-1">
-              <input
-                id="password"
-                v-model="password"
-                :type="showPassword ? 'text' : 'password'"
-                required
-                autocomplete="new-password"
-                placeholder="Create a password"
-                class="block w-full rounded-lg border border-gray-200 px-4 py-2.5 pr-10 text-sm text-gray-900 placeholder-gray-400 transition focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-              />
-              <button
-                type="button"
-                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                @click="showPassword = !showPassword"
-              >
-                <svg v-if="!showPassword" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-                <svg v-else class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                </svg>
-              </button>
+              <div class="mt-8 flex items-center justify-center gap-2">
+                <div
+                  v-for="i in 3"
+                  :key="i"
+                  class="h-2 w-2 rounded-full animate-bounce"
+                  :class="i === 1 ? 'bg-blue-400' : i === 2 ? 'bg-emerald-400' : 'bg-blue-500'"
+                  :style="{ animationDelay: `${i * 150}ms` }"
+                />
+              </div>
             </div>
           </div>
+        </div>
+      </Transition>
 
-          <div>
-            <label for="password_confirmation" class="block text-sm font-medium text-gray-700">Confirm Password</label>
-            <input
-              id="password_confirmation"
-              v-model="passwordConfirmation"
-              type="password"
-              required
-              autocomplete="new-password"
-              placeholder="Confirm your password"
-              class="mt-1 block w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 transition focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-            />
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700">I am a</label>
-            <div class="mt-2 grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                class="rounded-lg border px-4 py-2.5 text-sm font-medium transition"
-                :class="role === 'student'
-                  ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                  : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'"
-                @click="role = 'student'"
-              >
-                Student
-              </button>
-              <button
-                type="button"
-                class="rounded-lg border px-4 py-2.5 text-sm font-medium transition"
-                :class="role === 'teacher'
-                  ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                  : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'"
-                @click="role = 'teacher'"
-              >
-                Teacher
-              </button>
+      <!-- Registration Form -->
+      <Transition
+        enter-active-class="transition-all duration-500"
+        leave-active-class="transition-all duration-300"
+        enter-from-class="scale-95 opacity-0"
+        leave-to-class="scale-95 opacity-0"
+      >
+        <div v-if="!store.success">
+          <div class="mb-8 text-center">
+            <div class="inline-flex items-center justify-center gap-2 rounded-full bg-blue-50 px-4 py-1.5 mb-4">
+              <svg class="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              <span class="text-xs font-medium text-blue-700">Secure Registration</span>
             </div>
+            <h1 class="text-3xl font-bold text-gray-900">Create Your Account</h1>
+            <p class="mt-2 text-gray-500">Join the class engagement platform in a few simple steps</p>
           </div>
 
-          <div v-if="store.error" class="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
-            {{ store.error }}
+          <div class="mb-8 px-4">
+            <Stepper :steps="steps" :current-step="store.currentStep" />
           </div>
 
-          <button
-            type="submit"
-            :disabled="store.loading"
-            class="flex w-full items-center justify-center rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <LoadingSpinner v-if="store.loading" size="sm" />
-            <span v-else>Create Account</span>
-          </button>
-        </form>
+          <div class="rounded-2xl border border-gray-100 bg-white p-6 sm:p-8 shadow-sm shadow-gray-200/50">
+            <Transition
+              mode="out-in"
+              enter-active-class="transition-all duration-300 ease-out"
+              leave-active-class="transition-all duration-200 ease-in"
+              enter-from-class="translate-x-6 opacity-0"
+              leave-to-class="-translate-x-6 opacity-0"
+            >
+              <StepCreateAccount v-if="store.currentStep === 1" key="step1" />
+              <StepSelectRole v-else-if="store.currentStep === 2" key="step2" />
+              <StepSelectLocation v-else-if="store.currentStep === 3" key="step3" />
+              <StepSelectSchool v-else-if="store.currentStep === 4" key="step4" />
+              <StepReview v-else-if="store.currentStep === 5" key="step5" />
+            </Transition>
+          </div>
 
-        <p class="mt-6 text-center text-sm text-gray-500">
-          Already have an account?
-          <router-link to="/login" class="font-medium text-indigo-600 hover:text-indigo-500">Sign in</router-link>
-        </p>
-      </div>
+          <p class="mt-6 text-center text-sm text-gray-500">
+            Already have an account?
+            <router-link to="/login" class="font-semibold text-blue-600 hover:text-blue-500 transition-colors">
+              Sign in
+            </router-link>
+          </p>
+        </div>
+      </Transition>
     </div>
   </div>
 </template>

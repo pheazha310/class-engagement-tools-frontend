@@ -22,27 +22,30 @@ async function handleLogout() {
     <header class="sticky top-0 z-40 border-b border-gray-100 bg-white/95 backdrop-blur">
       <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
         <div class="flex items-center gap-6">
-          <button class="text-lg font-bold text-indigo-600" @click="router.push('/')">
-            VoteLive
+          <button class="text-lg font-bold text-blue-600" @click="router.push('/')">
+            ClassTools
           </button>
-          <nav class="hidden items-center gap-1 sm:flex">
+          <nav v-if="authStore.user" class="hidden items-center gap-1 sm:flex">
             <button
+              v-if="authStore.user.role === 'admin'"
               class="rounded-lg px-3 py-2 text-sm font-medium text-gray-500 transition hover:bg-gray-50 hover:text-gray-900"
-              @click="router.push('/polls')"
+              @click="router.push('/admin/users')"
             >
-              Teacher Dashboard
+              Users
             </button>
             <button
+              v-if="authStore.user.role === 'teacher'"
               class="rounded-lg px-3 py-2 text-sm font-medium text-gray-500 transition hover:bg-gray-50 hover:text-gray-900"
-              @click="router.push('/active-poll')"
+              @click="router.push('/teacher/dashboard')"
             >
-              Active Poll
+              Dashboard
             </button>
             <button
+              v-if="authStore.user.role === 'student'"
               class="rounded-lg px-3 py-2 text-sm font-medium text-gray-500 transition hover:bg-gray-50 hover:text-gray-900"
-              @click="router.push('/live-voting')"
+              @click="router.push('/student/dashboard')"
             >
-              Live Voting
+              Dashboard
             </button>
           </nav>
         </div>
@@ -51,9 +54,11 @@ async function handleLogout() {
             <span class="hidden text-sm text-gray-500 sm:block">{{ authStore.user.name }}</span>
             <span
               class="hidden rounded-full px-2 py-0.5 text-xs font-medium sm:inline-block"
-              :class="authStore.user.role === 'teacher'
-                ? 'bg-indigo-50 text-indigo-700'
-                : 'bg-green-50 text-green-700'"
+              :class="authStore.user.role === 'admin'
+                ? 'bg-purple-50 text-purple-700'
+                : authStore.user.role === 'teacher'
+                  ? 'bg-blue-50 text-blue-700'
+                  : 'bg-green-50 text-green-700'"
             >
               {{ authStore.user.role }}
             </span>
@@ -72,7 +77,7 @@ async function handleLogout() {
               Sign In
             </button>
             <button
-              class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700"
+              class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
               @click="router.push('/register')"
             >
               Sign Up
@@ -95,15 +100,17 @@ async function handleLogout() {
       >
         <div v-if="mobileMenuOpen" class="border-t border-gray-100 px-4 py-3">
           <nav class="flex flex-col gap-1">
-            <button class="rounded-lg px-3 py-2 text-left text-sm font-medium text-gray-500 hover:bg-gray-50" @click="router.push('/polls'); mobileMenuOpen = false">
-              Teacher Dashboard
-            </button>
-            <button class="rounded-lg px-3 py-2 text-left text-sm font-medium text-gray-500 hover:bg-gray-50" @click="router.push('/active-poll'); mobileMenuOpen = false">
-              Active Poll
-            </button>
-            <button class="rounded-lg px-3 py-2 text-left text-sm font-medium text-gray-500 hover:bg-gray-50" @click="router.push('/live-voting'); mobileMenuOpen = false">
-              Live Voting
-            </button>
+            <template v-if="authStore.user">
+              <button v-if="authStore.user.role === 'admin'" class="rounded-lg px-3 py-2 text-left text-sm font-medium text-gray-500 hover:bg-gray-50" @click="router.push('/admin/users'); mobileMenuOpen = false">
+                Users
+              </button>
+              <button v-if="authStore.user.role === 'teacher'" class="rounded-lg px-3 py-2 text-left text-sm font-medium text-gray-500 hover:bg-gray-50" @click="router.push('/teacher/dashboard'); mobileMenuOpen = false">
+                Dashboard
+              </button>
+              <button v-if="authStore.user.role === 'student'" class="rounded-lg px-3 py-2 text-left text-sm font-medium text-gray-500 hover:bg-gray-50" @click="router.push('/student/dashboard'); mobileMenuOpen = false">
+                Dashboard
+              </button>
+            </template>
             <template v-if="authStore.user">
               <div class="border-t border-gray-100 pt-2 mt-2">
                 <div class="px-3 py-2 text-sm text-gray-900">{{ authStore.user.name }}</div>
