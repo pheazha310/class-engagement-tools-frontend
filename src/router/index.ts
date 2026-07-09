@@ -1,5 +1,8 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 
+import StudentPickerView from '@/views/StudentPickerView.vue'
+import SingleStudentPickerView from '@/views/SingleStudentPickerView.vue'
+
 const routes: RouteRecordRaw[] = [
   {
     path: '/login',
@@ -10,6 +13,16 @@ const routes: RouteRecordRaw[] = [
     path: '/',
     name: 'wheel',
     component: () => import('@/pages/WheelPage.vue'),
+  },
+  {
+    path: '/student-picker',
+    name: 'student-picker',
+    component: StudentPickerView,
+  },
+  {
+    path: '/single-student-picker',
+    name: 'single-student-picker',
+    component: SingleStudentPickerView,
   },
   {
     path: '/:pathMatch(.*)*',
