@@ -28,12 +28,18 @@ function handleSpinError(error: Error) {
   <div class="page">
     <h1 class="title">Random Wheel</h1>
     <p class="subtitle">Manage participants and spin to select one randomly</p>
-    <ParticipantListEditor v-model:participants="participants" />
-    <WheelCanvas
-      :participants="participants"
-      @spin-complete="handleSpinComplete"
-      @spin-error="handleSpinError"
-    />
+    <div class="layout">
+      <div class="wheel-column">
+        <WheelCanvas
+          :participants="participants"
+          @spin-complete="handleSpinComplete"
+          @spin-error="handleSpinError"
+        />
+      </div>
+      <div class="editor-column">
+        <ParticipantListEditor v-model:participants="participants" />
+      </div>
+    </div>
   </div>
 </template>
 
@@ -49,6 +55,26 @@ function handleSpinError(error: Error) {
   gap: 24px;
 }
 
+.layout {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 32px;
+  width: 100%;
+  max-width: 1200px;
+}
+
+.editor-column {
+  flex: 1;
+  max-width: 420px;
+}
+
+.wheel-column {
+  flex: 1;
+  max-width: 520px;
+}
+
 .title {
   font-size: 32px;
   font-weight: 800;
@@ -62,5 +88,18 @@ function handleSpinError(error: Error) {
   color: #888;
   margin: 0;
   text-align: center;
+}
+
+@media (max-width: 900px) {
+  .layout {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .editor-column,
+  .wheel-column {
+    max-width: 520px;
+    width: 100%;
+  }
 }
 </style>
