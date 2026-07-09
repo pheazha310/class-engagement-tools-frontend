@@ -3,8 +3,11 @@ import { ref, watch, onMounted } from 'vue'
 import WheelCanvas from '@/components/WheelCanvas.vue'
 import ParticipantListEditor from '@/components/ParticipantListEditor.vue'
 import WheelThemePicker from '@/components/WheelThemePicker.vue'
-import type { Participant, WheelTheme } from '@/types/wheel'
+import SaveWheelModal from '@/components/SaveWheelModal.vue'
+import MyWheels from '@/components/MyWheels.vue'
+import type { Participant, WheelTheme, SavedWheel } from '@/types/wheel'
 import { wheelThemes, getThemeById, defaultThemeId } from '@/types/wheel'
+import { createSavedWheel, loadSavedWheel } from '@/services/wheel'
 
 const participants = ref<Participant[]>([
   { id: 1, name: 'Alice' },
@@ -44,6 +47,14 @@ onMounted(() => {
   loadTheme()
 })
 
+const showSaveModal = ref(false)
+const showMyWheelsModal = ref(false)
+const saving = ref(false)
+const saveError = ref<string | null>(null)
+const saveSuccess = ref<string | null>(null)
+const wheelName = ref('')
+const wheelDescription = ref('')
+
 function handleSpinComplete(participant: Participant) {
   console.log('Selected participant:', participant)
 }
@@ -51,12 +62,89 @@ function handleSpinComplete(participant: Participant) {
 function handleSpinError(error: Error) {
   console.error('Spin error:', error)
 }
+
+function openSaveModal() {
+  wheelName.value = ''
+  wheelDescription.value = ''
+  saveError.value = null
+  saveSuccess.value = null
+  showSaveModal.value = true
+}
+
+function closeSaveModal() {
+  showSaveModal.value = false
+}
+
+async function handleSaveWheel(payload: { name: string; description: string }) {
+  saving.value = true
+  saveError.value = null
+  saveSuccess.value = null
+
+  try {
+    await createSavedWheel({
+      name: payload.name,
+      description: payload.description,
+      color: selectedTheme.value.id,
+      participants: participants.value,
+    })
+    saveSuccess.value = 'Wheel saved successfully!'
+    closeSaveModal()
+  } catch (err) {
+    saveError.value = err instanceof Error ? err.message : 'Failed to save wheel'
+  } finally {
+    saving.value = false
+  }
+}
+
+async function handleOpenWheel(wheel: SavedWheel) {
+  try {
+    const loaded = await loadSavedWheel(wheel.id)
+    participants.value = loaded.participants.map((p) => ({
+      id: p.id,
+      name: p.name,
+    }))
+
+    if (loaded.color) {
+      const theme = getThemeById(loaded.color)
+      if (theme) {
+        selectedTheme.value = theme
+      }
+    }
+  } catch (err) {
+    saveError.value = err instanceof Error ? err.message : 'Failed to load wheel'
+  }
+}
+
+function handleDeleteWheel() {
+  // handled inside MyWheels modal
+}
 </script>
 
   <template>
     <div class="page" :style="{ background: selectedTheme.backgroundColor }">
       <h1 class="title">Random Wheel</h1>
       <p class="subtitle">Manage participants and spin to select one randomly</p>
+
+      <div class="toolbar">
+        <button type="button" class="btn btn-primary" @click="openSaveModal">
+          Save Wheel
+        </button>
+        <button
+          type="button"
+          class="btn btn-secondary"
+          @click="showMyWheelsModal = true"
+        >
+          My Wheels
+        </button>
+      </div>
+
+      <div v-if="saveError" class="alert alert-error">
+        {{ saveError }}
+      </div>
+      <div v-if="saveSuccess" class="alert alert-success">
+        {{ saveSuccess }}
+      </div>
+
       <div class="layout">
         <div class="wheel-column">
           <WheelCanvas
@@ -71,6 +159,23 @@ function handleSpinError(error: Error) {
           <ParticipantListEditor v-model:participants="participants" />
         </div>
       </div>
+
+      <SaveWheelModal
+        v-model="showSaveModal"
+        :name="wheelName"
+        :description="wheelDescription"
+        :participants="participants"
+        :theme="selectedTheme"
+        :loading="saving"
+        :error="saveError"
+        @save="handleSaveWheel"
+      />
+
+      <MyWheels
+        v-model="showMyWheelsModal"
+        @open-wheel="handleOpenWheel"
+        @delete-wheel="handleDeleteWheel"
+      />
     </div>
   </template>
 
@@ -82,7 +187,37 @@ function handleSpinError(error: Error) {
   justify-content: flex-start;
   min-height: 100vh;
   padding: 24px;
-  gap: 24px;
+  gap: 20px;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.alert {
+  width: 100%;
+  max-width: 1200px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.alert-error {
+  color: #ff6b6b;
+  background: #2a1010;
+  border: 1px solid #5a1f1f;
+}
+
+.alert-success {
+  color: #4ecdc4;
+  background: #1f1f38;
+  border: 1px solid #2a2a45;
 }
 
 .layout {
@@ -118,6 +253,43 @@ function handleSpinError(error: Error) {
   color: #888;
   margin: 0;
   text-align: center;
+}
+
+.btn {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  color: #fff;
+  transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s, background 0.15s;
+}
+
+.btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  box-shadow: 0 4px 12px rgba(78, 205, 196, 0.35);
+}
+
+.btn-secondary {
+  background: #2a2a45;
+  box-shadow: none;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #3a3a5a;
 }
 
 @media (max-width: 900px) {

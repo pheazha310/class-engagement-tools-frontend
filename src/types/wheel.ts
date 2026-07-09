@@ -18,6 +18,16 @@ export interface WheelTheme {
   centerColor: string
 }
 
+export interface SavedWheel {
+  id: string
+  name: string
+  description?: string | null
+  color?: string | null
+  participants: Participant[]
+  created_at?: string
+  updated_at?: string
+}
+
 export const defaultThemeId = 'default'
 
 export const wheelThemes: WheelTheme[] = [
