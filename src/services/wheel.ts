@@ -1,8 +1,17 @@
 import type { Participant, SavedWheel } from '@/types/wheel'
 
+function getApiUrl(path: string): string {
+  const baseUrl = typeof import.meta.env.VITE_API_URL === 'string' ? import.meta.env.VITE_API_URL.trim() : ''
+  const normalizedBase = baseUrl.replace(/\/$/, '')
+  if (normalizedBase) {
+    return `${normalizedBase}${path}`
+  }
+  return path
+}
+
 export async function spinWheel(participants: Participant[]): Promise<Participant> {
   try {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/wheel/spin`, {
+    const response = await fetch(getApiUrl('/api/wheel/spin'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -34,7 +43,7 @@ export async function spinWheel(participants: Participant[]): Promise<Participan
 }
 
 async function addParticipant(wheelId: string, name: string): Promise<void> {
-  const response = await fetch(`${import.meta.env.VITE_API_URL}/api/wheels/${wheelId}/participants`, {
+  const response = await fetch(getApiUrl(`/api/wheels/${wheelId}/participants`), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -51,7 +60,7 @@ async function addParticipant(wheelId: string, name: string): Promise<void> {
 }
 
 export async function listSavedWheels(): Promise<SavedWheel[]> {
-  const response = await fetch(`${import.meta.env.VITE_API_URL}/api/wheels`, {
+  const response = await fetch(getApiUrl('/api/wheels'), {
     method: 'GET',
     headers: {
       Accept: 'application/json',
@@ -73,7 +82,7 @@ export async function createSavedWheel(payload: {
   color?: string
   participants: Participant[]
 }): Promise<SavedWheel> {
-  const response = await fetch(`${import.meta.env.VITE_API_URL}/api/wheels`, {
+  const response = await fetch(getApiUrl('/api/wheels'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -98,7 +107,7 @@ export async function createSavedWheel(payload: {
     await addParticipant(wheel.id, participant.name)
   }
 
-  const wheelResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/wheels/${wheel.id}`, {
+  const wheelResponse = await fetch(getApiUrl(`/api/wheels/${wheel.id}`), {
     method: 'GET',
     headers: {
       Accept: 'application/json',
@@ -122,7 +131,7 @@ export async function updateSavedWheel(
     participants?: Participant[]
   },
 ): Promise<SavedWheel> {
-  const response = await fetch(`${import.meta.env.VITE_API_URL}/api/wheels/${id}`, {
+  const response = await fetch(getApiUrl(`/api/wheels/${id}`), {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -141,7 +150,7 @@ export async function updateSavedWheel(
 }
 
 export async function loadSavedWheel(id: string): Promise<SavedWheel> {
-  const response = await fetch(`${import.meta.env.VITE_API_URL}/api/wheels/${id}`, {
+  const response = await fetch(getApiUrl(`/api/wheels/${id}`), {
     method: 'GET',
     headers: {
       Accept: 'application/json',
@@ -158,7 +167,7 @@ export async function loadSavedWheel(id: string): Promise<SavedWheel> {
 }
 
 export async function deleteSavedWheel(id: string): Promise<void> {
-  const response = await fetch(`${import.meta.env.VITE_API_URL}/api/wheels/${id}`, {
+  const response = await fetch(getApiUrl(`/api/wheels/${id}`), {
     method: 'DELETE',
     headers: {
       Accept: 'application/json',
