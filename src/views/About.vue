@@ -15,7 +15,7 @@ import { RouterLink } from 'vue-router'
           <li><RouterLink to="/" class="nav-link">Home</RouterLink></li>
           <li><RouterLink to="/about" class="nav-link active">About</RouterLink></li>
           <li><RouterLink to="/" class="nav-link">Tools</RouterLink></li>
-          <li><RouterLink to="/" class="nav-link">Contact</RouterLink></li>
+          <li><RouterLink to="/contact" class="nav-link">Contact</RouterLink></li>
         </ul>
 
         <div class="nav-buttons">
@@ -267,7 +267,7 @@ import { RouterLink } from 'vue-router'
             <h4 class="footer-title">Company</h4>
             <ul class="footer-links">
               <li><RouterLink to="/about" class="active-link">About</RouterLink></li>
-              <li><RouterLink to="/">Contact</RouterLink></li>
+              <li><RouterLink to="/contact">Contact</RouterLink></li>
               <li><RouterLink to="/">Careers</RouterLink></li>
             </ul>
           </div>

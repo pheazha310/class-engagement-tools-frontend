@@ -103,7 +103,7 @@ const toggleMobileMenu = () => {
           <li><RouterLink to="/" class="nav-link">Home</RouterLink></li>
           <li><RouterLink to="/about" class="nav-link">About</RouterLink></li>
           <li><RouterLink to="/" class="nav-link">Tools</RouterLink></li>
-          <li><RouterLink to="/" class="nav-link">Contact</RouterLink></li>
+          <li><RouterLink to="/contact" class="nav-link">Contact</RouterLink></li>
         </ul>
 
         <div class="nav-buttons">
@@ -254,8 +254,8 @@ const toggleMobileMenu = () => {
           <div class="footer-section">
             <h4 class="footer-title">Company</h4>
             <ul class="footer-links">
-              <li><RouterLink to="/">About</RouterLink></li>
-              <li><RouterLink to="/">Contact</RouterLink></li>
+              <li><RouterLink to="/about">About</RouterLink></li>
+              <li><RouterLink to="/contact">Contact</RouterLink></li>
               <li><RouterLink to="/">Careers</RouterLink></li>
             </ul>
           </div>
