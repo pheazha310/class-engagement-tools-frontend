@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
+import { RouterLink } from 'vue-router'
 import WheelCanvas from '@/components/WheelCanvas.vue'
 import ParticipantListEditor from '@/components/ParticipantListEditor.vue'
 import WheelThemePicker from '@/components/WheelThemePicker.vue'
 import SaveWheelModal from '@/components/SaveWheelModal.vue'
 import MyWheels from '@/components/MyWheels.vue'
+import Navbar from '@/components/Navbar.vue'
 import type { Participant, WheelTheme, SavedWheel } from '@/types/wheel'
 import { wheelThemes, getThemeById, defaultThemeId } from '@/types/wheel'
 import { createSavedWheel, loadSavedWheel } from '@/services/wheel'
@@ -122,6 +124,10 @@ function handleDeleteWheel() {
 
   <template>
     <div class="page" :style="{ background: selectedTheme.backgroundColor }">
+      <Navbar />
+      <div class="back-wrapper">
+        <RouterLink to="/tools" class="btn-back">← Back to all tools</RouterLink>
+      </div>
       <h1 class="title">Random Wheel</h1>
       <p class="subtitle">Manage participants and spin to select one randomly</p>
 
@@ -186,8 +192,15 @@ function handleDeleteWheel() {
   align-items: center;
   justify-content: flex-start;
   min-height: 100vh;
-  padding: 24px;
+  padding: 88px 24px 24px;
   gap: 20px;
+}
+
+.back-wrapper {
+  width: 100%;
+  max-width: 1200px;
+  display: flex;
+  justify-content: flex-start;
 }
 
 .toolbar {
@@ -233,6 +246,7 @@ function handleDeleteWheel() {
 .editor-column {
   flex: 1;
   max-width: 420px;
+  gap: 20px;
 }
 
 .wheel-column {
@@ -280,16 +294,41 @@ function handleDeleteWheel() {
 }
 
 .btn-primary {
-  box-shadow: 0 4px 12px rgba(78, 205, 196, 0.35);
+  background: #22d3ee;
+  color: #0f172a;
+  box-shadow: 0 4px 12px rgba(34, 211, 238, 0.35);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #06b6d4;
+  box-shadow: 0 4px 16px rgba(34, 211, 238, 0.45);
 }
 
 .btn-secondary {
-  background: #2a2a45;
+  background: #1e293b;
   box-shadow: none;
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: #3a3a5a;
+  background: #334155;
+}
+
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.9);
+  transition: all 0.2s ease;
+}
+
+.btn-back:hover {
+  border-color: #22d3ee;
+  color: #22d3ee;
 }
 
 @media (max-width: 900px) {

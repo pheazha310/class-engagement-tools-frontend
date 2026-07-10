@@ -92,43 +92,47 @@ function select(theme: WheelTheme) {
 .theme-card {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 10px;
-  border-radius: 12px;
-  border: 1px solid #252540;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 2px solid #2a2a45;
   background: #1a1a2e;
   color: #fff;
   cursor: pointer;
   transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+  min-width: 0;
 }
 
 .theme-card:hover:not(:disabled) {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
   border-color: #3a3a5a;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.35);
 }
 
 .theme-card--active {
   border-color: #4ecdc4;
-  box-shadow: 0 0 0 1px #4ecdc4;
+  box-shadow: 0 0 0 2px rgba(78, 205, 196, 0.3), 0 8px 24px rgba(78, 205, 196, 0.25);
+  background: #1f1f3a;
 }
 
 .theme-name {
   font-size: 13px;
   font-weight: 700;
   text-align: center;
-}
-
-.theme-swatches {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  justify-content: center;
+  color: #f5f5f5;
+  letter-spacing: 0.02em;
 }
 
 .theme-swatch {
-  width: 14px;
-  height: 14px;
-  border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  width: 16px;
+  height: 16px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
+  transition: transform 0.15s;
+}
+
+.theme-card:hover .theme-swatch {
+  transform: scale(1.08);
 }
 </style>

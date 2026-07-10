@@ -204,26 +204,25 @@ async function handleFileChange(event: Event) {
 
 .add-row {
   display: flex;
-  gap: 8px;
+  gap: 10px;
+  padding-bottom: 4px;
 }
 
 .add-row input[type='text'] {
   flex: 1;
   padding: 12px 14px;
   border-radius: 10px;
-  border: 1px solid #2a2a45;
-  background: #1a1a2e;
-  color: #fff;
+  border: 2px solid #2a2a45;
+  background: #0f0f1e;
+  color: #f5f5f5;
   font-size: 15px;
   outline: none;
-}
-
-.add-row input[type='text']:focus {
-  border-color: #4ecdc4;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  min-height: 44px;
 }
 
 .btn {
-  padding: 10px 16px;
+  padding: 12px 20px;
   border: none;
   border-radius: 10px;
   font-size: 14px;
@@ -231,6 +230,7 @@ async function handleFileChange(event: Event) {
   cursor: pointer;
   color: #fff;
   transition: transform 0.15s, box-shadow 0.15s;
+  min-height: 44px;
 }
 
 .btn:hover:not(:disabled) {
@@ -243,12 +243,28 @@ async function handleFileChange(event: Event) {
 
 .btn-add {
   background: linear-gradient(135deg, #4ecdc4, #2fa89e);
-  box-shadow: 0 4px 12px rgba(78, 205, 196, 0.35);
+  color: #0f172a;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(78, 205, 196, 0.4);
+  letter-spacing: 0.02em;
+}
+
+.btn-add:hover:not(:disabled) {
+  background: linear-gradient(135deg, #5de0d7, #36b8ad);
+  box-shadow: 0 6px 18px rgba(78, 205, 196, 0.5);
 }
 
 .btn-import {
   background: linear-gradient(135deg, #45b7d1, #2d8aac);
-  box-shadow: 0 4px 12px rgba(69, 183, 209, 0.35);
+  color: #0f172a;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(69, 183, 209, 0.4);
+  letter-spacing: 0.02em;
+}
+
+.btn-import:hover:not(:disabled) {
+  background: linear-gradient(135deg, #56c8df, #379cbf);
+  box-shadow: 0 6px 18px rgba(69, 183, 209, 0.5);
 }
 
 .file-input {
@@ -276,7 +292,7 @@ async function handleFileChange(event: Event) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+  margin-bottom: 16px;
 }
 
 .preview-title {
@@ -302,7 +318,7 @@ async function handleFileChange(event: Event) {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   max-height: 260px;
   overflow-y: auto;
 }
@@ -311,46 +327,55 @@ async function handleFileChange(event: Event) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  padding: 10px 12px;
+  gap: 12px;
+  padding: 12px 14px;
   background: #1a1a2e;
-  border-radius: 10px;
-  border: 1px solid #252540;
+  border-radius: 12px;
+  border: 1px solid #2a2a45;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.participant-list li:hover {
+  background: #22223a;
+  border-color: #3a3a5a;
 }
 
 .participant-name {
   color: #f5f5f5;
   font-size: 14px;
+  font-weight: 600;
   word-break: break-word;
 }
 
 .btn-remove {
   flex-shrink: 0;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 8px;
-  border: 1px solid #3a1f1f;
+  border: 1px solid #ff6b6b44;
   background: #2a1010;
   color: #ff6b6b;
-  font-size: 18px;
+  font-size: 20px;
   line-height: 1;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition: all 0.2s;
 }
 
 .btn-remove:hover {
-  background: #3a1515;
+  background: #ff6b6b22;
   color: #ff4c4c;
+  border-color: #ff6b6b;
+  box-shadow: 0 0 10px rgba(255, 107, 107, 0.3);
 }
 
 .empty {
-  color: #888;
+  color: #9999bb;
   font-size: 14px;
   margin: 0;
   text-align: center;
-  padding: 16px 0;
+  padding: 20px 0;
 }
 </style>

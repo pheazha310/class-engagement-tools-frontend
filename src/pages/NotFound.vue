@@ -4,7 +4,7 @@
   <div class="not-found">
     <h1 class="title">404</h1>
     <p class="message">Page not found</p>
-    <router-link to="/" class="link">Go back to the wheel</router-link>
+    <router-link to="/" class="link">Go to home page</router-link>
   </div>
 </template>
 

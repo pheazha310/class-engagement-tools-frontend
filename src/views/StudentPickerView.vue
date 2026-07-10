@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
+import Navbar from '@/components/Navbar.vue'
 
 const router = useRouter()
 
@@ -62,22 +63,28 @@ function openFeature(feature: FeatureCard) {
 
 <template>
   <div class="dashboard">
+    <Navbar />
+
     <!-- Header -->
     <header class="header">
       <div class="header__inner">
         <div class="header__icon-wrap">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="11" cy="11" r="8" />
             <path d="m21 21-4.3-4.3" />
           </svg>
+          <span class="header__icon-glow"></span>
         </div>
         <div>
           <h1 class="header__title">Student Picker</h1>
-          <p class="header__subtitle">
-            Choose a picker mode below to get started with classroom engagement tools.
-          </p>
+          <p class="header__subtitle">Choose a picker mode below to get started.</p>
+        </div>
+        <div class="header__badge">
+          <span class="header__badge-dot"></span>
+          <span class="header__badge-text">Classroom Tools</span>
         </div>
       </div>
+      <div class="header__gradient"></div>
     </header>
 
     <!-- Feature Grid -->
@@ -90,25 +97,21 @@ function openFeature(feature: FeatureCard) {
           :class="{ 'card--live': feature.isLive }"
           @click="openFeature(feature)"
         >
-          <!-- Card header with gradient icon -->
           <div class="card__header" :style="{ background: feature.gradient }">
             <div class="card__icon">
-              <!-- Single Student Picker icon -->
-              <svg v-if="feature.icon === 'single'" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <svg v-if="feature.icon === 'single'" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
                 <circle cx="9" cy="7" r="4" />
                 <line x1="19" y1="8" x2="19" y2="14" />
                 <line x1="22" y1="11" x2="16" y2="11" />
               </svg>
-              <!-- Multiple Student Picker icon -->
-              <svg v-else-if="feature.icon === 'multiple'" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <svg v-else-if="feature.icon === 'multiple'" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
                 <circle cx="9" cy="7" r="4" />
                 <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
                 <path d="M16 3.13a4 4 0 0 1 0 7.75" />
               </svg>
-              <!-- Lucky Draw icon -->
-              <svg v-else-if="feature.icon === 'lucky'" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <svg v-else-if="feature.icon === 'lucky'" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10" />
                 <path d="M12 2v4" />
                 <path d="M12 18v4" />
@@ -121,16 +124,14 @@ function openFeature(feature: FeatureCard) {
                 <path d="M12 6a6 6 0 1 0 0 12 6 6 0 0 0 0-12Z" />
                 <path d="M12 10a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z" />
               </svg>
-              <!-- Card Picker icon -->
-              <svg v-else-if="feature.icon === 'card'" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <svg v-else-if="feature.icon === 'card'" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                 <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
                 <line x1="3" y1="9" x2="21" y2="9" />
                 <line x1="9" y1="3" x2="9" y2="21" />
                 <line x1="15" y1="3" x2="15" y2="21" />
                 <line x1="3" y1="15" x2="21" y2="15" />
               </svg>
-              <!-- Image Picker icon -->
-              <svg v-else-if="feature.icon === 'image'" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <svg v-else-if="feature.icon === 'image'" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                 <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
                 <circle cx="9" cy="9" r="2" />
                 <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
@@ -141,26 +142,20 @@ function openFeature(feature: FeatureCard) {
             </div>
           </div>
 
-          <!-- Preview area showing mockup UI -->
           <div class="card__preview">
-            <!-- Single Student Picker preview -->
             <div v-if="feature.icon === 'single'" class="preview preview--single">
               <div class="preview__avatar">A</div>
               <div class="preview__name">Alice Johnson</div>
             </div>
-
-            <!-- Multiple Student Picker preview -->
             <div v-else-if="feature.icon === 'multiple'" class="preview preview--multiple">
               <label class="preview__row"><input type="checkbox" checked disabled /><span>Alice</span></label>
               <label class="preview__row"><input type="checkbox" disabled /><span>Bob</span></label>
               <label class="preview__row"><input type="checkbox" checked disabled /><span>Charlie</span></label>
               <label class="preview__row"><input type="checkbox" disabled /><span>Diana</span></label>
             </div>
-
-            <!-- Lucky Draw preview -->
             <div v-else-if="feature.icon === 'lucky'" class="preview preview--lucky">
               <div class="preview__wheel">
-                <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="1.5">
+                <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="1.5">
                   <circle cx="12" cy="12" r="10" />
                   <path d="M12 2v4" /><path d="M12 18v4" />
                   <path d="M2 12h4" /><path d="M18 12h4" />
@@ -172,8 +167,6 @@ function openFeature(feature: FeatureCard) {
               </div>
               <div class="preview__wheel-arrow">▼</div>
             </div>
-
-            <!-- Card Picker preview -->
             <div v-else-if="feature.icon === 'card'" class="preview preview--card">
               <div class="preview__card-stack">
                 <div class="preview__card-item" style="--i: 0">?</div>
@@ -181,8 +174,6 @@ function openFeature(feature: FeatureCard) {
                 <div class="preview__card-item" style="--i: 2">?</div>
               </div>
             </div>
-
-            <!-- Image Picker preview -->
             <div v-else-if="feature.icon === 'image'" class="preview preview--image">
               <div class="preview__image-grid">
                 <div class="preview__img" style="background:#6366f1">A</div>
@@ -193,21 +184,18 @@ function openFeature(feature: FeatureCard) {
             </div>
           </div>
 
-          <!-- Card body -->
           <div class="card__body">
             <h2 class="card__title">{{ feature.title }}</h2>
             <p class="card__desc">{{ feature.description }}</p>
           </div>
 
-          <!-- Centered action button -->
-          <div class="card__action">
+          <div class="card__action" v-if="feature.route">
             <div class="card__btn">{{ feature.actionLabel }}</div>
           </div>
 
-          <!-- Card footer -->
           <div class="card__footer">
             <span class="card__status">{{ feature.isLive ? 'Click to Open' : 'Coming Soon' }}</span>
-            <svg class="card__arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg class="card__arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <line x1="5" y1="12" x2="19" y2="12" />
               <polyline points="12 5 19 12 12 19" />
             </svg>
@@ -221,81 +209,214 @@ function openFeature(feature: FeatureCard) {
 <style scoped>
 .dashboard {
   min-height: 100vh;
-  background: #f8fafc;
+  background: #ffffff;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  padding-top: 64px;
 }
 
-/* ── Header ── */
 .header {
-  background: white;
-  border-bottom: 1px solid #e2e8f0;
+  position: relative;
+  background: #0f172a;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.header {
+  position: relative;
+  background: #0f172a;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  overflow: hidden;
 }
 
 .header__inner {
+  position: relative;
+  z-index: 1;
   max-width: 72rem;
   margin: 0 auto;
-  padding: 2.5rem 2rem;
+  padding: 2.5rem 2rem 2.75rem;
   display: flex;
-  align-items: flex-start;
-  gap: 1rem;
+  align-items: center;
+  gap: 1.25rem;
 }
 
 .header__icon-wrap {
-  width: 3.5rem;
-  height: 3.5rem;
+  position: relative;
+  width: 4rem;
+  height: 4rem;
   display: flex;
   align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, #6366f1, #8b5cf6);
   color: white;
-  border-radius: 1rem;
+  border-radius: 1.1rem;
   flex-shrink: 0;
+  box-shadow: 0 20px 40px rgba(99, 102, 241, 0.35);
+}
+
+.header__icon-glow {
+  position: absolute;
+  inset: -8px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.55), transparent 65%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.header:hover .header__icon-glow {
+  opacity: 1;
 }
 
 .header__title {
-  font-size: 1.75rem;
+  font-size: 2rem;
   font-weight: 800;
-  color: #0f172a;
+  color: #f8fafc;
   margin: 0;
-  line-height: 1.2;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
 }
 
 .header__subtitle {
-  margin: 0.35rem 0 0;
-  color: #64748b;
-  font-size: 0.95rem;
+  margin: 0.4rem 0 0;
+  color: #94a3b8;
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
+.header__badge {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  color: #cbd5e1;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  backdrop-filter: blur(8px);
+}
+
+.header__badge-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.7);
+}
+
+.header__gradient {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.5), transparent);
+}
+
+.header__inner {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 2.25rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header__icon-wrap {
+  width: 3rem;
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  border-radius: 0.75rem;
+  flex-shrink: 0;
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.35);
+}
+
+.header__title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #f8fafc;
+  margin: 0;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.header__subtitle {
+  margin: 0.25rem 0 0;
+  color: #94a3b8;
+  font-size: 0.9rem;
   line-height: 1.5;
 }
 
-/* ── Main ── */
 .main {
   max-width: 72rem;
   margin: 0 auto;
   padding: 2rem;
 }
 
-/* ── Grid ── */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.25rem;
+@media (max-width: 640px) {
+  .header__inner {
+    padding: 1.5rem 1rem;
+    flex-wrap: wrap;
+  }
+
+  .header__icon-wrap {
+    width: 3.25rem;
+    height: 3.25rem;
+  }
+
+  .header__title {
+    font-size: 1.5rem;
+  }
+
+  .header__subtitle {
+    font-size: 0.9rem;
+  }
+
+  .header__badge {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
+    margin-top: 0.5rem;
+  }
+
+  .main {
+    padding: 1.25rem 1rem 2rem;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
 }
 
-/* ── Card ── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
 .card {
   display: flex;
   flex-direction: column;
   background: white;
-  border-radius: 1rem;
   border: 1px solid #e2e8f0;
+  border-radius: 1.25rem;
   overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
 }
 
 .card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04);
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04);
   border-color: #cbd5e1;
 }
 
@@ -303,24 +424,27 @@ function openFeature(feature: FeatureCard) {
   transform: translateX(3px);
 }
 
-/* Card header */
+.card:hover .card__action .card__btn {
+  transform: translateY(-1px) scale(1.03);
+}
+
 .card__header {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
-  min-height: 6rem;
+  min-height: 5.5rem;
 }
 
 .card__icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 3.5rem;
-  height: 3.5rem;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 1rem;
+  width: 3.25rem;
+  height: 3.25rem;
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 0.9rem;
   backdrop-filter: blur(4px);
 }
 
@@ -332,25 +456,27 @@ function openFeature(feature: FeatureCard) {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  padding: 0.25rem 0.6rem;
-  background: rgba(255, 255, 255, 0.25);
-  color: rgba(255, 255, 255, 0.9);
-  border-radius: 0.4rem;
-  backdrop-filter: blur(4px);
+  padding: 0.3rem 0.65rem;
+  background: rgba(255, 255, 255, 0.28);
+  color: rgba(255, 255, 255, 0.95);
+  border-radius: 999px;
+  backdrop-filter: blur(6px);
 }
 
 .card__badge--live {
-  background: rgba(34, 197, 94, 0.7);
+  background: #22c55e;
   color: white;
 }
 
-/* Preview area */
 .card__preview {
-  padding: 0.75rem 1rem;
-  background: #fafafa;
+  padding: 1rem 1.25rem;
+  background: #f8fafc;
+  border-top: 1px solid #f1f5f9;
   border-bottom: 1px solid #f1f5f9;
   display: flex;
   justify-content: center;
+  align-items: center;
+  min-height: 5rem;
 }
 
 .preview {
@@ -362,7 +488,6 @@ function openFeature(feature: FeatureCard) {
   width: 100%;
 }
 
-/* Single picker preview */
 .preview--single {
   flex-direction: row;
   flex-wrap: wrap;
@@ -371,8 +496,8 @@ function openFeature(feature: FeatureCard) {
 }
 
 .preview__avatar {
-  width: 2rem;
-  height: 2rem;
+  width: 2.25rem;
+  height: 2.25rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -384,14 +509,13 @@ function openFeature(feature: FeatureCard) {
 }
 
 .preview__name {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: #334155;
   flex: 1;
   min-width: 5rem;
 }
 
-/* Multiple picker preview */
 .preview--multiple {
   align-items: stretch;
 }
@@ -399,20 +523,19 @@ function openFeature(feature: FeatureCard) {
 .preview__row {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  font-size: 0.75rem;
+  gap: 0.5rem;
+  font-size: 0.8rem;
   color: #475569;
   cursor: default;
 }
 
 .preview__row input[type="checkbox"] {
   accent-color: #ec4899;
-  width: 0.8rem;
-  height: 0.8rem;
+  width: 0.9rem;
+  height: 0.9rem;
   pointer-events: none;
 }
 
-/* Lucky draw preview */
 .preview--lucky {
   position: relative;
 }
@@ -423,15 +546,15 @@ function openFeature(feature: FeatureCard) {
 
 .preview__wheel-arrow {
   position: absolute;
-  top: -2px;
-  font-size: 0.8rem;
+  top: -4px;
+  font-size: 0.85rem;
   color: #f59e0b;
   animation: bounce-arrow 1s ease-in-out infinite;
 }
 
 @keyframes spin-slow {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 @keyframes bounce-arrow {
@@ -439,7 +562,6 @@ function openFeature(feature: FeatureCard) {
   50% { transform: translateY(3px); }
 }
 
-/* Card picker preview */
 .preview--card {
   position: relative;
 }
@@ -451,19 +573,19 @@ function openFeature(feature: FeatureCard) {
 }
 
 .preview__card-item {
-  width: 2rem;
-  height: 2.8rem;
+  width: 2.2rem;
+  height: 3rem;
   display: flex;
   align-items: center;
   justify-content: center;
   background: white;
   border: 2px solid #14b8a6;
-  border-radius: 0.35rem;
+  border-radius: 0.4rem;
   font-weight: 800;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: #14b8a6;
-  margin-left: calc(var(--i) * -0.6rem);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  margin-left: calc(var(--i) * -0.65rem);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.06);
   transition: transform 0.2s ease;
 }
 
@@ -476,24 +598,23 @@ function openFeature(feature: FeatureCard) {
 .preview__card-item:nth-child(3) { animation-delay: 0.2s; }
 
 @keyframes fan-out {
-  0% { transform: rotate(0deg) translateY(0); }
-  100% { transform: rotate(5deg) translateY(-3px); }
+  from { transform: rotate(0deg) translateY(0); }
+  to { transform: rotate(5deg) translateY(-3px); }
 }
 
-/* Image picker preview */
 .preview__image-grid {
   display: flex;
-  gap: 0.35rem;
+  gap: 0.4rem;
 }
 
 .preview__img {
-  width: 1.8rem;
-  height: 1.8rem;
+  width: 2rem;
+  height: 2rem;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  border-radius: 0.35rem;
+  border-radius: 0.4rem;
   font-size: 0.55rem;
   font-weight: 700;
   transition: transform 0.2s ease;
@@ -507,17 +628,16 @@ function openFeature(feature: FeatureCard) {
 .card:hover .preview__img:nth-child(3) { transition-delay: 0.1s; }
 .card:hover .preview__img:nth-child(4) { transition-delay: 0.15s; }
 
-/* Card body */
 .card__body {
-  padding: 1rem 1.25rem;
+  padding: 1.1rem 1.25rem 0.75rem;
   flex: 1;
 }
 
 .card__title {
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: #0f172a;
-  margin: 0 0 0.25rem;
+  margin: 0 0 0.35rem;
   line-height: 1.3;
 }
 
@@ -525,18 +645,21 @@ function openFeature(feature: FeatureCard) {
   font-size: 0.8rem;
   color: #64748b;
   margin: 0;
-  line-height: 1.5;
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-orient: vertical;
+  overflow: hidden;
 }
 
-/* Centered action button */
 .card__action {
   display: flex;
   justify-content: center;
-  padding: 0 1.25rem 1rem;
+  padding: 0 1.25rem 0.85rem;
 }
 
 .card__btn {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
   padding: 0.55rem 1.5rem;
   background: linear-gradient(135deg, #6366f1, #8b5cf6);
@@ -544,35 +667,29 @@ function openFeature(feature: FeatureCard) {
   border-radius: 999px;
   white-space: nowrap;
   text-align: center;
-  box-shadow: 0 3px 8px rgba(99, 102, 241, 0.35);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: default;
 }
 
 .card:hover .card__btn {
-  transform: translateY(-1px) scale(1.04);
-  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.5);
+  transform: translateY(-1px) scale(1.03);
+  box-shadow: 0 8px 18px rgba(99, 102, 241, 0.45);
 }
 
-.card:hover .card__btn:active {
-  transform: translateY(0) scale(0.97);
-}
-
-/* Card footer */
 .card__footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem 1.25rem;
+  padding: 0.65rem 1.25rem;
   border-top: 1px solid #f1f5f9;
 }
 
 .card__status {
   font-size: 0.65rem;
   color: #94a3b8;
-  font-weight: 500;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
 }
 
 .card__arrow {
@@ -580,30 +697,40 @@ function openFeature(feature: FeatureCard) {
   transition: transform 0.2s ease;
 }
 
-/* ── Responsive ── */
+.main {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
 @media (max-width: 640px) {
   .header__inner {
     padding: 1.5rem 1rem;
-    flex-direction: column;
-    align-items: stretch;
+    flex-wrap: wrap;
   }
 
   .header__icon-wrap {
-    width: 2.75rem;
-    height: 2.75rem;
-  }
-
-  .header__icon-wrap svg {
-    width: 22px;
-    height: 22px;
+    width: 3.25rem;
+    height: 3.25rem;
   }
 
   .header__title {
-    font-size: 1.35rem;
+    font-size: 1.5rem;
+  }
+
+  .header__subtitle {
+    font-size: 0.9rem;
+  }
+
+  .header__badge {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
+    margin-top: 0.5rem;
   }
 
   .main {
-    padding: 1rem;
+    padding: 1.25rem 1rem 2rem;
   }
 
   .grid {
