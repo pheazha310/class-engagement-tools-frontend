@@ -5,6 +5,7 @@ import SingleStudentPickerView from '@/views/SingleStudentPickerView.vue'
 import HomepageView from '@/views/Homepage.vue'
 import ToolsPage from '@/pages/ToolsPage.vue'
 import ToolDetailPage from '@/pages/ToolDetailPage.vue'
+import GroupGeneratorView from '@/views/GroupGeneratorView.vue'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -56,6 +57,11 @@ const routes: RouteRecordRaw[] = [
     path: '/tools/:slug',
     name: 'tool-detail',
     component: ToolDetailPage,
+  },
+  {
+    path: '/group-generator',
+    name: 'group-generator',
+    component: GroupGeneratorView,
   },
   {
     path: '/:pathMatch(.*)*',

@@ -22,7 +22,7 @@ export const categories: Category[] = [
     tools: [
       { title: 'Random Wheel', slug: 'random-wheel', icon: '🎡', description: 'Choose students fairly with smooth spinning animations and reusable wheels.', category: 'Random Tools', route: '/wheel' },
       { title: 'Student Picker', slug: 'student-picker', icon: '🎯', description: 'Pick one or several learners at once with visual card and lucky draw modes.', category: 'Random Tools', route: '/student-picker' },
-      { title: 'Group Generator', slug: 'group-generator', icon: '👥', description: 'Create balanced teams quickly and share the groups with your class.', category: 'Random Tools' },
+      { title: 'Group Generator', slug: 'group-generator', icon: '👥', description: 'Create balanced teams quickly and share the groups with your class.', category: 'Random Tools', route: '/group-generator' },
     ]
   },
   {
