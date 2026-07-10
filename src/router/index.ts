@@ -6,7 +6,8 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: '/polls',
+      name: 'home',
+      component: () => import('@/views/Homepage.vue'),
     },
     {
       path: '/login',
@@ -91,6 +92,12 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
+
+  // Allow access to homepage without authentication
+  if (to.name === 'home') {
+    next()
+    return
+  }
 
   if (to.meta.requiresAuth && !authStore.user) {
     next('/login')

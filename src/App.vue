@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 const mobileMenuOpen = ref(false)
+
+const isHomepage = computed(() => route.name === 'home')
 
 onMounted(() => {
   authStore.fetchUser()
@@ -19,7 +22,7 @@ async function handleLogout() {
 
 <template>
   <div class="min-h-screen bg-white">
-    <header class="sticky top-0 z-40 border-b border-gray-100 bg-white/95 backdrop-blur">
+    <header v-if="!isHomepage" class="sticky top-0 z-40 border-b border-gray-100 bg-white/95 backdrop-blur">
       <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
         <div class="flex items-center gap-6">
           <button class="text-lg font-bold text-blue-600" @click="router.push('/')">
