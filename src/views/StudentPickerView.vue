@@ -210,7 +210,7 @@ function openFeature(feature: FeatureCard) {
 .dashboard {
   min-height: 100vh;
   background: #ffffff;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   padding-top: 64px;
 }
 

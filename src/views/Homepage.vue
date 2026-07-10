@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { categories } from '@/data/toolsData'
 import Navbar from '@/components/Navbar.vue'
+import SiteFooter from '@/components/SiteFooter.vue'
 </script>
 
 <template>
@@ -98,51 +99,7 @@ import Navbar from '@/components/Navbar.vue'
       </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="footer">
-      <div class="container">
-        <div class="footer-content">
-          <div class="footer-section">
-            <div class="footer-logo">
-              <span class="logo-icon">🎓</span>
-              <span class="logo-text">ClassTools</span>
-            </div>
-            <p class="footer-description">Empowering educators with innovative classroom engagement tools.</p>
-          </div>
-
-          <div class="footer-section">
-            <h4 class="footer-title">Product</h4>
-            <ul class="footer-links">
-              <li><RouterLink to="/">Features</RouterLink></li>
-              <li><RouterLink to="/">Tools</RouterLink></li>
-              <li><RouterLink to="/">Pricing</RouterLink></li>
-            </ul>
-          </div>
-
-          <div class="footer-section">
-            <h4 class="footer-title">Company</h4>
-            <ul class="footer-links">
-              <li><RouterLink to="/">About</RouterLink></li>
-              <li><RouterLink to="/">Contact</RouterLink></li>
-              <li><RouterLink to="/">Careers</RouterLink></li>
-            </ul>
-          </div>
-
-          <div class="footer-section">
-            <h4 class="footer-title">Support</h4>
-            <ul class="footer-links">
-              <li><RouterLink to="/">Help Center</RouterLink></li>
-              <li><RouterLink to="/">Documentation</RouterLink></li>
-              <li><RouterLink to="/">Privacy Policy</RouterLink></li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="footer-bottom">
-          <p>&copy; 2024 ClassTools. All rights reserved.</p>
-        </div>
-      </div>
-    </footer>
+    <SiteFooter />
   </div>
 </template>
 
@@ -879,71 +836,6 @@ h1, h2, h3 {
   line-height: 1.6;
 }
 
-/* Footer */
-.footer {
-  background: #0f172a;
-  color: white;
-  padding: 80px 20px 24px;
-}
-
-.footer-content {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
-  gap: 48px;
-  margin-bottom: 40px;
-}
-
-.footer-logo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 20px;
-  font-weight: 700;
-  margin-bottom: 16px;
-}
-
-.footer-description {
-  color: #94a3b8;
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-.footer-title {
-  font-size: 16px;
-  font-weight: 700;
-  margin-bottom: 20px;
-  color: #f1f5f9;
-}
-
-.footer-links {
-  list-style: none;
-}
-
-.footer-links li {
-  margin-bottom: 8px;
-}
-
-.footer-links a {
-  color: #94a3b8;
-  text-decoration: none;
-  font-size: 14px;
-  transition: all 0.2s ease;
-}
-
-.footer-links a:hover {
-  color: white;
-  transform: translateX(4px);
-  display: inline-block;
-}
-
-.footer-bottom {
-  border-top: 1px solid #334155;
-  padding-top: 24px;
-  text-align: center;
-  color: #94a3b8;
-  font-size: 14px;
-}
-
 /* Responsive Design */
 @media (max-width: 768px) {
   .hero {
@@ -974,11 +866,6 @@ h1, h2, h3 {
     grid-template-columns: 1fr;
   }
 
-  .footer-content {
-    grid-template-columns: 1fr;
-    gap: 32px;
-  }
-
   .cta-title {
     font-size: 28px;
   }
@@ -995,10 +882,6 @@ h1, h2, h3 {
 
   .about-content {
     grid-template-columns: 1fr;
-  }
-
-  .footer-content {
-    grid-template-columns: repeat(2, 1fr);
   }
 }
 </style>
