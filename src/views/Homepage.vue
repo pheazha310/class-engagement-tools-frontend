@@ -101,7 +101,7 @@ const toggleMobileMenu = () => {
 
         <ul class="nav-menu">
           <li><RouterLink to="/" class="nav-link">Home</RouterLink></li>
-          <li><RouterLink to="/" class="nav-link">About</RouterLink></li>
+          <li><RouterLink to="/about" class="nav-link">About</RouterLink></li>
           <li><RouterLink to="/" class="nav-link">Tools</RouterLink></li>
           <li><RouterLink to="/" class="nav-link">Contact</RouterLink></li>
         </ul>
