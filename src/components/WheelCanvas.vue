@@ -73,9 +73,12 @@ async function spin() {
     const selectedIndex = props.participants.findIndex(
       (p) => p.id === result.id || p.name === result.name,
     )
-    const targetSliceAngle = selectedIndex * sliceAngleDeg.value
+    const midAngle = selectedIndex * sliceAngleDeg.value + sliceAngleDeg.value / 2
+    const targetSliceAngle = ((360 - midAngle) % 360 + 360) % 360
     const extraRotations = 5 + Math.floor(Math.random() * 3)
-    const targetRotation = rotation.value + extraRotations * 360 + targetSliceAngle
+    let delta = targetSliceAngle - (rotation.value % 360)
+    if (delta < 0) delta += 360
+    const targetRotation = rotation.value + extraRotations * 360 + delta
 
     const startRotation = rotation.value
     const duration = 3500
@@ -119,13 +122,13 @@ onBeforeUnmount(() => {
 
   <template>
     <div class="wheel-wrapper" :style="{ background: theme.backgroundColor }">
-      <div class="wheel-container">
-        <svg
-          :viewBox="`0 0 ${size} ${size}`"
-          class="wheel-svg"
-          role="img"
-          aria-label="Spinning wheel"
-        >
+        <div class="wheel-container" @click="spin">
+          <svg
+            :viewBox="`0 0 ${size} ${size}`"
+            class="wheel-svg"
+            role="img"
+            aria-label="Spinning wheel"
+          >
           <circle :cx="center" :cy="center" :r="radius + 10" :fill="theme.wheelBackground" />
           <g :transform="`rotate(${rotation}, ${center}, ${center})`">
             <path
