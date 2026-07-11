@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
+
+const router = useRouter()
+const route = useRoute()
 
 const mobileMenuOpen = ref(false)
 const isScrolled = ref(false)
 const activeDropdown = ref(false)
 const activeParticipantsDropdown = ref(false)
+const user = ref<{ name: string } | null>(null)
 
 const handleScroll = () => {
   isScrolled.value = window.scrollY > 50
@@ -23,7 +27,29 @@ const closeDropdown = () => {
   activeDropdown.value = false
 }
 
-const route = useRoute()
+async function checkAuth() {
+  try {
+    const res = await fetch('/api/user', { credentials: 'include' })
+    if (res.ok) {
+      const data = await res.json()
+      user.value = data.data ?? data
+    }
+  } catch {
+    // not authenticated
+  }
+}
+
+async function logout() {
+  try {
+    await fetch('/api/logout', { method: 'POST', credentials: 'include' })
+  } catch {
+    // ignore
+  }
+  user.value = null
+  router.push('/')
+}
+
+onMounted(checkAuth)
 </script>
 
 <template>
@@ -70,8 +96,14 @@ const route = useRoute()
       </ul>
 
       <div class="nav-buttons">
-        <RouterLink to="/login" class="btn btn-login">Login</RouterLink>
-        <RouterLink to="/register" class="btn btn-register">Register</RouterLink>
+        <template v-if="user">
+          <RouterLink to="/profile" class="btn btn-login">{{ user.name }}</RouterLink>
+          <button class="btn btn-register" @click="logout">Logout</button>
+        </template>
+        <template v-else>
+          <RouterLink to="/login" class="btn btn-login">Login</RouterLink>
+          <RouterLink to="/register" class="btn btn-register">Register</RouterLink>
+        </template>
         <button class="mobile-menu-toggle" :class="{ active: mobileMenuOpen }" @click="toggleMobileMenu">
           <span></span>
           <span></span>
