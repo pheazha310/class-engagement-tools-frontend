@@ -15,6 +15,17 @@ async function submit(event: Event) {
   loading.value = true
 
   try {
+    const csrfResponse = await fetch('/sanctum/csrf-cookie', {
+      method: 'GET',
+      credentials: 'include',
+    })
+
+    if (!csrfResponse.ok) {
+      error.value = `CSRF bootstrap failed: ${csrfResponse.status}`
+      loading.value = false
+      return
+    }
+
     const response = await fetch('/api/login', {
       method: 'POST',
       headers: {
