@@ -33,6 +33,11 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/pages/WheelPage.vue'),
   },
   {
+    path: '/wheel/shared/:shareToken',
+    name: 'shared-wheel',
+    component: () => import('@/views/SharedWheelView.vue'),
+  },
+  {
     path: '/student-picker',
     name: 'student-picker',
     component: StudentPickerView,

@@ -6,10 +6,12 @@ import ParticipantListEditor from '@/components/ParticipantListEditor.vue'
 import WheelThemePicker from '@/components/WheelThemePicker.vue'
 import SaveWheelModal from '@/components/SaveWheelModal.vue'
 import MyWheels from '@/components/MyWheels.vue'
+import ShareWheelModal from '@/components/ShareWheelModal.vue'
 import Navbar from '@/components/Navbar.vue'
 import type { Participant, WheelTheme, SavedWheel } from '@/types/wheel'
 import { wheelThemes, getThemeById, defaultThemeId } from '@/types/wheel'
 import { createSavedWheel, loadSavedWheel } from '@/services/wheel'
+import { checkAuth } from '@/services/auth'
 
 const participants = ref<Participant[]>([
   { id: 1, name: 'Alice' },
@@ -51,11 +53,19 @@ onMounted(() => {
 
 const showSaveModal = ref(false)
 const showMyWheelsModal = ref(false)
+const showShareModal = ref(false)
 const saving = ref(false)
 const saveError = ref<string | null>(null)
 const saveSuccess = ref<string | null>(null)
 const wheelName = ref('')
 const wheelDescription = ref('')
+const savedWheelId = ref<string | null>(null)
+const isAuthenticated = ref(false)
+
+onMounted(async () => {
+  loadTheme()
+  isAuthenticated.value = await checkAuth()
+})
 
 function handleSpinComplete(participant: Participant) {
   console.log('Selected participant:', participant)
@@ -83,12 +93,13 @@ async function handleSaveWheel(payload: { name: string; description: string }) {
   saveSuccess.value = null
 
   try {
-    await createSavedWheel({
+    const wheel = await createSavedWheel({
       name: payload.name,
       description: payload.description,
       color: selectedTheme.value.id,
       participants: participants.value,
     })
+    savedWheelId.value = wheel.id
     saveSuccess.value = 'Wheel saved successfully!'
     closeSaveModal()
   } catch (err) {
@@ -98,6 +109,14 @@ async function handleSaveWheel(payload: { name: string; description: string }) {
   }
 }
 
+function openShareModal() {
+  showShareModal.value = true
+}
+
+function handleShared() {
+  saveSuccess.value = 'Share link generated!'
+}
+
 async function handleOpenWheel(wheel: SavedWheel) {
   try {
     const loaded = await loadSavedWheel(wheel.id)
@@ -105,6 +124,7 @@ async function handleOpenWheel(wheel: SavedWheel) {
       id: p.id,
       name: p.name,
     }))
+    savedWheelId.value = wheel.id
 
     if (loaded.color) {
       const theme = getThemeById(loaded.color)
@@ -142,6 +162,13 @@ function handleDeleteWheel() {
         >
           My Wheels
         </button>
+        <button
+          type="button"
+          class="btn btn-share"
+          @click="openShareModal"
+        >
+          Share Wheel
+        </button>
       </div>
 
       <div v-if="saveError" class="alert alert-error">
@@ -174,11 +201,21 @@ function handleDeleteWheel() {
         :theme="selectedTheme"
         :loading="saving"
         :error="saveError"
+        :is-authenticated="isAuthenticated"
         @save="handleSaveWheel"
+      />
+
+      <ShareWheelModal
+        v-model="showShareModal"
+        :wheel-id="savedWheelId"
+        :wheel-name="wheelName"
+        :theme="selectedTheme"
+        @shared="handleShared"
       />
 
       <MyWheels
         v-model="showMyWheelsModal"
+        :is-authenticated="isAuthenticated"
         @open-wheel="handleOpenWheel"
         @delete-wheel="handleDeleteWheel"
       />
@@ -311,6 +348,17 @@ function handleDeleteWheel() {
 
 .btn-secondary:hover:not(:disabled) {
   background: #334155;
+}
+
+.btn-share {
+  background: #4ecdc4;
+  color: #0f172a;
+  box-shadow: 0 4px 12px rgba(78, 205, 196, 0.35);
+}
+
+.btn-share:hover:not(:disabled) {
+  background: #3dbdb4;
+  box-shadow: 0 4px 16px rgba(78, 205, 196, 0.45);
 }
 
 .btn-back {
