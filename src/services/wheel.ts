@@ -32,13 +32,13 @@ export async function spinWheel(participants: Participant[]): Promise<Participan
       throw new Error('Selected participant not found in provided list')
     }
 
-    return selected
+    return { ...selected }
   } catch {
     const fallback = participants[Math.floor(Math.random() * participants.length)]
     if (!fallback) {
       throw new Error('No participants available to spin')
     }
-    return fallback
+    return { ...fallback }
   }
 }
 
