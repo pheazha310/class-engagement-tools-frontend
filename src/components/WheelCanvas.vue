@@ -11,6 +11,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   spinComplete: [participant: Participant]
   spinError: [error: Error]
+  closeWinner: []
+  removeWinner: [participant: Participant]
 }>()
 
 const size = 400
@@ -43,21 +45,45 @@ function labelPosition(cx: number, cy: number, r: number, midAngle: number) {
   return { x, y }
 }
 
-const slices = computed(() => {
-  return props.participants.map((_, i) => {
-    const startAngle = i * sliceAngle.value
-    const endAngle = (i + 1) * sliceAngle.value
-    const midAngle = startAngle + sliceAngle.value / 2
-    const pos = labelPosition(center, center, radius, midAngle)
-    return {
-      path: describeArc(center, center, radius, startAngle, endAngle),
-      color: props.theme.colors[i % props.theme.colors.length],
-      labelX: pos.x,
-      labelY: pos.y,
-      labelAngle: (midAngle * 180) / Math.PI,
-    }
+  const slices = computed(() => {
+    return props.participants.map((_, i) => {
+      const startAngle = i * sliceAngle.value
+      const endAngle = (i + 1) * sliceAngle.value
+      const midAngle = startAngle + sliceAngle.value / 2
+      const pos = labelPosition(center, center, radius, midAngle)
+      return {
+        path: describeArc(center, center, radius, startAngle, endAngle),
+        color: props.theme.colors[i % props.theme.colors.length],
+        labelX: pos.x,
+        labelY: pos.y,
+        labelAngle: (midAngle * 180) / Math.PI,
+        midAngle,
+      }
+    })
   })
-})
+
+  const labels = computed(() => {
+    return slices.value.map((slice, i) => {
+      const startAngle = i * sliceAngle.value
+      const endAngle = (i + 1) * sliceAngle.value
+      const textRadius = radius * 0.78
+      const x1 = center + textRadius * Math.sin(startAngle)
+      const y1 = center - textRadius * Math.cos(startAngle)
+      const x2 = center + textRadius * Math.sin(endAngle)
+      const y2 = center - textRadius * Math.cos(endAngle)
+      const largeArc = endAngle - startAngle > Math.PI ? 1 : 0
+      const pathId = `slice-text-path-${i}-${props.participants.length}`
+      return {
+        path: `M ${x1} ${y1} A ${textRadius} ${textRadius} 0 ${largeArc} 1 ${x2} ${y2}`,
+        pathId,
+        name: props.participants[i]?.name ?? '',
+      }
+    })
+  })
+
+  function labelHref(label: { pathId: string }) {
+    return `#${label.pathId}`
+  }
 
 async function spin() {
   if (spinning.value || props.participants.length === 0) return
@@ -107,6 +133,18 @@ async function spin() {
   }
 }
 
+function closePopup() {
+  selected.value = null
+  emit('closeWinner')
+}
+
+function confirmRemove() {
+  if (selected.value) {
+    emit('removeWinner', selected.value)
+    selected.value = null
+  }
+}
+
 const pointerPoints = computed(() => {
   const tipX = center
   const tipY = center - radius + 10
@@ -129,7 +167,17 @@ onBeforeUnmount(() => {
             role="img"
             aria-label="Spinning wheel"
           >
+          <defs>
+            <path
+              v-for="(label, i) in labels"
+              :key="`path-${i}`"
+              :id="label.pathId"
+              :d="label.path"
+              fill="none"
+            />
+          </defs>
           <circle :cx="center" :cy="center" :r="radius + 10" :fill="theme.wheelBackground" />
+          <circle :cx="center" :cy="center" :r="radius + 6" :fill="'none'" :stroke="'#000000'" stroke-width="6" opacity="0.85" />
           <g :transform="`rotate(${rotation}, ${center}, ${center})`">
             <path
               v-for="(slice, i) in slices"
@@ -137,22 +185,19 @@ onBeforeUnmount(() => {
               :d="slice.path"
               :fill="slice.color"
               :stroke="theme.sliceStroke"
-              stroke-width="2"
+              stroke-width="3"
             />
             <text
-              v-for="(slice, i) in slices"
+              v-for="(label, i) in labels"
               :key="`label-${i}`"
-              :x="slice.labelX"
-              :y="slice.labelY"
-              text-anchor="middle"
-              dominant-baseline="central"
-              :transform="`rotate(${slice.labelAngle}, ${slice.labelX}, ${slice.labelY})`"
               :fill="theme.textColor"
-              font-size="14"
+              font-size="13"
               font-weight="bold"
               class="slice-label"
             >
-              {{ participants[i]?.name }}
+              <textPath :href="labelHref(label)" startOffset="50%" text-anchor="middle">
+                {{ label.name }}
+              </textPath>
             </text>
           </g>
           <polygon :points="pointerPoints" :fill="theme.pointerColor" :stroke="theme.pointerStroke" stroke-width="2" />
@@ -170,18 +215,42 @@ onBeforeUnmount(() => {
           }"
           @click="spin"
         >
-          {{ spinning ? 'Spinning...' : 'Spin the Wheel' }}
+          <span class="spin-button-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22">
+              <path d="M10.5 7.5v9l8.5-5.25z" />
+            </svg>
+          </span>
+          <span class="spin-button-text">{{ spinning ? 'Spinning...' : 'Spin the Wheel' }}</span>
         </button>
 
         <div v-if="error" class="error-message" :style="{ color: theme.pointerColor }">
           {{ error }}
         </div>
-
-        <div v-if="selected && !spinning" class="result-message" :style="{ background: theme.wheelBackground, border: `1px solid ${theme.sliceStroke}` }">
-          <span class="result-label">Selected:</span>
-          <span class="result-name" :style="{ color: theme.pointerColor }">{{ selected.name }}</span>
-        </div>
       </div>
+
+      <transition name="popup">
+        <div
+          v-if="selected && !spinning"
+          class="winner-popup"
+          @click.self="closePopup"
+        >
+          <div class="winner-popup-card" :style="{ background: theme.wheelBackground, border: `1px solid ${theme.sliceStroke}` }">
+            <div class="winner-popup-header" :style="{ background: theme.pointerColor }">
+              <span class="winner-popup-title">We have a winner!</span>
+              <button type="button" class="winner-popup-close" @click="closePopup" aria-label="Close">
+                ×
+              </button>
+            </div>
+            <div class="winner-popup-body">
+              <div class="winner-popup-name" :style="{ color: theme.textColor }">{{ selected.name }}</div>
+            </div>
+            <div class="winner-popup-footer">
+              <button type="button" class="winner-popup-close-text" @click="closePopup">Close</button>
+              <button type="button" class="winner-popup-remove" @click="confirmRemove">Remove</button>
+            </div>
+          </div>
+        </div>
+      </transition>
     </div>
   </template>
 
@@ -223,7 +292,11 @@ onBeforeUnmount(() => {
 }
 
 .spin-button {
-  padding: 14px 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 28px;
   font-size: 18px;
   font-weight: 700;
   color: #fff;
@@ -233,6 +306,27 @@ onBeforeUnmount(() => {
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
   box-shadow: 0 4px 15px rgba(233, 69, 96, 0.4);
+}
+
+.spin-button-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.spin-button-icon svg {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+  margin-left: 2px;
+}
+
+.spin-button-text {
+  letter-spacing: 0.02em;
 }
 
 .spin-button:hover:not(:disabled) {
@@ -256,54 +350,144 @@ onBeforeUnmount(() => {
   text-align: center;
 }
 
-.result-message {
+.winner-popup {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 24px;
-  background: #1a1a2e;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(3px);
+  animation: fadeIn 0.25s ease;
+}
+
+.winner-popup-card {
+  width: 100%;
+  max-width: 420px;
   border-radius: 12px;
-  font-size: 18px;
-  animation: fadeIn 0.4s ease;
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  animation: scaleIn 0.3s ease;
 }
 
-.result-label {
-  color: #aaa;
-  font-weight: 500;
+.winner-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: #e53935;
 }
 
-.result-name {
-  color: #4ecdc4;
+.winner-popup-title {
+  color: #fff;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.winner-popup-close {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.winner-popup-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.winner-popup-body {
+  padding: 28px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.winner-popup-name {
+  font-size: 32px;
+  font-weight: 800;
+  text-align: center;
+  word-break: break-word;
+}
+
+.winner-popup-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 20px 18px;
+}
+
+.winner-popup-close-text {
+  background: transparent;
+  border: none;
+  color: #ddd;
+  font-size: 14px;
   font-weight: 700;
+  cursor: pointer;
+  padding: 8px 10px;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+
+.winner-popup-close-text:hover {
+  background: #2a2a45;
+}
+
+.winner-popup-remove {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 10px;
+  background: #3b82f6;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+  transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+}
+
+.winner-popup-remove:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.45);
+}
+
+.popup-enter-from,
+.popup-leave-to {
+  opacity: 0;
+}
+.popup-enter-active,
+.popup-leave-active {
+  transition: opacity 0.2s ease;
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 @media (max-width: 480px) {
-  .wheel-wrapper {
-    padding: 16px;
-    gap: 16px;
+  .winner-popup-card {
+    max-width: 92vw;
   }
 
-  .spin-button {
-    width: 100%;
-    padding: 12px 24px;
-    font-size: 16px;
-  }
-
-  .result-message {
-    width: 100%;
-    justify-content: center;
-    font-size: 16px;
+  .winner-popup-name {
+    font-size: 26px;
   }
 }
 </style>

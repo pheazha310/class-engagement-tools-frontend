@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import WheelCanvas from '@/components/WheelCanvas.vue'
 import ParticipantListEditor from '@/components/ParticipantListEditor.vue'
 import WheelThemePicker from '@/components/WheelThemePicker.vue'
@@ -12,6 +12,9 @@ import type { Participant, WheelTheme, SavedWheel } from '@/types/wheel'
 import { wheelThemes, getThemeById, defaultThemeId } from '@/types/wheel'
 import { createSavedWheel, loadSavedWheel } from '@/services/wheel'
 import { checkAuth } from '@/services/auth'
+
+const route = useRoute()
+const router = useRouter()
 
 const participants = ref<Participant[]>([
   { id: 1, name: 'Alice' },
@@ -61,18 +64,64 @@ const wheelName = ref('')
 const wheelDescription = ref('')
 const savedWheelId = ref<string | null>(null)
 const isAuthenticated = ref(false)
+const removeAfterSpin = ref(false)
+const futureListTitle = ref('Future List')
+
+function parseNames(raw: string): string[] {
+  return raw
+    .split(/[\n,;]+/)
+    .map((name) => name.trim())
+    .filter((name) => name.length > 0)
+}
+
+function applyUrlNames() {
+  const names = route.query.names
+  if (typeof names === 'string' && names.trim()) {
+    const parsed = parseNames(names)
+    if (parsed.length > 0) {
+      participants.value = parsed.map((name, index) => ({
+        id: index + 1,
+        name,
+      }))
+    }
+  }
+
+  const futureTitle = route.query.futureListTitle
+  if (typeof futureTitle === 'string' && futureTitle.trim()) {
+    futureListTitle.value = futureTitle.trim()
+  }
+}
 
 onMounted(async () => {
   loadTheme()
   isAuthenticated.value = await checkAuth()
+  applyUrlNames()
 })
 
+watch(
+  [() => route.query.names, () => route.query.futureListTitle],
+  () => {
+    applyUrlNames()
+  },
+)
+
 function handleSpinComplete(participant: Participant) {
+  if (removeAfterSpin.value) {
+    participants.value = participants.value.filter((p) => p.id !== participant.id)
+  }
   console.log('Selected participant:', participant)
 }
 
 function handleSpinError(error: Error) {
   console.error('Spin error:', error)
+}
+
+function handleCloseWinner() {
+  // popup closed
+}
+
+function handleRemoveWinner(participant: Participant) {
+  participants.value = participants.value.filter((p) => p.id !== participant.id)
 }
 
 function openSaveModal() {
@@ -169,6 +218,10 @@ function handleDeleteWheel() {
         >
           Share Wheel
         </button>
+        <label class="toggle-remove">
+          <input type="checkbox" v-model="removeAfterSpin" />
+          <span>Remove selected after spin</span>
+        </label>
       </div>
 
       <div v-if="saveError" class="alert alert-error">
@@ -185,11 +238,16 @@ function handleDeleteWheel() {
             :theme="selectedTheme"
             @spin-complete="handleSpinComplete"
             @spin-error="handleSpinError"
+            @close-winner="handleCloseWinner"
+            @remove-winner="handleRemoveWinner"
           />
         </div>
         <div class="editor-column">
           <WheelThemePicker v-model="selectedTheme" :themes="wheelThemes" />
-          <ParticipantListEditor v-model:participants="participants" />
+          <ParticipantListEditor
+            v-model:participants="participants"
+            :future-list-title="futureListTitle"
+          />
         </div>
       </div>
 
@@ -377,6 +435,24 @@ function handleDeleteWheel() {
 .btn-back:hover {
   border-color: #22d3ee;
   color: #22d3ee;
+}
+
+.toggle-remove {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ddd;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle-remove input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  accent-color: #22d3ee;
+  cursor: pointer;
 }
 
 @media (max-width: 900px) {
