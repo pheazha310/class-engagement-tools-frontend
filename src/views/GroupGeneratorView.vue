@@ -1,12 +1,30 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import type { Student, Group, GenerationMethod } from '@/types/groupGenerator'
+import * as XLSX from 'xlsx'
+import jsPDF from 'jspdf'
+
+// Close dropdown when clicking outside
+function handleClickOutside(event: MouseEvent) {
+  const target = event.target as HTMLElement
+  if (!target.closest('.dropdown')) {
+    showDropdown.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
 
 // State
 const students = ref<Student[]>([])
 const method = ref<GenerationMethod>('random')
 const target = ref<'groups' | 'size'>('groups')
-const quantity = ref(4)
+const quantity = ref(3)
 const generateTeamNames = ref(true)
 const generatedGroups = ref<Group[]>([])
 const isGenerating = ref(false)
@@ -51,6 +69,7 @@ const isEmpty = computed(() => generatedGroups.value.length === 0)
 const hasStudents = computed(() => students.value.length > 0)
 const totalStudents = computed(() => students.value.length)
 const totalGroups = computed(() => generatedGroups.value.length)
+const showDropdown = ref(false)
 
 const studentText = computed({
   get: () => students.value.map(s => s.name).join('\n'),
@@ -194,7 +213,65 @@ function regenerate() {
   generateGroups()
 }
 
-function exportGroups() {
+function toggleDropdown() {
+  showDropdown.value = !showDropdown.value
+}
+
+function closeDropdown() {
+  showDropdown.value = false
+}
+
+function exportXLSX() {
+  if (generatedGroups.value.length === 0) return
+
+  // Prepare data for Excel
+  const data: any[] = []
+  
+  generatedGroups.value.forEach((group, idx) => {
+    // Group header row
+    data.push({
+      'Group': group.name,
+      'Student Name': `(${group.students.length} Students)`,
+      'Row': ''
+    })
+    
+    // Student rows
+    group.students.forEach((student, sIdx) => {
+      data.push({
+        'Group': '',
+        'Student Name': student.name,
+        'Row': sIdx + 1
+      })
+    })
+    
+    // Add blank row between groups
+    if (idx < generatedGroups.value.length - 1) {
+      data.push({ 'Group': '', 'Student Name': '', 'Row': '' })
+    }
+  })
+
+  // Create workbook
+  const ws = XLSX.utils.json_to_sheet(data)
+  
+  // Set column widths
+  ws['!cols'] = [
+    { wch: 20 },  // Group column
+    { wch: 30 },  // Student Name column
+    { wch: 10 }   // Row column
+  ]
+
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, 'Groups')
+  
+  // Generate Excel file
+  XLSX.writeFile(wb, 'groups-export.xlsx')
+}
+
+function exportCSV() {
+  exportXLSX()
+}
+
+function exportJSON() {
   if (generatedGroups.value.length === 0) return
 
   const exportData = {
@@ -213,6 +290,101 @@ function exportGroups() {
   a.download = 'groups-export.json'
   a.click()
   URL.revokeObjectURL(url)
+}
+
+function exportPDF() {
+  if (generatedGroups.value.length === 0) return
+
+  const doc = new jsPDF()
+  const pageWidth = doc.internal.pageSize.getWidth()
+  let yPosition = 20
+
+  // Title
+  doc.setFontSize(20)
+  doc.setFont('helvetica', 'bold')
+  doc.setTextColor(30, 64, 175) // #1e40af
+  doc.text('Group Generator Export', pageWidth / 2, yPosition, { align: 'center' })
+  
+  yPosition += 10
+  
+  // Metadata
+  doc.setFontSize(10)
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(100, 116, 139) // #64748b
+  doc.text(`Generated on: ${new Date().toLocaleString()}`, 20, yPosition)
+  yPosition += 6
+  doc.text(`Method: ${method.value}`, 20, yPosition)
+  yPosition += 6
+  doc.text(`Total Groups: ${generatedGroups.value.length}`, 20, yPosition)
+  yPosition += 6
+  doc.text(`Total Students: ${totalStudents.value}`, 20, yPosition)
+  
+  yPosition += 15
+
+  // Groups
+  generatedGroups.value.forEach((group, idx) => {
+    // Check if we need a new page
+    if (yPosition > 250) {
+      doc.addPage()
+      yPosition = 20
+    }
+
+    // Group header with color
+    const color = groupCardColors[idx % groupCardColors.length]
+    const rgb = hexToRgb(color)
+    
+    doc.setFillColor(rgb.r, rgb.g, rgb.b)
+    doc.rect(15, yPosition, pageWidth - 30, 10, 'F')
+    
+    doc.setFontSize(14)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(255, 255, 255)
+    doc.text(`${group.name} (${group.students.length} Students)`, 20, yPosition + 6.5)
+    
+    yPosition += 15
+
+    // Students
+    doc.setTextColor(0, 0, 0)
+    doc.setFontSize(11)
+    doc.setFont('helvetica', 'normal')
+    
+    group.students.forEach((student, sIdx) => {
+      if (yPosition > 280) {
+        doc.addPage()
+        yPosition = 20
+      }
+      
+      // Student number circle
+      doc.setFillColor(30, 64, 175)
+      doc.circle(22, yPosition - 1, 3, 'F')
+      doc.setTextColor(255, 255, 255)
+      doc.setFontSize(9)
+      doc.setFont('helvetica', 'bold')
+      doc.text(`${sIdx + 1}`, 22, yPosition, { align: 'center' })
+      
+      // Student name
+      doc.setFontSize(11)
+      doc.setTextColor(0, 0, 0)
+      doc.setFont('helvetica', 'normal')
+      doc.text(student.name, 28, yPosition)
+      
+      yPosition += 7
+    })
+
+    yPosition += 8 // Space between groups
+  })
+
+  // Save the PDF
+  doc.save('groups-export.pdf')
+}
+
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : { r: 0, g: 0, b: 0 }
 }
 
 function handleFileUpload(event: Event) {
@@ -379,7 +551,7 @@ function handleDrop(e: DragEvent) {
               </div>
 
               <div class="row">
-                <div class="field">
+                <div class="field field--grow">
                   <label class="label">Targeting</label>
                   <select v-model="target" class="select">
                     <option value="groups">Number of Groups</option>
@@ -387,7 +559,7 @@ function handleDrop(e: DragEvent) {
                   </select>
                 </div>
 
-                <div class="field">
+                <div class="field field--quantity">
                   <label class="label">Quantity</label>
                   <div class="number-input">
                     <button class="num-btn" @click="quantity > 2 && quantity--">−</button>
@@ -441,23 +613,44 @@ function handleDrop(e: DragEvent) {
                 <span class="text-sm text-slate-500 ml-3">Created for {{ totalStudents }} students</span>
               </div>
               <div class="actions">
+                <div class="dropdown">
+                  <button class="primary-btn" @click="toggleDropdown">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                    Export
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </button>
+                  <div v-if="showDropdown" class="dropdown-menu">
+                    <button @click="exportXLSX" class="dropdown-item">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                      </svg>
+                      <span>Export as XLSX (CSV)</span>
+                    </button>
+                    <button @click="exportPDF" class="dropdown-item">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <line x1="16" y1="13" x2="8" y2="13" />
+                        <line x1="16" y1="17" x2="8" y2="17" />
+                        <polyline points="10 9 9 9 8 9" />
+                      </svg>
+                      <span>Export as PDF</span>
+                    </button>
+                  </div>
+                </div>
                 <button class="secondary-btn" @click="regenerate">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
                     <path d="M21 3v5h-5" />
                   </svg>
                   Regenerate
-                </button>
-                <button class="primary-btn" @click="exportGroups">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="7 10 12 15 17 10" />
-                    <line x1="12" y1="15" x2="12" y2="3" />
-                  </svg>
-                  Export
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
                 </button>
               </div>
             </div>
@@ -578,7 +771,8 @@ function handleDrop(e: DragEvent) {
   background: white;
   border-radius: 1rem;
   padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  border: 1px solid #f1f5f9;
 }
 
 .step-header {
@@ -744,6 +938,15 @@ function handleDrop(e: DragEvent) {
   flex-direction: column;
 }
 
+.field--grow {
+  flex: 1;
+}
+
+.field--quantity {
+  width: 160px;
+  flex-shrink: 0;
+}
+
 .select {
   padding: 0.6rem;
   border: 1px solid #e2e8f0;
@@ -760,6 +963,13 @@ function handleDrop(e: DragEvent) {
   border: 1px solid #e2e8f0;
   border-radius: 0.5rem;
   overflow: hidden;
+  background: white;
+  transition: border-color 0.2s;
+}
+
+.number-input:focus-within {
+  border-color: #1e40af;
+  box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
 }
 
 .num-btn {
@@ -770,14 +980,22 @@ function handleDrop(e: DragEvent) {
   justify-content: center;
   border: none;
   background: #f8fafc;
-  color: #334155;
-  font-size: 1.25rem;
+  color: #1e40af;
+  font-size: 1.5rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s;
+  user-select: none;
 }
 
 .num-btn:hover {
-  background: #f1f5f9;
+  background: #dbeafe;
+  color: #1e30a8;
+}
+
+.num-btn:active {
+  background: #1e40af;
+  color: white;
 }
 
 .num-field {
@@ -789,7 +1007,21 @@ function handleDrop(e: DragEvent) {
   text-align: center;
   font-family: inherit;
   font-size: 0.9rem;
+  font-weight: 600;
+  color: #0f172a;
   outline: none;
+  background: white;
+  min-width: 3rem;
+}
+
+.num-field::-webkit-inner-spin-button,
+.num-field::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.num-field[type="number"] {
+  -moz-appearance: textfield;
 }
 
 .toggle-row {
@@ -841,7 +1073,7 @@ function handleDrop(e: DragEvent) {
   justify-content: center;
   gap: 0.5rem;
   width: 100%;
-  padding: 0.85rem;
+  padding: 0.9rem;
   background: #1e40af;
   color: white;
   border: none;
@@ -852,12 +1084,17 @@ function handleDrop(e: DragEvent) {
   cursor: pointer;
   transition: all 0.2s;
   box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+  margin-top: 0.5rem;
 }
 
 .generate-btn:hover:not(:disabled) {
   background: #1e30a8;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(30, 64, 175, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(30, 64, 175, 0.4);
+}
+
+.generate-btn:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .generate-btn:disabled {
@@ -967,6 +1204,49 @@ function handleDrop(e: DragEvent) {
 
 .primary-btn:hover {
   background: #1e30a8;
+}
+
+/* Dropdown */
+.dropdown {
+  position: relative;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  background: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e2e8f0;
+  min-width: 220px;
+  z-index: 100;
+  overflow: hidden;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: white;
+  color: #1e40af;
+  border: none;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.dropdown-item:hover {
+  background: #dbeafe;
+}
+
+.dropdown-item svg {
+  flex-shrink: 0;
 }
 
 .groups-grid {
