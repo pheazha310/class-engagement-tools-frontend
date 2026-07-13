@@ -5,6 +5,7 @@ import SingleStudentPickerView from '@/views/SingleStudentPickerView.vue'
 import HomepageView from '@/views/Homepage.vue'
 import ToolsPage from '@/pages/ToolsPage.vue'
 import ToolDetailPage from '@/pages/ToolDetailPage.vue'
+import CreateGamePage from '@/pages/CreateGamePage.vue'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -61,6 +62,11 @@ const routes: RouteRecordRaw[] = [
     path: '/tools/:slug',
     name: 'tool-detail',
     component: ToolDetailPage,
+  },
+  {
+    path: '/games/create',
+    name: 'create-game',
+    component: CreateGamePage,
   },
   {
     path: '/:pathMatch(.*)*',
