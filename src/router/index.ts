@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/authStore'
 import StudentPickerView from '@/views/StudentPickerView.vue'
 import SingleStudentPickerView from '@/views/SingleStudentPickerView.vue'
 import MultipleStudentPickerView from '@/views/MultipleStudentPickerView.vue'
+import LuckyDrawView from '@/views/LuckyDrawView.vue'
 import HomepageView from '@/views/Homepage.vue'
 import ToolsPage from '@/pages/ToolsPage.vue'
 import ToolDetailPage from '@/pages/ToolDetailPage.vue'
@@ -125,6 +126,11 @@ const router = createRouter({
     name: 'multiple-student-picker',
     component: MultipleStudentPickerView,
   },
+  {
+    path: '/lucky-draw',
+    name: 'lucky-draw',
+    component: LuckyDrawView,
+  },
     {
       path: '/tools',
       name: 'tools',
@@ -158,7 +164,7 @@ router.beforeEach((to, from, next) => {
 
   // Allow access to public routes without authentication
   const publicRoutes = ['home', 'about', 'contact', 'login', 'register', 'not-found',
-    'wheel', 'student-picker', 'single-student-picker', 'multiple-student-picker', 'tools', 'category-tools',
+    'wheel', 'student-picker', 'single-student-picker', 'multiple-student-picker', 'lucky-draw', 'tools', 'category-tools',
     'tool-detail', 'group-generator']
   if (publicRoutes.includes(to.name as string)) {
     next()

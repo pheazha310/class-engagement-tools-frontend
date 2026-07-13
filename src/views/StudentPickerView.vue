@@ -38,6 +38,8 @@ const features: FeatureCard[] = [
     gradient: 'linear-gradient(135deg, #f59e0b, #f97316)',
     icon: 'lucky',
     actionLabel: 'Spin!',
+    route: '/lucky-draw',
+    isLive: true,
   },
   {
     title: 'Card Picker',
