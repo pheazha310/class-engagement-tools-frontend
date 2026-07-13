@@ -1,92 +1,166 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+
+import StudentPickerView from '@/views/StudentPickerView.vue'
+import SingleStudentPickerView from '@/views/SingleStudentPickerView.vue'
+import HomepageView from '@/views/Homepage.vue'
+import ToolsPage from '@/pages/ToolsPage.vue'
+import ToolDetailPage from '@/pages/ToolDetailPage.vue'
+
+const routes: RouteRecordRaw[] = [
+  // Home
+  {
+    path: '/',
+    name: 'home',
+    component: HomepageView,
+  },
+
+  // Authentication
+  {
+    path: '/login',
+    name: 'login',
+    component: () => import('@/pages/Login.vue'),
+    meta: { guest: true },
+  },
+  {
+    path: '/register',
+    name: 'register',
+    component: () => import('@/pages/Register.vue'),
+    meta: { guest: true },
+  },
+
+  // Teacher
+  {
+    path: '/teacher/dashboard',
+    name: 'teacher-dashboard',
+    component: () => import('@/pages/TeacherPollList.vue'),
+    meta: { requiresAuth: true, role: 'teacher' },
+  },
+
+  // Student
+  {
+    path: '/student/dashboard',
+    name: 'student-dashboard',
+    component: () => import('@/pages/ActivePoll.vue'),
+    meta: { requiresAuth: true, role: 'student' },
+  },
+
+  // Polls
+  {
+    path: '/polls',
+    name: 'teacher-polls',
+    component: () => import('@/pages/TeacherPollList.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/polls/create',
+    name: 'create-poll',
+    component: () => import('@/pages/CreatePoll.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/polls/:id/edit',
+    name: 'edit-poll',
+    component: () => import('@/pages/CreatePoll.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/polls/:id/results',
+    name: 'poll-results',
+    component: () => import('@/pages/LiveResults.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/active-poll',
+    name: 'active-poll',
+    component: () => import('@/pages/ActivePoll.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/live-voting',
+    name: 'live-voting',
+    component: () => import('@/pages/LiveClassroomVoting.vue'),
+    meta: { requiresAuth: true },
+  },
+
+  // Admin
+  {
+    path: '/admin/users',
+    name: 'admin-users',
+    component: () => import('@/pages/admin/UserList.vue'),
+    meta: { requiresAuth: true, role: 'admin' },
+  },
+  {
+    path: '/admin/users/create',
+    name: 'admin-users-create',
+    component: () => import('@/pages/admin/UserForm.vue'),
+    meta: { requiresAuth: true, role: 'admin' },
+  },
+  {
+    path: '/admin/users/:id/edit',
+    name: 'admin-users-edit',
+    component: () => import('@/pages/admin/UserForm.vue'),
+    meta: { requiresAuth: true, role: 'admin' },
+  },
+
+  // Other pages from your friend
+  {
+    path: '/about',
+    name: 'about',
+    component: () => import('@/views/About.vue'),
+  },
+  {
+    path: '/contact',
+    name: 'contact',
+    component: () => import('@/views/Contact.vue'),
+  },
+  {
+    path: '/wheel',
+    name: 'wheel',
+    component: () => import('@/pages/WheelPage.vue'),
+  },
+  {
+    path: '/wheel/shared/:shareToken',
+    name: 'shared-wheel',
+    component: () => import('@/views/SharedWheelView.vue'),
+  },
+  {
+    path: '/student-picker',
+    name: 'student-picker',
+    component: StudentPickerView,
+  },
+  {
+    path: '/single-student-picker',
+    name: 'single-student-picker',
+    component: SingleStudentPickerView,
+  },
+  {
+    path: '/tools',
+    name: 'tools',
+    component: ToolsPage,
+  },
+  {
+    path: '/tools/category/:slug',
+    name: 'category-tools',
+    component: () => import('@/pages/CategoryToolsPage.vue'),
+  },
+  {
+    path: '/tools/:slug',
+    name: 'tool-detail',
+    component: ToolDetailPage,
+  },
+
+  // 404
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'not-found',
+    component: () => import('@/pages/NotFound.vue'),
+  },
+]
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [
-    {
-      path: '/',
-      redirect: '/polls',
-    },
-    {
-      path: '/login',
-      name: 'login',
-      component: () => import('@/pages/Login.vue'),
-      meta: { guest: true },
-    },
-    {
-      path: '/register',
-      name: 'register',
-      component: () => import('@/pages/Register.vue'),
-      meta: { guest: true },
-    },
-    {
-      path: '/teacher/dashboard',
-      name: 'teacher-dashboard',
-      component: () => import('@/pages/TeacherPollList.vue'),
-      meta: { requiresAuth: true, role: 'teacher' },
-    },
-    {
-      path: '/student/dashboard',
-      name: 'student-dashboard',
-      component: () => import('@/pages/ActivePoll.vue'),
-      meta: { requiresAuth: true, role: 'student' },
-    },
-    {
-      path: '/live-voting',
-      name: 'live-voting',
-      component: () => import('@/pages/LiveClassroomVoting.vue'),
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/polls',
-      name: 'teacher-polls',
-      component: () => import('@/pages/TeacherPollList.vue'),
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/polls/create',
-      name: 'create-poll',
-      component: () => import('@/pages/CreatePoll.vue'),
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/polls/:id/edit',
-      name: 'edit-poll',
-      component: () => import('@/pages/CreatePoll.vue'),
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/polls/:id/results',
-      name: 'poll-results',
-      component: () => import('@/pages/LiveResults.vue'),
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/active-poll',
-      name: 'active-poll',
-      component: () => import('@/pages/ActivePoll.vue'),
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/admin/users',
-      name: 'admin-users',
-      component: () => import('@/pages/admin/UserList.vue'),
-      meta: { requiresAuth: true, role: 'admin' },
-    },
-    {
-      path: '/admin/users/create',
-      name: 'admin-users-create',
-      component: () => import('@/pages/admin/UserForm.vue'),
-      meta: { requiresAuth: true, role: 'admin' },
-    },
-    {
-      path: '/admin/users/:id/edit',
-      name: 'admin-users-edit',
-      component: () => import('@/pages/admin/UserForm.vue'),
-      meta: { requiresAuth: true, role: 'admin' },
-    },
-  ],
+  routes,
 })
 
 router.beforeEach((to, from, next) => {
@@ -94,28 +168,44 @@ router.beforeEach((to, from, next) => {
 
   if (to.meta.requiresAuth && !authStore.user) {
     next('/login')
-  } else if (to.meta.guest && authStore.user) {
-    if (authStore.user.role === 'admin') {
-      next('/admin/users')
-    } else if (authStore.user.role === 'teacher') {
-      next('/teacher/dashboard')
-    } else if (authStore.user.role === 'student') {
-      next('/student/dashboard')
-    } else {
-      next('/polls')
-    }
-  } else if (to.meta.role && authStore.user?.role !== to.meta.role) {
-    if (authStore.user?.role === 'admin') {
-      next('/admin/users')
-    } else if (authStore.user?.role === 'teacher') {
-      next('/teacher/dashboard')
-    } else if (authStore.user?.role === 'student') {
-      next('/student/dashboard')
-    } else {
-      next('/polls')
-    }
-  } else {
-    next()
+    return
   }
+
+  if (to.meta.guest && authStore.user) {
+    switch (authStore.user.role) {
+      case 'admin':
+        next('/admin/users')
+        break
+      case 'teacher':
+        next('/teacher/dashboard')
+        break
+      case 'student':
+        next('/student/dashboard')
+        break
+      default:
+        next('/polls')
+    }
+    return
+  }
+
+  if (to.meta.role && authStore.user?.role !== to.meta.role) {
+    switch (authStore.user?.role) {
+      case 'admin':
+        next('/admin/users')
+        break
+      case 'teacher':
+        next('/teacher/dashboard')
+        break
+      case 'student':
+        next('/student/dashboard')
+        break
+      default:
+        next('/polls')
+    }
+    return
+  }
+
+  next()
 })
+
 export default router
