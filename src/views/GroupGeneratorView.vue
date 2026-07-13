@@ -42,17 +42,6 @@ const nouns = [
   'Mavericks', 'Legends', 'Champions', 'Stars', 'Comets', 'Rockets', 'Blazers', 'Strikers'
 ]
 
-const colorPalette = [
-  { bg: 'bg-blue-600', text: 'text-white', ring: 'ring-blue-600' },
-  { bg: 'bg-fuchsia-600', text: 'text-white', ring: 'ring-fuchsia-600' },
-  { bg: 'bg-amber-700', text: 'text-white', ring: 'ring-amber-700' },
-  { bg: 'bg-violet-600', text: 'text-white', ring: 'ring-violet-600' },
-  { bg: 'bg-emerald-600', text: 'text-white', ring: 'ring-emerald-600' },
-  { bg: 'bg-rose-600', text: 'text-white', ring: 'ring-rose-600' },
-  { bg: 'bg-cyan-700', text: 'text-white', ring: 'ring-cyan-700' },
-  { bg: 'bg-indigo-600', text: 'text-white', ring: 'ring-indigo-600' },
-]
-
 const groupCardColors = [
   '#1e40af',
   '#9333ea',
@@ -122,7 +111,6 @@ function generateRandomGroups(): Group[] {
         id: `group-${i}`,
         name: generateTeamNames.value ? generateGroupName(i) : `Group ${i + 1}`,
         students: groupStudents,
-        color: colorPalette[i % colorPalette.length].bg,
       })
     }
   }
@@ -143,7 +131,6 @@ function generateBalancedGroups(): Group[] {
         id: `group-${groupIndex}`,
         name: generateTeamNames.value ? generateGroupName(groupIndex) : `Group ${groupIndex + 1}`,
         students: [],
-        color: colorPalette[groupIndex % colorPalette.length].bg,
       }
     }
     groups[groupIndex].students.push(shuffled[i])
@@ -173,7 +160,6 @@ function generateGenderBalancedGroups(): Group[] {
           id: `group-${groupIndex}`,
           name: generateTeamNames.value ? generateGroupName(groupIndex) : `Group ${groupIndex + 1}`,
           students: [],
-          color: colorPalette[groupIndex % colorPalette.length].bg,
         }
       }
       groups[groupIndex].students.push(student)
@@ -213,6 +199,10 @@ function regenerate() {
   generateGroups()
 }
 
+function clearGroups() {
+  generatedGroups.value = []
+}
+
 function toggleDropdown() {
   showDropdown.value = !showDropdown.value
 }
@@ -226,7 +216,7 @@ function exportXLSX() {
 
   // Prepare data for Excel
   const data: any[] = []
-  
+
   generatedGroups.value.forEach((group, idx) => {
     // Group header row
     data.push({
@@ -234,7 +224,7 @@ function exportXLSX() {
       'Student Name': `(${group.students.length} Students)`,
       'Row': ''
     })
-    
+
     // Student rows
     group.students.forEach((student, sIdx) => {
       data.push({
@@ -243,7 +233,7 @@ function exportXLSX() {
         'Row': sIdx + 1
       })
     })
-    
+
     // Add blank row between groups
     if (idx < generatedGroups.value.length - 1) {
       data.push({ 'Group': '', 'Student Name': '', 'Row': '' })
@@ -252,7 +242,7 @@ function exportXLSX() {
 
   // Create workbook
   const ws = XLSX.utils.json_to_sheet(data)
-  
+
   // Set column widths
   ws['!cols'] = [
     { wch: 20 },  // Group column
@@ -262,34 +252,9 @@ function exportXLSX() {
 
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, 'Groups')
-  
+
   // Generate Excel file
   XLSX.writeFile(wb, 'groups-export.xlsx')
-}
-
-function exportCSV() {
-  exportXLSX()
-}
-
-function exportJSON() {
-  if (generatedGroups.value.length === 0) return
-
-  const exportData = {
-    generatedAt: new Date().toISOString(),
-    method: method.value,
-    groups: generatedGroups.value.map(g => ({
-      name: g.name,
-      students: g.students.map(s => s.name),
-    }))
-  }
-
-  const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = 'groups-export.json'
-  a.click()
-  URL.revokeObjectURL(url)
 }
 
 function exportPDF() {
@@ -304,9 +269,9 @@ function exportPDF() {
   doc.setFont('helvetica', 'bold')
   doc.setTextColor(30, 64, 175) // #1e40af
   doc.text('Group Generator Export', pageWidth / 2, yPosition, { align: 'center' })
-  
+
   yPosition += 10
-  
+
   // Metadata
   doc.setFontSize(10)
   doc.setFont('helvetica', 'normal')
@@ -318,7 +283,7 @@ function exportPDF() {
   doc.text(`Total Groups: ${generatedGroups.value.length}`, 20, yPosition)
   yPosition += 6
   doc.text(`Total Students: ${totalStudents.value}`, 20, yPosition)
-  
+
   yPosition += 15
 
   // Groups
@@ -332,28 +297,28 @@ function exportPDF() {
     // Group header with color
     const color = groupCardColors[idx % groupCardColors.length]
     const rgb = hexToRgb(color)
-    
+
     doc.setFillColor(rgb.r, rgb.g, rgb.b)
     doc.rect(15, yPosition, pageWidth - 30, 10, 'F')
-    
+
     doc.setFontSize(14)
     doc.setFont('helvetica', 'bold')
     doc.setTextColor(255, 255, 255)
     doc.text(`${group.name} (${group.students.length} Students)`, 20, yPosition + 6.5)
-    
+
     yPosition += 15
 
     // Students
     doc.setTextColor(0, 0, 0)
     doc.setFontSize(11)
     doc.setFont('helvetica', 'normal')
-    
+
     group.students.forEach((student, sIdx) => {
       if (yPosition > 280) {
         doc.addPage()
         yPosition = 20
       }
-      
+
       // Student number circle
       doc.setFillColor(30, 64, 175)
       doc.circle(22, yPosition - 1, 3, 'F')
@@ -361,13 +326,13 @@ function exportPDF() {
       doc.setFontSize(9)
       doc.setFont('helvetica', 'bold')
       doc.text(`${sIdx + 1}`, 22, yPosition, { align: 'center' })
-      
+
       // Student name
       doc.setFontSize(11)
       doc.setTextColor(0, 0, 0)
       doc.setFont('helvetica', 'normal')
       doc.text(student.name, 28, yPosition)
-      
+
       yPosition += 7
     })
 
@@ -613,6 +578,20 @@ function handleDrop(e: DragEvent) {
                 <span class="text-sm text-slate-500 ml-3">Created for {{ totalStudents }} students</span>
               </div>
               <div class="actions">
+                <button class="secondary-btn" @click="regenerate">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+                    <path d="M21 3v5h-5" />
+                  </svg>
+                  Regenerate
+                </button>
+                <button class="secondary-btn secondary-btn--clear" @click="clearGroups">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                  </svg>
+                  Clear
+                </button>
                 <div class="dropdown">
                   <button class="primary-btn" @click="toggleDropdown">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -645,13 +624,6 @@ function handleDrop(e: DragEvent) {
                     </button>
                   </div>
                 </div>
-                <button class="secondary-btn" @click="regenerate">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
-                    <path d="M21 3v5h-5" />
-                  </svg>
-                  Regenerate
-                </button>
               </div>
             </div>
 
@@ -660,11 +632,17 @@ function handleDrop(e: DragEvent) {
                 v-for="(group, idx) in generatedGroups"
                 :key="group.id"
                 class="group-card"
-                :style="{ background: groupCardColors[idx % groupCardColors.length] }"
+                :style="{ borderColor: groupCardColors[idx % groupCardColors.length] }"
               >
-                <div class="group-card__header">
-                  <h3 class="group-card__name">{{ group.name }}</h3>
-                  <span class="group-card__count">{{ group.students.length }} Students</span>
+                <div class="group-card__header" :style="{ background: groupCardColors[idx % groupCardColors.length] }">
+                  <div class="group-card__title-row">
+                    <span class="group-card__number">{{ idx + 1 }}.</span>
+                    <input
+                      type="text"
+                      v-model="group.name"
+                      class="group-card__input"
+                    />
+                  </div>
                 </div>
 
                 <div class="group-card__list">
@@ -1186,6 +1164,12 @@ function handleDrop(e: DragEvent) {
   background: #dbeafe;
 }
 
+.secondary-btn--clear:hover {
+  background: #fef2f2;
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
 .primary-btn {
   display: flex;
   align-items: center;
@@ -1257,24 +1241,61 @@ function handleDrop(e: DragEvent) {
 
 .group-card {
   border-radius: 1rem;
-  padding: 1.25rem;
-  color: white;
+  border: 3px solid;
+  background: white;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
 }
 
 .group-card__header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 1rem 1.25rem;
+  color: white;
 }
 
-.group-card__name {
+.group-card__title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.group-card__title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.group-card__number {
   font-size: 1.1rem;
   font-weight: 700;
-  margin: 0;
+  color: white;
+  opacity: 0.9;
+  flex-shrink: 0;
+}
+
+.group-card__input {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: white;
+  border: none;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+  background: transparent;
+  padding: 0.25rem 0;
+  flex: 1;
+  outline: none;
+  transition: border-color 0.2s;
+  min-width: 0;
+}
+
+.group-card__input:focus {
+  border-bottom-color: white;
+}
+
+.group-card__input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .group-card__count {
