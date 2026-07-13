@@ -11,7 +11,6 @@ import TimerCountdown from '@/components/TimerCountdown.vue'
       <div class="container">
         <div class="hero-copy">
           <h1>Countdown Timer</h1>
-          <p>Set a custom duration and share the remaining time with your students in real time.</p>
         </div>
       </div>
     </section>
