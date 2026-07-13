@@ -64,7 +64,7 @@ const wheelName = ref('')
 const wheelDescription = ref('')
 const savedWheelId = ref<string | null>(null)
 const isAuthenticated = ref(false)
-const removeAfterSpin = ref(false)
+
 const futureListTitle = ref('Future List')
 
 function parseNames(raw: string): string[] {
@@ -106,9 +106,7 @@ watch(
 )
 
 function handleSpinComplete(participant: Participant) {
-  if (removeAfterSpin.value) {
-    participants.value = participants.value.filter((p) => p.id !== participant.id)
-  }
+  participants.value = participants.value.filter((p) => p.id !== participant.id)
   console.log('Selected participant:', participant)
 }
 
@@ -218,10 +216,7 @@ function handleDeleteWheel() {
         >
           Share Wheel
         </button>
-        <label class="toggle-remove">
-          <input type="checkbox" v-model="removeAfterSpin" />
-          <span>Remove selected after spin</span>
-        </label>
+
       </div>
 
       <div v-if="saveError" class="alert alert-error">
@@ -435,24 +430,6 @@ function handleDeleteWheel() {
 .btn-back:hover {
   border-color: #22d3ee;
   color: #22d3ee;
-}
-
-.toggle-remove {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 700;
-  color: #ddd;
-  cursor: pointer;
-  user-select: none;
-}
-
-.toggle-remove input[type='checkbox'] {
-  width: 18px;
-  height: 18px;
-  accent-color: #22d3ee;
-  cursor: pointer;
 }
 
 @media (max-width: 900px) {
