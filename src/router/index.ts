@@ -1,18 +1,36 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 
+import StudentPickerView from '@/views/StudentPickerView.vue'
+import SingleStudentPickerView from '@/views/SingleStudentPickerView.vue'
+import MultipleStudentPickerView from '@/views/MultipleStudentPickerView.vue'
+import HomepageView from '@/views/Homepage.vue'
+import ToolsPage from '@/pages/ToolsPage.vue'
+import ToolDetailPage from '@/pages/ToolDetailPage.vue'
+import GroupGeneratorView from '@/views/GroupGeneratorView.vue'
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
       name: 'home',
-      component: () => import('@/views/Homepage.vue'),
+      component: HomepageView,
+    },
+    {
+      path: '/about',
+      name: 'about',
+      component: () => import('@/views/About.vue'),
+    },
+    {
+      path: '/contact',
+      name: 'contact',
+      component: () => import('@/views/Contact.vue'),
     },
     {
       path: '/login',
       name: 'login',
-      component: () => import('@/pages/Login.vue'),
+      component: () => import('@/pages/LoginPage.vue'),
       meta: { guest: true },
     },
     {
@@ -87,14 +105,62 @@ const router = createRouter({
       component: () => import('@/pages/admin/UserForm.vue'),
       meta: { requiresAuth: true, role: 'admin' },
     },
+    {
+      path: '/wheel',
+      name: 'wheel',
+      component: () => import('@/pages/WheelPage.vue'),
+    },
+    {
+      path: '/student-picker',
+      name: 'student-picker',
+      component: StudentPickerView,
+    },
+    {
+    path: '/single-student-picker',
+    name: 'single-student-picker',
+    component: SingleStudentPickerView,
+  },
+  {
+    path: '/multiple-student-picker',
+    name: 'multiple-student-picker',
+    component: MultipleStudentPickerView,
+  },
+    {
+      path: '/tools',
+      name: 'tools',
+      component: ToolsPage,
+    },
+    {
+      path: '/tools/category/:slug',
+      name: 'category-tools',
+      component: () => import('@/pages/CategoryToolsPage.vue'),
+    },
+    {
+      path: '/tools/:slug',
+      name: 'tool-detail',
+      component: ToolDetailPage,
+    },
+    {
+      path: '/group-generator',
+      name: 'group-generator',
+      component: GroupGeneratorView,
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'not-found',
+      component: () => import('@/pages/NotFound.vue'),
+    },
   ],
 })
 
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
 
-  // Allow access to homepage without authentication
-  if (to.name === 'home') {
+  // Allow access to public routes without authentication
+  const publicRoutes = ['home', 'about', 'contact', 'login', 'register', 'not-found',
+    'wheel', 'student-picker', 'single-student-picker', 'multiple-student-picker', 'tools', 'category-tools',
+    'tool-detail', 'group-generator']
+  if (publicRoutes.includes(to.name as string)) {
     next()
     return
   }
@@ -125,4 +191,5 @@ router.beforeEach((to, from, next) => {
     next()
   }
 })
+
 export default router
