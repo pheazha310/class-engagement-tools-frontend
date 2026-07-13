@@ -69,14 +69,34 @@ const routes: RouteRecordRaw[] = [
     component: GroupGeneratorView,
   },
   {
+    path: '/live-voting',
+    name: 'live-voting',
+    component: () => import('@/pages/LiveVotingPage.vue'),
+  },
+  {
     path: '/teacher/polls',
     name: 'teacher-polls',
     component: () => import('@/pages/teacher/PollDashboard.vue'),
   },
   {
-    path: '/vote/:roomCode?',
-    name: 'vote',
-    component: () => import('@/pages/student/VotePage.vue'),
+    path: '/teacher/polls/create',
+    name: 'teacher-polls-create',
+    component: () => import('@/pages/teacher/PollCreatePage.vue'),
+  },
+  {
+    path: '/student/polls/:id',
+    name: 'student-poll-vote',
+    component: () => import('@/pages/student/PollVotePage.vue'),
+  },
+  {
+    path: '/profile',
+    name: 'profile',
+    component: () => import('@/pages/ProfilePage.vue'),
+  },
+  {
+    path: '/settings',
+    name: 'settings',
+    component: () => import('@/pages/ProfilePage.vue'),
   },
   {
     path: '/:pathMatch(.*)*',

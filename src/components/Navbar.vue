@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import { onClickOutside } from '@vueuse/core'
 import { useAuthStore } from '@/stores/auth'
+import ProfileDropdown from '@/components/ProfileDropdown.vue'
 
 defineOptions({
   name: 'AppNavbar',
@@ -16,8 +16,6 @@ const mobileMenuOpen = ref(false)
 const isScrolled = ref(false)
 const activeDropdown = ref(false)
 const activeParticipantsDropdown = ref(false)
-const profileDropdownOpen = ref(false)
-const profileAvatarUrl = computed(() => auth.user?.avatar?.trim() ?? '')
 
 const handleScroll = () => {
   isScrolled.value = window.scrollY > 50
@@ -28,22 +26,12 @@ const toggleMobileMenu = () => {
   if (mobileMenuOpen.value) {
     activeDropdown.value = false
     activeParticipantsDropdown.value = false
-    profileDropdownOpen.value = false
   }
 }
 
 const toggleDropdown = () => {
   activeDropdown.value = !activeDropdown.value
   if (activeDropdown.value) {
-    activeParticipantsDropdown.value = false
-    profileDropdownOpen.value = false
-  }
-}
-
-const toggleProfileDropdown = () => {
-  profileDropdownOpen.value = !profileDropdownOpen.value
-  if (profileDropdownOpen.value) {
-    activeDropdown.value = false
     activeParticipantsDropdown.value = false
   }
 }
@@ -52,24 +40,10 @@ const closeMobileMenu = () => {
   mobileMenuOpen.value = false
   activeDropdown.value = false
   activeParticipantsDropdown.value = false
-  profileDropdownOpen.value = false
 }
-
-const closeDesktopDropdowns = () => {
-  activeDropdown.value = false
-  activeParticipantsDropdown.value = false
-  profileDropdownOpen.value = false
-}
-
-const profileTriggerRef = ref<HTMLElement | null>(null)
-
-onClickOutside(profileTriggerRef, () => {
-  profileDropdownOpen.value = false
-})
 
 async function handleLogout() {
   await auth.logout()
-  closeDesktopDropdowns()
   mobileMenuOpen.value = false
   await router.replace('/')
 }
@@ -112,7 +86,7 @@ onUnmounted(() => {
             <RouterLink to="/tools/category/engagement" class="dropdown-item" @click="closeMobileMenu">Engagement</RouterLink>
             <RouterLink to="/tools/category/fun" class="dropdown-item" @click="closeMobileMenu">Fun Activities</RouterLink>
             <div class="dropdown-divider"></div>
-            <RouterLink to="/teacher/polls" class="dropdown-item" @click="closeMobileMenu">📊 Live Voting</RouterLink>
+            <RouterLink to="/live-voting" class="dropdown-item" @click="closeMobileMenu">📊 Live Voting</RouterLink>
           </div>
         </li>
         <li class="nav-dropdown-trigger" @mouseenter="activeParticipantsDropdown = true" @mouseleave="activeParticipantsDropdown = false">
@@ -127,7 +101,7 @@ onUnmounted(() => {
           </div>
         </li>
         <li><RouterLink to="/contact" class="nav-link" :class="{ active: route.path === '/contact' }" @click="closeMobileMenu">Contact</RouterLink></li>
-        <li><RouterLink to="/vote" class="nav-link nav-link--vote" :class="{ active: route.path.startsWith('/vote') }" @click="closeMobileMenu">Join Vote</RouterLink></li>
+      
 
         <!-- Mobile auth links (visible only in mobile menu) -->
         <li v-if="!auth.isAuthenticated" class="mobile-auth-links">
@@ -135,56 +109,15 @@ onUnmounted(() => {
           <RouterLink to="/register" class="nav-link mobile-register-btn" @click="closeMobileMenu">Register</RouterLink>
         </li>
         <li v-else class="mobile-auth-links">
-          <div class="mobile-profile-card">
-            <span class="mobile-avatar" :class="{ 'mobile-avatar--image': profileAvatarUrl }">
-              <img v-if="profileAvatarUrl" :src="profileAvatarUrl" :alt="auth.userName" class="mobile-avatar-image" />
-              <span v-else>{{ auth.userInitials }}</span>
-            </span>
-            <div class="mobile-profile-copy">
-              <span class="mobile-profile-name">{{ auth.userName }}</span>
-              <span class="mobile-profile-email">{{ auth.user?.email }}</span>
-            </div>
-          </div>
+          <RouterLink to="/profile" class="nav-link" @click="closeMobileMenu">Profile</RouterLink>
+          <RouterLink to="/settings" class="nav-link" @click="closeMobileMenu">Settings</RouterLink>
           <button class="nav-link mobile-logout-btn" type="button" @click="handleLogout">Logout</button>
         </li>
       </ul>
 
       <div class="nav-buttons">
         <template v-if="auth.isAuthenticated">
-          <div ref="profileTriggerRef" class="profile-dropdown-trigger">
-            <button class="profile-btn" type="button" @click="toggleProfileDropdown">
-              <span class="profile-avatar" :class="{ 'profile-avatar--image': profileAvatarUrl }">
-                <img v-if="profileAvatarUrl" :src="profileAvatarUrl" :alt="auth.userName" class="profile-avatar-image" />
-                <span v-else>{{ auth.userInitials }}</span>
-              </span>
-              <span class="profile-name">{{ auth.userName }}</span>
-              <svg class="dropdown-icon" :class="{ open: profileDropdownOpen }" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
-            </button>
-            <div class="profile-dropdown" :class="{ active: profileDropdownOpen }">
-              <div class="profile-dropdown-header">
-                <span class="profile-dropdown-avatar" :class="{ 'profile-dropdown-avatar--image': profileAvatarUrl }">
-                  <img v-if="profileAvatarUrl" :src="profileAvatarUrl" :alt="auth.userName" class="profile-dropdown-avatar-image" />
-                  <span v-else>{{ auth.userInitials }}</span>
-                </span>
-                <div class="profile-dropdown-info">
-                  <span class="profile-dropdown-name">{{ auth.userName }}</span>
-                  <span class="profile-dropdown-email">{{ auth.user?.email }}</span>
-                </div>
-              </div>
-              <div class="profile-dropdown-divider"></div>
-              <button class="profile-dropdown-item profile-dropdown-logout" type="button" @click="handleLogout">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                  <polyline points="16 17 21 12 16 7"></polyline>
-                  <line x1="21" y1="12" x2="9" y2="12"></line>
-                </svg>
-                Logout
-              </button>
-            </div>
-          </div>
-          <button class="btn btn-logout" type="button" @click="handleLogout">Logout</button>
+          <ProfileDropdown />
         </template>
         <template v-else>
           <RouterLink to="/login" class="btn btn-login">Login</RouterLink>
@@ -389,194 +322,6 @@ onUnmounted(() => {
   margin: 4px 0;
 }
 
-/* Profile Dropdown */
-.profile-dropdown-trigger {
-  position: relative;
-}
-
-.profile-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 14px 6px 6px;
-  background: transparent;
-  border: 1px solid #e2e8f0;
-  border-radius: 999px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-family: inherit;
-}
-
-.profile-btn:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
-}
-
-.profile-avatar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #2563eb, #7c3aed);
-  color: white;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  flex-shrink: 0;
-  overflow: hidden;
-}
-
-.profile-avatar--image {
-  background: #fff;
-}
-
-.profile-avatar-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.profile-avatar > span {
-  line-height: 1;
-}
-
-.profile-name {
-  color: #1e293b;
-  font-size: 14px;
-  font-weight: 600;
-  max-width: 120px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.profile-btn .dropdown-icon {
-  color: #94a3b8;
-  transition: transform 0.2s ease;
-}
-
-.profile-btn .dropdown-icon.open {
-  transform: rotate(180deg);
-}
-
-.profile-dropdown {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 6px;
-  min-width: 240px;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(8px) scale(0.96);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
-  z-index: 1002;
-}
-
-.profile-dropdown.active {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0) scale(1);
-}
-
-.profile-dropdown-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-}
-
-.profile-dropdown-avatar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #2563eb, #7c3aed);
-  color: white;
-  font-size: 14px;
-  font-weight: 700;
-  flex-shrink: 0;
-  overflow: hidden;
-}
-
-.profile-dropdown-avatar--image {
-  background: #fff;
-}
-
-.profile-dropdown-avatar-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.profile-dropdown-info {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.profile-dropdown-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: #1e293b;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.profile-dropdown-email {
-  font-size: 12px;
-  color: #94a3b8;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.profile-dropdown-divider {
-  height: 1px;
-  background: #f1f5f9;
-  margin: 4px 0;
-}
-
-.profile-dropdown-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  text-align: left;
-  padding: 10px 12px;
-  color: #475569;
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: 500;
-  border-radius: 8px;
-  transition: all 0.15s ease;
-  border: none;
-  background: none;
-  cursor: pointer;
-  font-family: inherit;
-}
-
-.profile-dropdown-item:hover {
-  background: #f8fafc;
-  color: #2563eb;
-}
-
-.profile-dropdown-logout {
-  color: #ef4444;
-}
-
-.profile-dropdown-logout:hover {
-  background: #fef2f2;
-  color: #dc2626;
-}
 
 .nav-buttons {
   display: flex;
@@ -680,61 +425,6 @@ onUnmounted(() => {
   gap: 10px;
 }
 
-.mobile-avatar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #2563eb, #7c3aed);
-  color: white;
-  font-size: 11px;
-  font-weight: 700;
-  margin-right: 8px;
-  overflow: hidden;
-}
-
-.mobile-avatar--image {
-  background: #fff;
-}
-
-.mobile-avatar-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.mobile-profile-card {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  border-radius: 12px;
-  background: #f8fafc;
-}
-
-.mobile-profile-copy {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.mobile-profile-name {
-  color: #0f172a;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.2;
-}
-
-.mobile-profile-email {
-  color: #64748b;
-  font-size: 12px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .mobile-login-btn,
 .mobile-register-btn {
   justify-content: center;
@@ -758,6 +448,10 @@ onUnmounted(() => {
   border-radius: 8px;
   background: #fff;
   font-weight: 600;
+}
+
+.mobile-logout-btn:hover {
+  background: #fef2f2;
 }
 
 @media (max-width: 768px) {
@@ -829,7 +523,7 @@ onUnmounted(() => {
   }
 
   .nav-buttons .btn,
-  .nav-buttons .profile-dropdown-trigger,
+  .nav-buttons .profile-dropdown-wrapper,
   .nav-buttons .btn-logout {
     display: none;
   }

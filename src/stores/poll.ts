@@ -1,5 +1,7 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
+import { getEcho } from '@/services/echo'
+import type { Channel } from 'laravel-echo'
 
 export interface PollOption {
   id: number
@@ -9,6 +11,8 @@ export interface PollOption {
 export interface Poll {
   id: number
   teacher_id: number
+  school_id: number | null
+  province_id: number | null
   question: string
   room_code: string | null
   status: 'draft' | 'active' | 'ended'
@@ -40,11 +44,13 @@ export interface PollResultsData {
 export const usePollStore = defineStore('poll', () => {
   const currentPoll = ref<Poll | null>(null)
   const polls = ref<Poll[]>([])
+  const activeSchoolPolls = ref<Poll[]>([])
   const results = ref<PollResultsData | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
   const hasVoted = ref(false)
   const pollingInterval = ref<ReturnType<typeof setInterval> | null>(null)
+  const echoChannel = ref<Channel | null>(null)
 
   const isActive = computed(() => currentPoll.value?.status === 'active')
   const isEnded = computed(() => currentPoll.value?.status === 'ended')
@@ -102,11 +108,11 @@ export const usePollStore = defineStore('poll', () => {
   async function startPoll(pollId: number) {
     error.value = null
     try {
-      const data = await apiCall<{ poll: { data: Poll } }>(`/api/polls/${pollId}/start`, { method: 'POST' })
+      const data = await apiCall<{ poll: Poll }>(`/api/polls/${pollId}/start`, { method: 'POST' })
       const idx = polls.value.findIndex(p => p.id === pollId)
-      if (idx !== -1) polls.value[idx] = data.poll.data
-      if (currentPoll.value?.id === pollId) currentPoll.value = data.poll.data
-      return data.poll.data
+      if (idx !== -1) polls.value[idx] = data.poll
+      if (currentPoll.value?.id === pollId) currentPoll.value = data.poll
+      return data.poll
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to start poll'
       return null
@@ -116,11 +122,11 @@ export const usePollStore = defineStore('poll', () => {
   async function endPoll(pollId: number) {
     error.value = null
     try {
-      const data = await apiCall<{ poll: { data: Poll } }>(`/api/polls/${pollId}/end`, { method: 'POST' })
+      const data = await apiCall<{ poll: Poll }>(`/api/polls/${pollId}/end`, { method: 'POST' })
       const idx = polls.value.findIndex(p => p.id === pollId)
-      if (idx !== -1) polls.value[idx] = data.poll.data
-      if (currentPoll.value?.id === pollId) currentPoll.value = data.poll.data
-      return data.poll.data
+      if (idx !== -1) polls.value[idx] = data.poll
+      if (currentPoll.value?.id === pollId) currentPoll.value = data.poll
+      return data.poll
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to end poll'
       return null
@@ -142,13 +148,13 @@ export const usePollStore = defineStore('poll', () => {
     error.value = null
     hasVoted.value = false
     try {
-      const data = await apiCall<{ poll: { data: Poll }; hasVoted: boolean }>('/api/polls/join-by-code', {
+      const data = await apiCall<{ poll: Poll; hasVoted: boolean }>('/api/polls/join-by-code', {
         method: 'POST',
         body: JSON.stringify({ room_code: roomCode.toUpperCase() }),
       })
-      currentPoll.value = data.poll.data
+      currentPoll.value = data.poll
       hasVoted.value = data.hasVoted
-      return data.poll.data
+      return data.poll
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Invalid room code'
       return null
@@ -161,13 +167,30 @@ export const usePollStore = defineStore('poll', () => {
     loading.value = true
     error.value = null
     try {
-      const data = await apiCall<{ poll: { data: Poll }; hasVoted: boolean }>('/api/polls/active')
-      currentPoll.value = data.poll.data
+      const data = await apiCall<{ poll: Poll; hasVoted: boolean }>('/api/polls/active')
+      currentPoll.value = data.poll
       hasVoted.value = data.hasVoted
-      return data.poll.data
+      return data.poll
     } catch {
       currentPoll.value = null
       return null
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function fetchActiveSchoolPolls() {
+    loading.value = true
+    error.value = null
+    try {
+      const data = await apiCall<{ polls?: Poll[]; poll?: Poll }>('/api/polls/active')
+      const pollsPayload = Array.isArray(data.polls) ? data.polls : (data.poll ? [data.poll] : [])
+      activeSchoolPolls.value = pollsPayload
+      return pollsPayload
+    } catch (err) {
+      activeSchoolPolls.value = []
+      error.value = err instanceof Error ? err.message : 'Failed to load polls'
+      return []
     } finally {
       loading.value = false
     }
@@ -210,19 +233,53 @@ export const usePollStore = defineStore('poll', () => {
     }
   }
 
+  function listenForVoteUpdates(pollId: number) {
+    stopListening()
+    try {
+      const echo = getEcho()
+      echoChannel.value = echo.private(`poll.${pollId}`).listen('VoteUpdated', (data: {
+        pollId: number
+        totalVotes: number
+        results: PollResult[]
+      }) => {
+        if (results.value) {
+          results.value.totalVotes = data.totalVotes
+          results.value.results = data.results
+        }
+      })
+    } catch {
+      // Echo not configured; fall back to polling
+      startPolling(pollId)
+    }
+  }
+
+  function stopListening() {
+    if (echoChannel.value) {
+      echoChannel.value.stopListening('VoteUpdated')
+      try {
+        const echo = getEcho()
+        echo.leaveChannel(`poll.${currentPoll.value?.id}`)
+      } catch {
+        // ignore
+      }
+      echoChannel.value = null
+    }
+  }
+
   function reset() {
     currentPoll.value = null
     results.value = null
     error.value = null
     hasVoted.value = false
     stopPolling()
+    stopListening()
   }
 
   return {
-    currentPoll, polls, results, loading, error, hasVoted,
+    currentPoll, polls, activeSchoolPolls, results, loading, error, hasVoted,
     isActive, isEnded, activePolls, draftPolls, endedPolls,
-    fetchTeacherPolls, createPoll, startPoll, endPoll, deletePoll,
-    fetchPollByRoomCode, fetchActivePoll, submitVote, fetchResults,
-    startPolling, stopPolling, reset,
+    apiCall, fetchTeacherPolls, createPoll, startPoll, endPoll, deletePoll,
+    fetchPollByRoomCode, fetchActivePoll, fetchActiveSchoolPolls, submitVote, fetchResults,
+    startPolling, stopPolling, listenForVoteUpdates, stopListening, reset,
   }
 })

@@ -5,7 +5,11 @@ export interface AuthUser {
   id: number
   name: string
   email: string
+  role: string
   avatar?: string | null
+  profile_image?: string | null
+  profile_image_url?: string | null
+  school?: string | null
 }
 
 export const useAuthStore = defineStore('auth', () => {
@@ -14,6 +18,8 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => user.value !== null)
   const userName = computed(() => user.value?.name ?? '')
+  const profileImageUrl = computed(() => user.value?.profile_image_url ?? user.value?.avatar ?? '')
+
   const userInitials = computed(() => {
     const name = user.value?.name ?? ''
     const parts = name.trim().split(/\s+/).filter(Boolean)
@@ -56,7 +62,11 @@ export const useAuthStore = defineStore('auth', () => {
       id: candidateRecord.id,
       name: candidateRecord.name,
       email: candidateRecord.email,
+      role: typeof candidateRecord.role === 'string' ? candidateRecord.role : 'student',
       avatar: typeof candidateRecord.avatar === 'string' ? candidateRecord.avatar : null,
+      profile_image: typeof candidateRecord.profile_image === 'string' ? candidateRecord.profile_image : null,
+      profile_image_url: typeof candidateRecord.profile_image_url === 'string' ? candidateRecord.profile_image_url : null,
+      school: typeof candidateRecord.school === 'string' ? candidateRecord.school : null,
     }
   }
 
@@ -149,6 +159,7 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     userName,
     userInitials,
+    profileImageUrl,
     fetchUser,
     login,
     register,

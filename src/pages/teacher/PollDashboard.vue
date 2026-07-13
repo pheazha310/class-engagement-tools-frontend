@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { usePollStore } from '@/stores/poll'
 
+const route = useRoute()
 const pollStore = usePollStore()
 
 const question = ref('')
@@ -10,7 +12,8 @@ const isMultipleChoice = ref(false)
 const durationMinutes = ref<number | null>(null)
 const showCreateForm = ref(false)
 const selectedPollId = ref<number | null>(null)
-const selectedTab = ref<'active' | 'draft' | 'ended'>('active')
+const tabParam = (route.query.tab as string) || 'active'
+const selectedTab = ref<'active' | 'draft' | 'ended'>(tabParam === 'draft' ? 'draft' : tabParam === 'ended' ? 'ended' : 'active')
 const createError = ref<string | null>(null)
 
 function addOption() {
@@ -167,6 +170,9 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
+
+    <!-- Error display -->
+    <div v-if="pollStore.error" class="alert alert-error">{{ pollStore.error }}</div>
 
     <!-- Poll List -->
     <div v-if="pollStore.loading && pollStore.polls.length === 0" class="loading">Loading polls...</div>

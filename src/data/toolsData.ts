@@ -31,7 +31,7 @@ export const categories: Category[] = [
     slug: 'quiz',
     tools: [
       { title: 'Classroom Quiz', slug: 'classroom-quiz', icon: '📝', description: 'Create quizzes with multiple formats and display live rankings.', category: 'Quiz & Assessment' },
-      { title: 'Live Voting', slug: 'live-voting', icon: '🗳️', description: 'Collect instant feedback with polls that work on any device.', category: 'Quiz & Assessment' },
+      { title: 'Live Voting', slug: 'live-voting', icon: '🗳️', description: 'Collect instant feedback with polls that work on any device.', category: 'Quiz & Assessment', route: '/live-voting' },
       { title: 'Exit Ticket', slug: 'exit-ticket', icon: '🎫', description: 'Quick formative assessments to check student understanding.', category: 'Quiz & Assessment' },
     ]
   },
