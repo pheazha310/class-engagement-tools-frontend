@@ -2,7 +2,6 @@
 import { computed } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { allTools } from '@/data/toolsData'
-import Navbar from '@/components/Navbar.vue'
 
 const route = useRoute()
 
@@ -16,8 +15,6 @@ const relatedTools = computed(() => {
 
 <template>
    <div class="tool-page" v-if="tool">
-    <Navbar />
-
     <section class="tool-hero">
       <div class="container">
         <div class="tool-hero-content">
@@ -57,8 +54,6 @@ const relatedTools = computed(() => {
     </div>
   </div>
   <div v-else class="tool-page">
-    <Navbar />
-
     <div class="container not-found" style="padding: 160px 20px 60px; text-align: center;">
       <h1 style="font-size: 48px; font-weight: 800; color: #0f172a; margin-bottom: 16px;">Tool not found</h1>
       <p style="font-size: 18px; color: #475569; margin-bottom: 32px;">The tool you are looking for does not exist.</p>

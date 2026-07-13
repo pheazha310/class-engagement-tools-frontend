@@ -1,45 +1,26 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
+const auth = useAuthStore()
 
 const email = ref('')
 const password = ref('')
 const error = ref<string | null>(null)
-const loading = ref(false)
 
 async function submit(event: Event) {
   event.preventDefault()
   error.value = null
-  loading.value = true
 
-  try {
-    const response = await fetch('/api/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify({
-        email: email.value.trim(),
-        password: password.value,
-      }),
-    })
-
-    const data = await response.json().catch(() => ({}))
-    if (!response.ok) {
-      error.value = data.message || `Login failed: ${response.status}`
-      return
-    }
-
-    router.replace('/')
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : 'Login failed'
-  } finally {
-    loading.value = false
+  const err = await auth.login(email.value, password.value)
+  if (err) {
+    error.value = err
+    return
   }
+
+  router.replace('/')
 }
 </script>
 
@@ -61,8 +42,8 @@ async function submit(event: Event) {
         <input v-model="password" type="password" class="input" required />
       </label>
 
-      <button class="btn btn-primary" type="submit" :disabled="loading">
-        {{ loading ? 'Signing in...' : 'Sign in' }}
+      <button class="btn btn-primary" type="submit" :disabled="auth.loading">
+        {{ auth.loading ? 'Signing in...' : 'Sign in' }}
       </button>
     </form>
   </div>

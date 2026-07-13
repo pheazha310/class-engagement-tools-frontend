@@ -6,7 +6,6 @@ import ParticipantListEditor from '@/components/ParticipantListEditor.vue'
 import WheelThemePicker from '@/components/WheelThemePicker.vue'
 import SaveWheelModal from '@/components/SaveWheelModal.vue'
 import MyWheels from '@/components/MyWheels.vue'
-import Navbar from '@/components/Navbar.vue'
 import type { Participant, WheelTheme, SavedWheel } from '@/types/wheel'
 import { wheelThemes, getThemeById, defaultThemeId } from '@/types/wheel'
 import { createSavedWheel, loadSavedWheel } from '@/services/wheel'
@@ -124,7 +123,6 @@ function handleDeleteWheel() {
 
   <template>
     <div class="page" :style="{ background: selectedTheme.backgroundColor }">
-      <Navbar />
       <div class="back-wrapper">
         <RouterLink to="/tools" class="btn-back">← Back to all tools</RouterLink>
       </div>

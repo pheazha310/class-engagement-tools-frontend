@@ -69,6 +69,16 @@ const routes: RouteRecordRaw[] = [
     component: GroupGeneratorView,
   },
   {
+    path: '/teacher/polls',
+    name: 'teacher-polls',
+    component: () => import('@/pages/teacher/PollDashboard.vue'),
+  },
+  {
+    path: '/vote/:roomCode?',
+    name: 'vote',
+    component: () => import('@/pages/student/VotePage.vue'),
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
     component: () => import('@/pages/NotFound.vue'),

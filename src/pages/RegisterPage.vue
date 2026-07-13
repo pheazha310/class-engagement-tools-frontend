@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
+const auth = useAuthStore()
 
 type Role = '' | 'student' | 'teacher'
 
@@ -142,39 +144,25 @@ async function submit() {
   error.value = ''
   submitting.value = true
 
-  try {
-    const response = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify({
-        name: form.value.name,
-        email: form.value.email,
-        password: form.value.password,
-        password_confirmation: form.value.passwordConfirmation,
-        role: form.value.role,
-        country: form.value.countryName,
-        province: form.value.province,
-        school_name: form.value.schoolName,
-      }),
-    })
+  const err = await auth.register({
+    name: form.value.name,
+    email: form.value.email,
+    password: form.value.password,
+    password_confirmation: form.value.passwordConfirmation,
+    role: form.value.role,
+    country: form.value.countryName,
+    province: form.value.province,
+    school_name: form.value.schoolName,
+  })
 
-    const data = await response.json().catch(() => ({}))
-    if (!response.ok) {
-      error.value = data.message || `Registration failed: ${response.status}`
-      return
-    }
-
-    success.value = true
-    setTimeout(() => router.push('/'), 2000)
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : 'Registration failed'
-  } finally {
+  if (err) {
+    error.value = err
     submitting.value = false
+    return
   }
+
+  success.value = true
+  setTimeout(() => router.replace('/'), 1400)
 }
 
 const roleOptions: { value: Role; label: string }[] = [
@@ -207,7 +195,7 @@ const roleOptions: { value: Role; label: string }[] = [
 
       <div v-if="success" class="success-message">
         <div class="success-icon">✓</div>
-        <p>Account created successfully! Redirecting to login...</p>
+        <p>Account created successfully! Redirecting home...</p>
       </div>
 
       <form v-else novalidate @submit.prevent="submit()">
