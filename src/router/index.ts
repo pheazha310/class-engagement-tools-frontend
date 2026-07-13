@@ -58,6 +58,11 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/pages/CategoryToolsPage.vue'),
   },
   {
+    path: '/timer',
+    name: 'timer',
+    component: () => import('@/views/TimerView.vue'),
+  },
+  {
     path: '/tools/:slug',
     name: 'tool-detail',
     component: ToolDetailPage,

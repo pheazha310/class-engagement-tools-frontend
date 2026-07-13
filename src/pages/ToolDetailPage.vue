@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { allTools } from '@/data/toolsData'
 import Navbar from '@/components/Navbar.vue'
+import TimerCountdown from '@/components/TimerCountdown.vue'
 
 const route = useRoute()
 
@@ -34,6 +35,8 @@ const relatedTools = computed(() => {
           <h2 class="tool-section-title">About this tool</h2>
           <p class="tool-description">{{ tool.description }}</p>
         </div>
+
+        <TimerCountdown v-if="tool.slug === 'timer'" />
 
         <div class="tool-card" v-if="relatedTools.length">
           <h2 class="tool-section-title">Related tools</h2>
