@@ -32,13 +32,13 @@ export async function spinWheel(participants: Participant[]): Promise<Participan
       throw new Error('Selected participant not found in provided list')
     }
 
-    return selected
+    return { ...selected }
   } catch {
     const fallback = participants[Math.floor(Math.random() * participants.length)]
     if (!fallback) {
       throw new Error('No participants available to spin')
     }
-    return fallback
+    return { ...fallback }
   }
 }
 
@@ -179,4 +179,60 @@ export async function deleteSavedWheel(id: string): Promise<void> {
     const data = await response.json().catch(() => ({}))
     throw new Error(data.message || `Failed to delete wheel: ${response.status}`)
   }
+}
+
+export interface ShareTokenResponse {
+  share_token: string
+  shared_url: string
+}
+
+export async function generateShareToken(wheelId: string): Promise<ShareTokenResponse> {
+  const response = await fetch(getApiUrl(`/api/wheels/${wheelId}/share-token`), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    credentials: 'include',
+  })
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}))
+    throw new Error(data.message || `Failed to generate share link: ${response.status}`)
+  }
+
+  return response.json()
+}
+
+export interface SharedWheel extends SavedWheel {
+  theme?: {
+    id: string
+    name: string
+    colors: string[]
+    backgroundColor: string
+    wheelBackground: string
+    pointerColor: string
+    pointerStroke: string
+    textColor: string
+    buttonGradient: [string, string]
+    buttonShadow: string
+    sliceStroke: string
+    centerColor: string
+  }
+}
+
+export async function loadSharedWheel(shareToken: string): Promise<SharedWheel> {
+  const response = await fetch(getApiUrl(`/api/wheels/shared/${encodeURIComponent(shareToken)}`), {
+    method: 'GET',
+    headers: {
+      Accept: 'application/json',
+    },
+  })
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}))
+    throw new Error(data.message || `Failed to load shared wheel: ${response.status}`)
+  }
+
+  return response.json()
 }

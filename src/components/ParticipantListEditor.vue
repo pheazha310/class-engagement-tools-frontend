@@ -4,6 +4,7 @@ import type { Participant } from '@/types/wheel'
 
 const props = defineProps<{
   participants: Participant[]
+  futureListTitle?: string
 }>()
 
 const emit = defineEmits<{
@@ -11,14 +12,27 @@ const emit = defineEmits<{
 }>()
 
 const newName = ref('')
+const bulkNames = ref('')
 const importError = ref<string | null>(null)
 const duplicateWarning = ref<string | null>(null)
+const bulkDuplicateWarning = ref<string | null>(null)
+const bulkSuccess = ref<string | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
+const futureListTitle = ref(props.futureListTitle ?? 'Future List')
 
 const trimmedName = computed(() => newName.value.trim())
 
 function generateId(): string | number {
   return Date.now() + Math.random()
+}
+
+function parseNames(raw: string): string[] {
+  return raw
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .split(/[\n,;]+/)
+    .map((name) => name.trim())
+    .filter((name) => name.length > 0)
 }
 
 function addParticipant(name: string) {
@@ -43,6 +57,46 @@ function handleAdd() {
   if (!trimmedName.value) return
   addParticipant(trimmedName.value)
   newName.value = ''
+}
+
+function handleBulkAdd() {
+  const names = parseNames(bulkNames.value)
+  if (names.length === 0) return
+
+  const existingNames = new Set(
+    props.participants.map((p) => p.name.toLowerCase()),
+  )
+
+  const newParticipants: Participant[] = []
+  const duplicates: string[] = []
+
+  for (const name of names) {
+    const trimmed = name.trim()
+    if (!trimmed) continue
+
+    if (existingNames.has(trimmed.toLowerCase())) {
+      duplicates.push(trimmed)
+      continue
+    }
+
+    newParticipants.push({ id: generateId(), name: trimmed })
+    existingNames.add(trimmed.toLowerCase())
+  }
+
+  if (duplicates.length > 0) {
+    bulkDuplicateWarning.value = `Skipped duplicates: ${duplicates.slice(0, 5).join(', ')}${duplicates.length > 5 ? '...' : ''}`
+  } else {
+    bulkDuplicateWarning.value = null
+  }
+
+  if (newParticipants.length > 0) {
+    emit('update:participants', [...props.participants, ...newParticipants])
+    bulkSuccess.value = `Added ${newParticipants.length} participant${newParticipants.length === 1 ? '' : 's'}`
+    bulkNames.value = ''
+    setTimeout(() => {
+      bulkSuccess.value = null
+    }, 2000)
+  }
 }
 
 function handleRemove(participant: Participant) {
@@ -157,6 +211,24 @@ async function handleFileChange(event: Event) {
       />
     </div>
 
+    <div class="bulk-row">
+      <textarea
+        v-model="bulkNames"
+        class="bulk-input"
+        placeholder="Paste multiple names here...&#10;Ali&#10;Bob&#10;Charlie"
+        rows="4"
+      />
+      <button class="btn btn-bulk" @click="handleBulkAdd" :disabled="!bulkNames.trim()">
+        Add All
+      </button>
+    </div>
+
+    <div v-if="bulkSuccess" class="success">
+      {{ bulkSuccess }}
+    </div>
+    <div v-if="bulkDuplicateWarning" class="warning">
+      {{ bulkDuplicateWarning }}
+    </div>
     <div v-if="duplicateWarning" class="warning">
       {{ duplicateWarning }}
     </div>
@@ -165,24 +237,32 @@ async function handleFileChange(event: Event) {
     </div>
 
     <div class="preview">
-      <div class="preview-header">
-        <span class="preview-title">Participants</span>
-        <span class="preview-count">{{ participants.length }}</span>
+      <div v-if="participants.length" class="lists-row">
+        <div class="list-panel">
+          <div class="preview-header">
+            <input
+              v-model="futureListTitle"
+              class="list-title-input"
+              type="text"
+              aria-label="Future list name"
+            />
+            <span class="preview-count">{{ participants.length }}</span>
+          </div>
+          <ul class="participant-list">
+            <li v-for="participant in participants" :key="participant.id">
+              <span class="participant-name">{{ participant.name }}</span>
+              <button
+                class="btn-remove"
+                type="button"
+                aria-label="Remove participant"
+                @click="handleRemove(participant)"
+              >
+                ×
+              </button>
+            </li>
+          </ul>
+        </div>
       </div>
-
-      <ul v-if="participants.length" class="participant-list">
-        <li v-for="participant in participants" :key="participant.id">
-          <span class="participant-name">{{ participant.name }}</span>
-          <button
-            class="btn-remove"
-            type="button"
-            aria-label="Remove participant"
-            @click="handleRemove(participant)"
-          >
-            ×
-          </button>
-        </li>
-      </ul>
       <p v-else class="empty">No participants yet. Add names above or import a file.</p>
     </div>
   </div>
@@ -219,6 +299,31 @@ async function handleFileChange(event: Event) {
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
   min-height: 44px;
+}
+
+.bulk-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.bulk-input {
+  flex: 1;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 2px solid #2a2a45;
+  background: #0f0f1e;
+  color: #f5f5f5;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  min-height: 80px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.bulk-input::placeholder {
+  color: #6b7280;
 }
 
 .btn {
@@ -267,12 +372,37 @@ async function handleFileChange(event: Event) {
   box-shadow: 0 6px 18px rgba(69, 183, 209, 0.5);
 }
 
+.btn-bulk {
+  background: linear-gradient(135deg, #f39c12, #d68910);
+  color: #0f172a;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(243, 156, 18, 0.4);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.btn-bulk:hover:not(:disabled) {
+  background: linear-gradient(135deg, #f5b041, #e67e22);
+  box-shadow: 0 6px 18px rgba(243, 156, 18, 0.5);
+}
+
+.btn-bulk:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .file-input {
   display: none;
 }
 
 .warning {
   color: #f39c12;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.success {
+  color: #4ecdc4;
   font-size: 13px;
   line-height: 1.4;
 }
@@ -319,7 +449,7 @@ async function handleFileChange(event: Event) {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  max-height: 260px;
+  max-height: 320px;
   overflow-y: auto;
 }
 
@@ -377,5 +507,36 @@ async function handleFileChange(event: Event) {
   margin: 0;
   text-align: center;
   padding: 20px 0;
+}
+
+.lists-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+.list-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.list-title-input {
+  background: transparent;
+  border: none;
+  color: #ddd;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  outline: none;
+  padding: 0;
+  width: auto;
+  max-width: 180px;
+  cursor: text;
+}
+
+.list-title-input:focus {
+  border-bottom: 1px solid #4ecdc4;
 }
 </style>
