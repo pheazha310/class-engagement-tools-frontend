@@ -6,6 +6,7 @@ import HomepageView from '@/views/Homepage.vue'
 import ToolsPage from '@/pages/ToolsPage.vue'
 import ToolDetailPage from '@/pages/ToolDetailPage.vue'
 import CreateGamePage from '@/pages/CreateGamePage.vue'
+import JoinGamePage from '@/pages/JoinGamePage.vue'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -67,6 +68,11 @@ const routes: RouteRecordRaw[] = [
     path: '/games/create',
     name: 'create-game',
     component: CreateGamePage,
+  },
+  {
+    path: '/join/:joinCode',
+    name: 'join-game',
+    component: JoinGamePage,
   },
   {
     path: '/:pathMatch(.*)*',
