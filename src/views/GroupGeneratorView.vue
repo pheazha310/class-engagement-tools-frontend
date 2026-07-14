@@ -61,14 +61,41 @@ const totalGroups = computed(() => generatedGroups.value.length)
 const showDropdown = ref(false)
 
 const studentText = computed({
-  get: () => students.value.map(s => s.name).join('\n'),
+  get: () => {
+    return students.value.map(s => {
+      // If gender is defined, show it with the name
+      if (s.gender) {
+        return `${s.name} (${s.gender})`
+      }
+      return s.name
+    }).join('\n')
+  },
   set: (val) => {
-    const names = val.split('\n').filter(n => n.trim())
-    students.value = names.map((name, idx) => ({
-      id: `student-${idx}`,
-      name: name.trim(),
-      gender: undefined,
-    }))
+    const lines = val.split('\n').filter(n => n.trim())
+    students.value = lines.map((line, idx) => {
+      // Check if line contains gender in parentheses
+      const genderMatch = line.match(/\(([^)]+)\)$/)
+      let name = line.trim()
+      let gender: 'male' | 'female' | 'other' | undefined = undefined
+      
+      if (genderMatch) {
+        name = line.substring(0, genderMatch.index).trim()
+        const genderValue = genderMatch[1].toLowerCase().trim()
+        if (genderValue === 'male' || genderValue === 'm') {
+          gender = 'male'
+        } else if (genderValue === 'female' || genderValue === 'f') {
+          gender = 'female'
+        } else {
+          gender = 'other'
+        }
+      }
+      
+      return {
+        id: `student-${idx}`,
+        name: name,
+        gender: gender,
+      }
+    })
   }
 })
 
@@ -80,6 +107,10 @@ function getInitials(name: string): string {
     .join('')
     .toUpperCase()
     .slice(0, 2)
+}
+
+function getStudentNumber(student: any, index: number): number {
+  return index + 1
 }
 
 function generateGroupName(index: number): string {
@@ -357,17 +388,7 @@ function handleFileUpload(event: Event) {
   const file = input.files?.[0]
   if (!file) return
 
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    const content = e.target?.result as string
-    const names = content.split(/[\n,]/).filter(n => n.trim())
-    students.value = names.map((name, idx) => ({
-      id: `student-${idx}`,
-      name: name.trim(),
-      gender: undefined,
-    }))
-  }
-  reader.readAsText(file)
+  processFile(file)
 }
 
 function handleDragOver(e: DragEvent) {
@@ -379,17 +400,87 @@ function handleDrop(e: DragEvent) {
   const file = e.dataTransfer?.files[0]
   if (!file) return
 
-  const reader = new FileReader()
-  reader.onload = (ev) => {
-    const content = ev.target?.result as string
-    const names = content.split(/[\n,]/).filter(n => n.trim())
-    students.value = names.map((name, idx) => ({
-      id: `student-${idx}`,
-      name: name.trim(),
-      gender: undefined,
-    }))
+  processFile(file)
+}
+
+function processFile(file: File) {
+  const fileExtension = file.name.split('.').pop()?.toLowerCase()
+  
+  if (fileExtension === 'xlsx' || fileExtension === 'xls') {
+    // Handle Excel files
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target?.result as ArrayBuffer)
+        const workbook = XLSX.read(data, { type: 'array' })
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]]
+        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 }) as any[][]
+        
+        // Process each row - look for Name and Gender columns
+        const processedStudents: Student[] = []
+        
+        jsonData.forEach((row, idx) => {
+          // Skip empty rows
+          if (!row || row.length === 0) return
+          
+          // Try to find name and gender from the row
+          // Common column order: No., Name, Gender or ID, Name, Gender
+          let name = ''
+          let gender: 'male' | 'female' | 'other' | undefined = undefined
+          
+          // Look for non-empty values
+          const values = row.filter(cell => cell !== undefined && cell !== null && String(cell).trim() !== '')
+          
+          if (values.length >= 2) {
+            // If we have at least 2 columns, assume second is name, third might be gender
+            name = String(values[1] || values[0]).trim()
+            
+            // Check if there's a gender value (usually "Male" or "Female")
+            if (values.length >= 3) {
+              const genderValue = String(values[2]).toLowerCase().trim()
+              if (genderValue === 'male' || genderValue === 'm') {
+                gender = 'male'
+              } else if (genderValue === 'female' || genderValue === 'f') {
+                gender = 'female'
+              } else if (genderValue && genderValue !== '') {
+                gender = 'other'
+              }
+            }
+          } else if (values.length === 1) {
+            // Only one column, assume it's the name
+            name = String(values[0]).trim()
+          }
+          
+          if (name) {
+            processedStudents.push({
+              id: `student-${idx}`,
+              name: name,
+              gender: gender,
+            })
+          }
+        })
+        
+        students.value = processedStudents
+      } catch (error) {
+        console.error('Error reading Excel file:', error)
+        alert('Error reading Excel file. Please make sure it\'s a valid Excel file.')
+      }
+    }
+    reader.readAsArrayBuffer(file)
+  } else {
+    // Handle text files (CSV, TXT)
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const content = e.target?.result as string
+      const names = content.split(/[\n,]/).filter(n => n.trim())
+      students.value = names.map((name, idx) => ({
+        id: `student-${idx}`,
+        name: name.trim(),
+        gender: undefined,
+      }))
+    }
+    reader.readAsText(file)
   }
-  reader.readAsText(file)
 }
 </script>
 
@@ -398,22 +489,16 @@ function handleDrop(e: DragEvent) {
     <!-- Header -->
     <header class="header">
       <div class="header__inner">
-        <h1 class="header__title">Group Generator</h1>
-        <p class="header__subtitle">Automatically organize students into balanced classroom groups.</p>
-        <div class="header__actions">
-          <button class="icon-btn" title="Help">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-              <line x1="12" y1="17" x2="12.01" y2="17" />
-            </svg>
-          </button>
-          <button class="icon-btn" title="Settings">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M12 1v6m0 6v6m4.22-10.22l4.24-4.24M6.34 6.34L2.1 2.1m17.8 17.8l-4.24-4.24M6.34 17.66l-4.24 4.24M23 12h-6m-6 0H1m20.07-4.93l-4.24 4.24M6.34 6.34l-4.24-4.24" />
-            </svg>
-          </button>
+        <button class="back-btn" @click="$router.back()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12" />
+            <polyline points="12 19 5 12 12 5" />
+          </svg>
+          <span>Back</span>
+        </button>
+        <div class="header__title-group">
+          <h1 class="header__title">Group Generator</h1>
+          <p class="header__subtitle">Automatically organize students into balanced classroom groups.</p>
         </div>
       </div>
     </header>
@@ -462,7 +547,7 @@ function handleDrop(e: DragEvent) {
                 <p class="upload-text">
                   Drag & drop or <label class="upload-link"><input type="file" accept=".csv,.txt,.xlsx" class="hidden" @change="handleFileUpload">upload file</label>
                 </p>
-                <p class="upload-hint">Supports .csv, .txt, .xlsx</p>
+                <p class="upload-hint">Supports .csv, .txt, .xlsx files (with columns: ID, Name, Gender)</p>
               </div>
             </div>
           </section>
@@ -647,12 +732,12 @@ function handleDrop(e: DragEvent) {
 
                 <div class="group-card__list">
                   <div
-                    v-for="student in group.students"
+                    v-for="(student, sIdx) in group.students"
                     :key="student.id"
                     class="student-item"
                   >
                     <div class="student-avatar">
-                      {{ getInitials(student.name) }}
+                      {{ sIdx + 1 }}
                     </div>
                     <span class="student-name">{{ student.name }}</span>
                   </div>
@@ -671,12 +756,17 @@ function handleDrop(e: DragEvent) {
   min-height: 100vh;
   background: #f5f3ff;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  padding-top: 64px;
+  padding-top: 90px;
 }
 
 .header {
   background: white;
   border-bottom: 1px solid #e2e8f0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
 }
 
 .header__inner {
@@ -685,7 +775,37 @@ function handleDrop(e: DragEvent) {
   padding: 1.5rem 2rem;
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 1.5rem;
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.25rem;
+  background: white;
+  color: #1e40af;
+  border: 2px solid #1e40af;
+  border-radius: 0.5rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.back-btn:hover {
+  background: #dbeafe;
+  transform: translateX(-2px);
+}
+
+.back-btn:active {
+  transform: translateX(0);
+}
+
+.header__title-group {
+  flex: 1;
 }
 
 .header__title {
@@ -743,6 +863,29 @@ function handleDrop(e: DragEvent) {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  position: sticky;
+  top: 84px;
+  max-height: calc(100vh - 104px);
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.left-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.left-panel::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.left-panel::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.left-panel::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 .card {
@@ -1083,6 +1226,29 @@ function handleDrop(e: DragEvent) {
 /* Right Panel */
 .right-panel {
   min-height: 500px;
+  max-height: calc(100vh - 104px);
+  overflow-y: auto;
+  position: sticky;
+  top: 104px;
+  padding-right: 0.5rem;
+}
+
+.right-panel::-webkit-scrollbar {
+  width: 8px;
+}
+
+.right-panel::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.right-panel::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.right-panel::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 .empty-state {
@@ -1127,6 +1293,9 @@ function handleDrop(e: DragEvent) {
   background: white;
   border-radius: 0.75rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .badge {
