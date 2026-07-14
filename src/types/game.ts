@@ -46,6 +46,38 @@ export interface GameSessionResponse {
   game_id: string | number
 }
 
+export interface QuestionOption {
+  id: string
+  label: string
+}
+
+export interface Question {
+  id: string
+  text: string
+  type: 'multiple_choice' | 'text_input'
+  options?: QuestionOption[]
+  correctAnswer?: string
+  points: number
+}
+
+export interface AnswerSubmission {
+  questionId: string
+  answer: string
+  timeSpent: number
+}
+
+export interface GameState {
+  gameType: string
+  settings: Record<string, unknown>
+  questions: Question[]
+  currentQuestionIndex: number
+  answers: AnswerSubmission[]
+  score: number
+  isComplete: boolean
+  timeRemaining: number
+  isAnswerSubmitted: boolean
+}
+
 export const gameTypes: GameTypeOption[] = [
   {
     id: 'math-challenge',

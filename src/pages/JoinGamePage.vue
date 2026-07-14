@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { joinGameSession, type JoinGameSessionResponse } from '@/services/game'
 
 const route = useRoute()
+const router = useRouter()
 
 const joinCode = ref('')
 const studentName = ref('')
@@ -38,6 +39,11 @@ async function handleJoin() {
   try {
     const data = await joinGameSession(joinCode.value, { name: trimmedName })
     successData.value = data
+    router.replace({
+      name: 'game-play',
+      params: { joinCode: joinCode.value },
+      query: { studentName: trimmedName },
+    })
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : 'Failed to join game. Please try again.'
   } finally {

@@ -1,4 +1,4 @@
-import type { GameSessionPayload, GameSessionResponse } from '@/types/game'
+import type { AnswerSubmission, GameSessionPayload, GameSessionResponse, Question } from '@/types/game'
 
 export interface JoinGameSessionPayload {
   name: string
@@ -7,6 +7,30 @@ export interface JoinGameSessionPayload {
 export interface JoinGameSessionResponse {
   message: string
   participant: Record<string, unknown>
+}
+
+export interface QuestionsResponse {
+  questions: Question[]
+  timePerQuestion?: number
+}
+
+export interface SubmitAnswerResponse {
+  score: number
+  totalScore: number
+  isCorrect: boolean
+  correctAnswer?: string
+  message?: string
+}
+
+export interface GameResultResponse {
+  totalScore: number
+  maxScore: number
+  rank?: number
+  answers: Array<{
+    questionId: string
+    isCorrect: boolean
+    pointsEarned: number
+  }>
 }
 
 function getApiUrl(path: string): string {
@@ -56,6 +80,66 @@ export async function joinGameSession(
   if (!response.ok) {
     const data = await response.json().catch(() => ({}))
     throw new Error(data.message || `Failed to join game session: ${response.status}`)
+  }
+
+  return response.json()
+}
+
+export async function fetchGameQuestions(
+  joinCode: string,
+): Promise<QuestionsResponse> {
+  const response = await fetch(getApiUrl(`/api/game-sessions/${encodeURIComponent(joinCode)}/questions`), {
+    method: 'GET',
+    headers: {
+      Accept: 'application/json',
+    },
+    credentials: 'include',
+  })
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}))
+    throw new Error(data.message || `Failed to load questions: ${response.status}`)
+  }
+
+  return response.json()
+}
+
+export async function submitAnswer(
+  joinCode: string,
+  payload: AnswerSubmission,
+): Promise<SubmitAnswerResponse> {
+  const response = await fetch(getApiUrl(`/api/game-sessions/${encodeURIComponent(joinCode)}/answers`), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    credentials: 'include',
+    body: JSON.stringify(payload),
+  })
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}))
+    throw new Error(data.message || `Failed to submit answer: ${response.status}`)
+  }
+
+  return response.json()
+}
+
+export async function fetchGameResults(
+  joinCode: string,
+): Promise<GameResultResponse> {
+  const response = await fetch(getApiUrl(`/api/game-sessions/${encodeURIComponent(joinCode)}/results`), {
+    method: 'GET',
+    headers: {
+      Accept: 'application/json',
+    },
+    credentials: 'include',
+  })
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}))
+    throw new Error(data.message || `Failed to load results: ${response.status}`)
   }
 
   return response.json()
