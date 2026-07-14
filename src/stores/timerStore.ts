@@ -1,13 +1,49 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 
+export interface TimerPreset {
+  id: string
+  name: string
+  durationSeconds: number
+}
+
+const PRESETS_STORAGE_KEY = 'class-engagement-timer-presets'
+
+function loadSavedPresets(): TimerPreset[] {
+  if (typeof window === 'undefined') return []
+
+  try {
+    const savedValue = window.localStorage.getItem(PRESETS_STORAGE_KEY)
+    if (!savedValue) return []
+
+    const parsedValue: unknown = JSON.parse(savedValue)
+    if (!Array.isArray(parsedValue)) return []
+
+    return parsedValue.filter((preset): preset is TimerPreset => (
+      typeof preset?.id === 'string'
+      && typeof preset.name === 'string'
+      && typeof preset.durationSeconds === 'number'
+      && preset.durationSeconds > 0
+    ))
+  } catch {
+    return []
+  }
+}
+
 export const useTimerStore = defineStore('timer', () => {
   const remainingSeconds = ref(5 * 60)
   const isRunning = ref(false)
   const isPaused = ref(false)
   const isCompleted = ref(false)
   const hasPlayedAlarm = ref(false)
+  const savedPresets = ref<TimerPreset[]>(loadSavedPresets())
   let timerId: number | null = null
+
+  function persistPresets() {
+    if (typeof window === 'undefined') return
+
+    window.localStorage.setItem(PRESETS_STORAGE_KEY, JSON.stringify(savedPresets.value))
+  }
 
   function stopInterval() {
     if (timerId !== null) {
@@ -86,6 +122,23 @@ export const useTimerStore = defineStore('timer', () => {
     return true
   }
 
+  function savePreset(name: string, durationSeconds: number) {
+    const trimmedName = name.trim()
+    if (!trimmedName || durationSeconds <= 0) return
+
+    savedPresets.value.push({
+      id: globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`,
+      name: trimmedName,
+      durationSeconds,
+    })
+    persistPresets()
+  }
+
+  function deletePreset(id: string) {
+    savedPresets.value = savedPresets.value.filter((preset) => preset.id !== id)
+    persistPresets()
+  }
+
   function dispose() {
     stopInterval()
   }
@@ -96,12 +149,15 @@ export const useTimerStore = defineStore('timer', () => {
     isPaused,
     isCompleted,
     hasPlayedAlarm,
+    savedPresets,
     start,
     pause,
     resume,
     reset,
     setDuration,
     claimCompletionAlarm,
+    savePreset,
+    deletePreset,
     dispose,
   }
 })

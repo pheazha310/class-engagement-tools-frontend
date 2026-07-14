@@ -4,9 +4,10 @@ import { storeToRefs } from 'pinia'
 import { useTimerStore } from '@/stores/timerStore'
 
 const timerStore = useTimerStore()
-const { remainingSeconds, isRunning, isPaused, isCompleted } = storeToRefs(timerStore)
+const { remainingSeconds, isRunning, isPaused, isCompleted, savedPresets } = storeToRefs(timerStore)
 const minutesInput = ref(5)
 const secondsInput = ref(0)
+const presetName = ref('')
 const isFullscreen = ref(false)
 const audioContext = ref<AudioContext | null>(null)
 const bellBuffer = ref<AudioBuffer | null>(null)
@@ -26,6 +27,12 @@ const formattedRemainingTime = computed(() => {
 
 const hasDuration = computed(() => totalDurationSeconds.value > 0)
 const isFinished = computed(() => remainingSeconds.value <= 0)
+
+const formatPresetDuration = (durationSeconds: number) => {
+  const minutes = Math.floor(durationSeconds / 60)
+  const seconds = durationSeconds % 60
+  return `${minutes}:${String(seconds).padStart(2, '0')}`
+}
 
 const stopAlarm = () => {
   if (!bellSource.value) return
@@ -123,6 +130,20 @@ const setPreset = (minutes: number, seconds = 0) => {
   if (isRunning.value) return
   minutesInput.value = minutes
   secondsInput.value = seconds
+}
+
+const saveCurrentPreset = () => {
+  timerStore.savePreset(presetName.value, totalDurationSeconds.value)
+  presetName.value = ''
+}
+
+const loadSavedPreset = (durationSeconds: number) => {
+  if (isRunning.value) return
+
+  stopAlarm()
+  minutesInput.value = Math.floor(durationSeconds / 60)
+  secondsInput.value = durationSeconds % 60
+  timerStore.setDuration(durationSeconds)
 }
 
 const clampMinutes = (value: number) => {
@@ -253,6 +274,53 @@ onUnmounted(() => {
           <button type="button" class="preset-pill" @click="setPreset(2, 0)">2m</button>
           <button type="button" class="preset-pill" @click="setPreset(5, 0)">5m</button>
           <button type="button" class="preset-pill" @click="setPreset(10, 0)">10m</button>
+        </div>
+      </div>
+
+      <div class="saved-preset-manager">
+        <div class="save-preset-row">
+          <input
+            v-model.trim="presetName"
+            type="text"
+            maxlength="40"
+            placeholder="Preset name"
+            :disabled="isRunning"
+            aria-label="Preset name"
+            @keydown.enter.prevent="saveCurrentPreset"
+          />
+          <button
+            type="button"
+            class="save-preset-button"
+            :disabled="isRunning || !hasDuration || !presetName"
+            @click="saveCurrentPreset"
+          >
+            Save preset
+          </button>
+        </div>
+
+        <div v-if="savedPresets.length" class="saved-presets" aria-label="Saved timer presets">
+          <p class="saved-presets-label">Saved presets</p>
+          <div class="saved-preset-list">
+            <div v-for="preset in savedPresets" :key="preset.id" class="saved-preset-item">
+              <button
+                type="button"
+                class="saved-preset-button"
+                :disabled="isRunning"
+                @click="loadSavedPreset(preset.durationSeconds)"
+              >
+                {{ preset.name }} · {{ formatPresetDuration(preset.durationSeconds) }}
+              </button>
+              <button
+                type="button"
+                class="delete-preset-button"
+                :disabled="isRunning"
+                :aria-label="`Delete ${preset.name} preset`"
+                @click="timerStore.deletePreset(preset.id)"
+              >
+                ×
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -517,6 +585,87 @@ onUnmounted(() => {
 .preset-pill:hover {
   border-color: #c7d2fe;
   background: #eef2ff;
+}
+
+.saved-preset-manager {
+  margin-bottom: 18px;
+  padding-top: 18px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.save-preset-row {
+  display: flex;
+  gap: 10px;
+}
+
+.save-preset-row input {
+  min-width: 0;
+  flex: 1;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: #0f172a;
+}
+
+.save-preset-button,
+.saved-preset-button,
+.delete-preset-button {
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.save-preset-button {
+  border-radius: 10px;
+  padding: 10px 14px;
+  background: #eef2ff;
+  color: #3730a3;
+}
+
+.saved-presets {
+  margin-top: 16px;
+}
+
+.saved-presets-label {
+  margin: 0 0 8px;
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.saved-preset-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.saved-preset-item {
+  display: flex;
+  overflow: hidden;
+  border: 1px solid #c7d2fe;
+  border-radius: 999px;
+}
+
+.saved-preset-button {
+  padding: 8px 12px;
+  background: #eef2ff;
+  color: #312e81;
+}
+
+.delete-preset-button {
+  width: 32px;
+  background: #e0e7ff;
+  color: #4338ca;
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.save-preset-button:disabled,
+.saved-preset-button:disabled,
+.delete-preset-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .timer-note {
