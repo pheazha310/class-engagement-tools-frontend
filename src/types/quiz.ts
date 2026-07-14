@@ -11,8 +11,8 @@ export interface QuizFormData {
 }
 
 export interface Quiz extends QuizFormData {
-  id: number
-  teacher_id: number
+  id: string
+  teacher_id: string | null
   created_at: string
   updated_at: string
 }

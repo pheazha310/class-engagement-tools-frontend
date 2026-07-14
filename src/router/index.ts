@@ -6,8 +6,19 @@ import SingleStudentPickerView from '@/views/SingleStudentPickerView.vue'
 import HomepageView from '@/views/Homepage.vue'
 import ToolsPage from '@/pages/ToolsPage.vue'
 import ToolDetailPage from '@/pages/ToolDetailPage.vue'
+import GroupGeneratorView from '@/views/GroupGeneratorView.vue'
 
 const routes: RouteRecordRaw[] = [
+  {
+    path: '/register',
+    name: 'register',
+    component: () => import('@/pages/RegisterPage.vue'),
+  },
+  {
+    path: '/login',
+    name: 'login',
+    component: () => import('@/pages/LoginPage.vue'),
+  },
   // Home
   {
     path: '/',
@@ -47,8 +58,18 @@ const routes: RouteRecordRaw[] = [
 
   // Quizzes
   {
+    path: '/quizzes',
+    name: 'teacher-quizzes',
+    component: () => import('@/pages/TeacherQuizList.vue'),
+  },
+  {
     path: '/quizzes/create',
     name: 'create-quiz',
+    component: () => import('@/pages/CreateQuiz.vue'),
+  },
+  {
+    path: '/quizzes/:id/edit',
+    name: 'edit-quiz',
     component: () => import('@/pages/CreateQuiz.vue'),
   },
 
@@ -163,6 +184,41 @@ const routes: RouteRecordRaw[] = [
   },
 
   // 404
+  {
+    path: '/group-generator',
+    name: 'group-generator',
+    component: GroupGeneratorView,
+  },
+  {
+    path: '/live-voting',
+    name: 'live-voting',
+    component: () => import('@/pages/LiveVotingPage.vue'),
+  },
+  {
+    path: '/teacher/polls',
+    name: 'teacher-polls',
+    component: () => import('@/pages/teacher/PollDashboard.vue'),
+  },
+  {
+    path: '/teacher/polls/create',
+    name: 'teacher-polls-create',
+    component: () => import('@/pages/teacher/PollCreatePage.vue'),
+  },
+  {
+    path: '/student/polls/:id',
+    name: 'student-poll-vote',
+    component: () => import('@/pages/student/PollVotePage.vue'),
+  },
+  {
+    path: '/profile',
+    name: 'profile',
+    component: () => import('@/pages/ProfilePage.vue'),
+  },
+  {
+    path: '/settings',
+    name: 'settings',
+    component: () => import('@/pages/ProfilePage.vue'),
+  },
   {
     path: '/:pathMatch(.*)*',
     name: 'not-found',

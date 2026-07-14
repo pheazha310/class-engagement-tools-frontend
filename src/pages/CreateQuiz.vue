@@ -1,13 +1,18 @@
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, reactive, computed, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useQuizStore } from '@/stores/quizStore'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import ToastNotification from '@/components/ToastNotification.vue'
-import type { QuizFormData } from '@/types/quiz'
+import type { QuizFormData, Quiz } from '@/types/quiz'
+import type { AxiosError } from 'axios'
 
 const router = useRouter()
+const route = useRoute()
 const store = useQuizStore()
+
+const isEditMode = computed(() => !!route.params.id)
+const quizId = computed(() => route.params.id as string | undefined)
 
 const form = reactive<QuizFormData>({
   title: '',
@@ -21,6 +26,7 @@ const form = reactive<QuizFormData>({
   status: 'draft',
 })
 
+const loading = ref(false)
 const errors = ref<Record<string, string>>({})
 const toastMessage = ref<string | null>(null)
 const toastType = ref<'success' | 'error'>('success')
@@ -61,8 +67,9 @@ function validate(): boolean {
   } else {
     const due = new Date(form.due_date).getTime()
     const now = Date.now()
-    if (due <= now - 60000) {
-      errors.value.due_date = 'Due date must be in the future.'
+    // Must be at least 1 minute in the future to account for clock drift
+    if (due <= now + 60000) {
+      errors.value.due_date = 'Due date must be at least 1 minute from now.'
     }
   }
 
@@ -73,21 +80,34 @@ async function handleSubmit() {
   if (!validate()) return
 
   try {
-    await store.createQuiz({ ...form })
-    toastMessage.value = 'Quiz created successfully!'
+    if (isEditMode.value && quizId.value) {
+      const { quizService } = await import('@/services/quizService')
+      await quizService.updateQuiz(quizId.value, { ...form })
+      toastMessage.value = 'Quiz updated successfully!'
+    } else {
+      await store.createQuiz({ ...form })
+      toastMessage.value = 'Quiz created successfully!'
+    }
     toastType.value = 'success'
     setTimeout(() => {
-      router.push('/tools')
+      router.push('/quizzes')
     }, 1500)
-  } catch (e: any) {
-    const msg = store.error || 'Failed to create quiz.'
+  } catch (e: unknown) {
+    const axiosError = e as AxiosError<{ message?: string; errors?: Record<string, string[]> }>
+    // Try to extract the most descriptive error message
+    const errData = axiosError.response?.data
+    let msg = ''
+    if (errData?.errors) {
+      // Laravel 422 validation errors — join them together
+      msg = Object.values(errData.errors).flat().join('. ')
+    } else if (errData?.message) {
+      msg = errData.message
+    } else {
+      msg = isEditMode.value ? 'Failed to update quiz.' : 'Failed to create quiz.'
+    }
     toastMessage.value = msg
     toastType.value = 'error'
   }
-}
-
-function handleCancel() {
-  router.push('/tools')
 }
 
 const todayString = computed(() => {
@@ -96,6 +116,38 @@ const todayString = computed(() => {
   const month = String(now.getMonth() + 1).padStart(2, '0')
   const day = String(now.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
+})
+
+// Load quiz data for editing
+async function loadQuiz() {
+  if (!quizId.value) return
+
+  loading.value = true
+  try {
+    const { quizService } = await import('@/services/quizService')
+    const quiz: Quiz = await quizService.getQuiz(quizId.value)
+    form.title = quiz.title
+    form.description = quiz.description
+    form.subject = quiz.subject
+    form.class_name = quiz.class_name
+    form.duration = quiz.duration
+    form.passing_score = quiz.passing_score
+    form.due_date = quiz.due_date
+    form.shuffle_questions = quiz.shuffle_questions
+    form.status = quiz.status
+  } catch (e: unknown) {
+    const axiosError = e as AxiosError<{ message?: string }>
+    alert(axiosError.response?.data?.message || 'Failed to load quiz.')
+    router.push('/quizzes')
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  if (isEditMode.value) {
+    loadQuiz()
+  }
 })
 </script>
 
@@ -116,8 +168,8 @@ const todayString = computed(() => {
           </svg>
         </div>
         <div class="quiz-header-text">
-          <h1 class="quiz-header-title">Create New Quiz</h1>
-          <p class="quiz-header-subtitle">Design a quiz for your classroom assessments</p>
+          <h1 class="quiz-header-title">{{ isEditMode ? 'Edit Quiz' : 'Create New Quiz' }}</h1>
+          <p class="quiz-header-subtitle">{{ isEditMode ? 'Update your quiz settings' : 'Design a quiz for your classroom assessments' }}</p>
         </div>
       </header>
 
@@ -355,9 +407,9 @@ const todayString = computed(() => {
         </div>
 
         <!-- ===================== LOADING ===================== -->
-        <div v-if="store.loading" class="quiz-loading">
+        <div v-if="loading || store.loading" class="quiz-loading">
           <LoadingSpinner />
-          <span class="quiz-loading-text">Creating your quiz...</span>
+          <span class="quiz-loading-text">{{ isEditMode ? 'Updating your quiz...' : 'Creating your quiz...' }}</span>
         </div>
 
         <!-- ===================== ACTIONS ===================== -->
@@ -365,7 +417,7 @@ const todayString = computed(() => {
           <button
             type="button"
             class="btn btn-cancel"
-            @click="handleCancel"
+            @click="router.push('/quizzes')"
           >
             Cancel
           </button>
@@ -377,7 +429,7 @@ const todayString = computed(() => {
             <svg class="btn-submit-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M12 5v14" /><path d="M5 12h14" />
             </svg>
-            Create Quiz
+            {{ isEditMode ? 'Update Quiz' : 'Create Quiz' }}
           </button>
         </div>
       </form>
@@ -566,15 +618,16 @@ const todayString = computed(() => {
   box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
 }
 
-/* Date field — remove default browser icon to keep ours */
+/* Date field — style the browser's date picker icon for light theme */
 .input-field--date::-webkit-calendar-picker-indicator {
-  opacity: 0.5;
-  filter: invert(1);
+  opacity: 0.6;
+  filter: invert(0.4);
   cursor: pointer;
 }
 
 .input-field--date::-webkit-calendar-picker-indicator:hover {
   opacity: 1;
+  filter: invert(0.6);
 }
 
 /* No left icon for textarea */

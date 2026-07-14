@@ -191,7 +191,6 @@ function handleDeleteWheel() {
 
   <template>
     <div class="page" :style="{ background: selectedTheme.backgroundColor }">
-      <Navbar />
       <div class="back-wrapper">
         <RouterLink to="/tools" class="btn-back">← Back to all tools</RouterLink>
       </div>
