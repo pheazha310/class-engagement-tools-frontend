@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref, watch } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useTimerStore } from '@/stores/timerStore'
 
+const timerStore = useTimerStore()
+const { remainingSeconds, isRunning, isPaused, isCompleted } = storeToRefs(timerStore)
 const minutesInput = ref(5)
 const secondsInput = ref(0)
-const remainingSeconds = ref(5 * 60)
-const timerId = ref<number | null>(null)
-const isRunning = ref(false)
-const isPaused = ref(false)
 const isFullscreen = ref(false)
+const audioContext = ref<AudioContext | null>(null)
+const bellBuffer = ref<AudioBuffer | null>(null)
+const bellSource = ref<AudioBufferSourceNode | null>(null)
 
 const totalDurationSeconds = computed(() => {
   const minutes = Math.max(0, Math.floor(minutesInput.value))
@@ -24,63 +27,74 @@ const formattedRemainingTime = computed(() => {
 const hasDuration = computed(() => totalDurationSeconds.value > 0)
 const isFinished = computed(() => remainingSeconds.value <= 0)
 
-const updateRemainingFromInputs = () => {
-  remainingSeconds.value = totalDurationSeconds.value
+const stopAlarm = () => {
+  if (!bellSource.value) return
+
+  bellSource.value.stop()
+  bellSource.value.disconnect()
+  bellSource.value = null
+}
+
+const prepareBellSound = async () => {
+  try {
+    if (!audioContext.value) {
+      audioContext.value = new AudioContext()
+    }
+
+    if (audioContext.value.state === 'suspended') {
+      await audioContext.value.resume()
+    }
+
+    if (!bellBuffer.value) {
+      const response = await fetch('/sounds/alarm.wav')
+      if (!response.ok) throw new Error('Alarm sound file could not be loaded.')
+      bellBuffer.value = await audioContext.value.decodeAudioData(await response.arrayBuffer())
+    }
+
+    return audioContext.value
+  } catch (error) {
+    console.error('Timer alarm could not be prepared:', error)
+    return null
+  }
+}
+
+const playAlarm = async () => {
+  if (!timerStore.claimCompletionAlarm()) return
+
+  const context = await prepareBellSound()
+  if (!context || !bellBuffer.value) return
+
+  stopAlarm()
+  const source = context.createBufferSource()
+  const gain = context.createGain()
+  gain.gain.setValueAtTime(1, context.currentTime)
+  source.buffer = bellBuffer.value
+  source.loop = true
+  source.connect(gain)
+  gain.connect(context.destination)
+  source.onended = () => {
+    if (bellSource.value === source) bellSource.value = null
+  }
+  bellSource.value = source
+  source.start()
+  source.stop(context.currentTime + 5)
 }
 
 const startTimer = () => {
-  if (!hasDuration.value || isRunning.value) return
-
-  if (remainingSeconds.value <= 0) {
-    updateRemainingFromInputs()
-  }
-
-  isRunning.value = true
-  timerId.value = window.setInterval(() => {
-    if (remainingSeconds.value <= 1) {
-      remainingSeconds.value = 0
-      stopTimer()
-      return
-    }
-
-    remainingSeconds.value -= 1
-  }, 1000)
+  stopAlarm()
+  void prepareBellSound()
+  timerStore.start(totalDurationSeconds.value)
 }
 
-const stopTimer = () => {
-  if (timerId.value !== null) {
-    clearInterval(timerId.value)
-    timerId.value = null
-  }
-  isRunning.value = false
-}
-
-const pauseTimer = () => {
-  stopTimer()
-  isPaused.value = true
-}
-
+const pauseTimer = () => timerStore.pause()
 const resumeTimer = () => {
-  if (!isPaused.value || remainingSeconds.value <= 0) return
-
-  isPaused.value = false
-  isRunning.value = true
-  timerId.value = window.setInterval(() => {
-    if (remainingSeconds.value <= 1) {
-      remainingSeconds.value = 0
-      stopTimer()
-      isPaused.value = false
-      return
-    }
-
-    remainingSeconds.value -= 1
-  }, 1000)
+  void prepareBellSound()
+  timerStore.resume()
 }
 
 const resetTimer = () => {
-  stopTimer()
-  isPaused.value = false
-  updateRemainingFromInputs()
+  stopAlarm()
+  timerStore.reset(totalDurationSeconds.value)
 }
 
 const toggleFullscreen = async () => {
@@ -109,17 +123,14 @@ const setPreset = (minutes: number, seconds = 0) => {
   if (isRunning.value) return
   minutesInput.value = minutes
   secondsInput.value = seconds
-  updateRemainingFromInputs()
 }
 
 const clampMinutes = (value: number) => {
   minutesInput.value = Math.max(0, Math.min(99, value))
-  if (!isRunning.value) updateRemainingFromInputs()
 }
 
 const clampSeconds = (value: number) => {
   secondsInput.value = Math.max(0, Math.min(59, value))
-  if (!isRunning.value) updateRemainingFromInputs()
 }
 
 const decrementMinutes = () => clampMinutes(minutesInput.value - 1)
@@ -128,13 +139,19 @@ const decrementSeconds = () => clampSeconds(secondsInput.value - 1)
 const incrementSeconds = () => clampSeconds(secondsInput.value + 1)
 
 watch([minutesInput, secondsInput], () => {
-  if (!isRunning.value) {
-    updateRemainingFromInputs()
-  }
+  timerStore.setDuration(totalDurationSeconds.value)
+})
+
+watch(isCompleted, (completed) => {
+  if (completed) void playAlarm()
 })
 
 onUnmounted(() => {
-  stopTimer()
+  timerStore.dispose()
+  stopAlarm()
+  if (audioContext.value && audioContext.value.state !== 'closed') {
+    void audioContext.value.close()
+  }
   if (isFullscreen.value && document.fullscreenElement) {
     document.exitFullscreen()
   }
