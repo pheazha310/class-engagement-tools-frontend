@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { pollService } from '@/services/pollService'
 import type { Poll, PollFormData, PollResultsData } from '@/types/poll'
 
-export const usePollStore = defineStore('poll', () => {
+export const usePollStore = defineStore('poll-service', () => {
   const polls = ref<Poll[]>([])
   const activePoll = ref<Poll | null>(null)
   const currentPoll = ref<Poll | null>(null)

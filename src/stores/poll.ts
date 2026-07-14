@@ -1,6 +1,7 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { getEcho } from '@/services/echo'
+import { getVoterToken } from '@/utils/voterToken'
 import type { Channel } from 'laravel-echo'
 
 export interface PollOption {
@@ -85,7 +86,9 @@ export const usePollStore = defineStore('poll', () => {
   const endedPolls = computed(() => polls.value.filter(p => p.status === 'ended'))
 
   async function apiCall<T>(url: string, options?: RequestInit): Promise<T> {
-    const res = await fetch(url, {
+    const separator = url.includes('?') ? '&' : '?'
+    const urlWithToken = `${url}${separator}voter_token=${getVoterToken()}`
+    const res = await fetch(urlWithToken, {
       credentials: 'include',
       headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...options?.headers },
       ...options,
@@ -230,7 +233,7 @@ export const usePollStore = defineStore('poll', () => {
   async function submitVote(optionId: number | null, points?: number, textResponse?: string) {
     if (!currentPoll.value) return
     error.value = null
-    const body: Record<string, any> = {}
+    const body: Record<string, any> = { voter_token: getVoterToken() }
     if (optionId != null) body.option_id = optionId
     if (points !== undefined) body.points = points
     if (textResponse !== undefined) body.text_response = textResponse

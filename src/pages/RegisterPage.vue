@@ -3,6 +3,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
+import '@/assets/css/auth.css'
+
 const router = useRouter()
 const auth = useAuthStore()
 
@@ -174,12 +176,12 @@ const roleOptions: { value: Role; label: string }[] = [
 </script>
 
 <template>
-  <div class="page">
-    <div class="card">
+  <div class="auth-page">
+    <div class="auth-card auth-card--wide">
       <!-- Header -->
-      <div class="header">
-        <div class="badge">
-          <svg class="badge-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <div class="auth-header">
+        <div class="auth-badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
             <circle cx="8.5" cy="7" r="4" />
             <line x1="20" y1="8" x2="20" y2="14" />
@@ -187,8 +189,8 @@ const roleOptions: { value: Role; label: string }[] = [
           </svg>
           Secure Registration
         </div>
-        <h1 class="title">Create Account</h1>
-        <p class="subtitle">Join the platform in a few simple steps</p>
+        <h1 class="auth-title">Create Account</h1>
+        <p class="auth-subtitle">Join the platform in a few simple steps</p>
       </div>
 
       <!-- Progress Steps -->
@@ -207,23 +209,23 @@ const roleOptions: { value: Role; label: string }[] = [
         </div>
       </div>
 
-      <!-- Success State -->
-      <Transition name="scale-fade">
-        <div v-if="success" class="success-message">
-          <div class="success-icon-wrap">
-            <svg class="success-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
+      <!-- Success State / Form -->
+      <template v-if="success">
+        <Transition name="scale-fade">
+          <div class="success-message">
+            <div class="success-icon-wrap">
+              <svg class="success-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
+            <h3 class="success-title">Account Created!</h3>
+            <p class="success-text">Redirecting to homepage...</p>
           </div>
-          <h3 class="success-title">Account Created!</h3>
-          <p class="success-text">Redirecting to homepage...</p>
-        </div>
-      </Transition>
-
-      <!-- Form -->
-      <form v-else novalidate @submit.prevent="submit()">
+        </Transition>
+      </template>
+      <form v-else class="auth-form" novalidate @submit.prevent="submit()">
         <Transition name="fade">
-          <div v-if="error" class="alert alert-error">
+          <div v-if="error" class="alert alert--error">
             <svg class="alert-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="10" />
               <line x1="15" y1="9" x2="9" y2="15" />
@@ -274,7 +276,7 @@ const roleOptions: { value: Role; label: string }[] = [
                 placeholder="At least 6 characters"
                 required
               />
-              <button type="button" class="toggle-password" @click="showPassword = !showPassword" tabindex="-1">
+              <button type="button" class="password-toggle" @click="showPassword = !showPassword" tabindex="-1">
                 <svg v-if="!showPassword" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
                   <circle cx="12" cy="12" r="3" />
@@ -302,7 +304,7 @@ const roleOptions: { value: Role; label: string }[] = [
                 placeholder="Repeat password"
                 required
               />
-              <button type="button" class="toggle-password" @click="showConfirmPassword = !showConfirmPassword" tabindex="-1">
+              <button type="button" class="password-toggle" @click="showConfirmPassword = !showConfirmPassword" tabindex="-1">
                 <svg v-if="!showConfirmPassword" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
                   <circle cx="12" cy="12" r="3" />
@@ -455,16 +457,16 @@ const roleOptions: { value: Role; label: string }[] = [
 
         <!-- Navigation -->
         <div class="nav-buttons">
-          <button v-if="step > 1" type="button" class="btn btn-secondary" @click="prevStep">
+          <button v-if="step > 1" type="button" class="auth-btn auth-btn--secondary" @click="prevStep">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <line x1="19" y1="12" x2="5" y2="12" />
               <polyline points="12 19 5 12 12 5" />
             </svg>
             Back
           </button>
-          <button type="button" class="btn btn-primary" :disabled="submitting" @click="step < 4 ? nextStep() : submit()">
+          <button type="button" class="auth-btn auth-btn--primary" :disabled="submitting" @click="step < 4 ? nextStep() : submit()">
             <template v-if="submitting">
-              <svg class="spinner" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <svg class="auth-spinner" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" stroke-linecap="round" />
               </svg>
               Creating account...
@@ -481,621 +483,16 @@ const roleOptions: { value: Role; label: string }[] = [
       </form>
 
       <!-- Footer -->
-      <div class="footer">
-        <p class="footer-text">
+      <div class="auth-footer">
+        <p class="auth-footer-text">
           Already have an account?
-          <router-link to="/login" class="footer-link">Sign in</router-link>
+          <router-link to="/login" class="auth-footer-link">Sign in</router-link>
         </p>
       </div>
     </div>
 
     <!-- Background decorations -->
-    <div class="bg-glow bg-glow--1" />
-    <div class="bg-glow bg-glow--2" />
+    <div class="auth-glow auth-glow--1" />
+    <div class="auth-glow auth-glow--2" />
   </div>
 </template>
-
-<style scoped>
-.page {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  background: #080812;
-  position: relative;
-  overflow: hidden;
-}
-
-/* ===== Background Glows ===== */
-.bg-glow {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(120px);
-  pointer-events: none;
-  z-index: 0;
-}
-
-.bg-glow--1 {
-  width: 400px;
-  height: 400px;
-  background: rgba(78, 205, 196, 0.12);
-  top: -120px;
-  right: -100px;
-}
-
-.bg-glow--2 {
-  width: 350px;
-  height: 350px;
-  background: rgba(99, 102, 241, 0.10);
-  bottom: -100px;
-  left: -80px;
-}
-
-/* ===== Card ===== */
-.card {
-  width: 100%;
-  max-width: 460px;
-  padding: 36px 32px 28px;
-  background: #111127;
-  border: 1px solid #1e1e40;
-  border-radius: 20px;
-  box-shadow:
-    0 20px 60px rgba(0, 0, 0, 0.6),
-    0 0 0 1px rgba(78, 205, 196, 0.05);
-  position: relative;
-  z-index: 1;
-  animation: cardIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes cardIn {
-  from {
-    opacity: 0;
-    transform: translateY(24px) scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-/* ===== Header ===== */
-.header {
-  text-align: center;
-  margin-bottom: 24px;
-}
-
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #4ecdc4;
-  background: rgba(78, 205, 196, 0.10);
-  border: 1px solid rgba(78, 205, 196, 0.15);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 16px;
-}
-
-.badge-icon {
-  opacity: 0.8;
-}
-
-.title {
-  margin: 0 0 6px;
-  font-size: 26px;
-  font-weight: 800;
-  color: #fff;
-  letter-spacing: -0.02em;
-}
-
-.subtitle {
-  margin: 0;
-  font-size: 14px;
-  color: #6b7280;
-  line-height: 1.5;
-}
-
-/* ===== Progress Steps ===== */
-.progress {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 28px;
-  position: relative;
-  padding: 0 8px;
-}
-
-.progress::before {
-  content: '';
-  position: absolute;
-  top: 14px;
-  left: 20px;
-  right: 20px;
-  height: 2px;
-  background: #1e1e40;
-  z-index: 0;
-}
-
-.progress-step {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  position: relative;
-  z-index: 1;
-}
-
-.progress-circle {
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  font-size: 12px;
-  font-weight: 700;
-  background: #0d0d22;
-  color: #4b4b6e;
-  border: 2px solid #1e1e40;
-  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.progress-step--active .progress-circle {
-  background: #4ecdc4;
-  color: #fff;
-  border-color: #4ecdc4;
-  box-shadow: 0 0 16px rgba(78, 205, 196, 0.35);
-  transform: scale(1.1);
-}
-
-.progress-step--done .progress-circle {
-  background: #2fa89e;
-  color: #fff;
-  border-color: #2fa89e;
-}
-
-.progress-label {
-  font-size: 10px;
-  color: #4b4b6e;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-weight: 600;
-  transition: color 0.35s;
-}
-
-.progress-step--active .progress-label {
-  color: #4ecdc4;
-}
-
-.progress-step--done .progress-label {
-  color: #2fa89e;
-}
-
-/* ===== Step Content ===== */
-.step-content {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.step-title {
-  margin: 0;
-  font-size: 17px;
-  font-weight: 700;
-  color: #e8e8f0;
-}
-
-.step-desc {
-  margin: -4px 0 4px;
-  font-size: 13px;
-  color: #6b7280;
-}
-
-/* ===== Form Elements ===== */
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.form-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: #c8c8dc;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.input-wrap {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.input-icon {
-  position: absolute;
-  left: 14px;
-  color: #4b4b6e;
-  pointer-events: none;
-  transition: color 0.2s;
-}
-
-.input-wrap:focus-within .input-icon {
-  color: #4ecdc4;
-}
-
-.input {
-  width: 100%;
-  padding: 13px 14px 13px 42px;
-  border-radius: 12px;
-  border: 1px solid #222244;
-  background: #0d0d22;
-  color: #e8e8f0;
-  font-size: 15px;
-  outline: none;
-  font-family: inherit;
-  transition: all 0.2s ease;
-  appearance: none;
-}
-
-.input--select {
-  cursor: pointer;
-  padding-right: 36px;
-}
-
-.input::placeholder {
-  color: #3a3a5c;
-}
-
-.input:focus {
-  border-color: #4ecdc4;
-  box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.08);
-}
-
-.input--error {
-  border-color: #ff6b6b !important;
-}
-
-.input--error:focus {
-  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.10) !important;
-}
-
-.toggle-password {
-  position: absolute;
-  right: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: none;
-  background: transparent;
-  color: #4b4b6e;
-  cursor: pointer;
-  border-radius: 8px;
-  transition: all 0.2s;
-  z-index: 2;
-}
-
-.toggle-password:hover {
-  color: #8b8baa;
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.input-spinner {
-  position: absolute;
-  right: 14px;
-  color: #4ecdc4;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.field-error {
-  font-size: 12px;
-  color: #ff6b6b;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-/* ===== Roles ===== */
-.role-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 4px;
-}
-
-.role-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 22px 16px;
-  border-radius: 14px;
-  border: 2px solid #222244;
-  background: #0d0d22;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.25s ease;
-  font-family: inherit;
-}
-
-.role-btn:hover {
-  border-color: #4ecdc4;
-  color: #e8e8f0;
-  background: rgba(78, 205, 196, 0.04);
-  transform: translateY(-2px);
-}
-
-.role-btn--active {
-  border-color: #4ecdc4;
-  background: rgba(78, 205, 196, 0.08);
-  color: #4ecdc4;
-  box-shadow: 0 0 20px rgba(78, 205, 196, 0.10);
-}
-
-.role-icon {
-  font-size: 32px;
-  line-height: 1;
-}
-
-.role-label {
-  font-size: 15px;
-  font-weight: 700;
-}
-
-.role-desc {
-  font-size: 11px;
-  color: #4b4b6e;
-  text-align: center;
-  line-height: 1.3;
-}
-
-.role-btn--active .role-desc {
-  color: rgba(78, 205, 196, 0.6);
-}
-
-/* ===== Review Grid ===== */
-.review-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 4px;
-}
-
-.review-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  background: #0d0d22;
-  border-radius: 12px;
-  border: 1px solid #1e1e40;
-  transition: border-color 0.2s;
-}
-
-.review-item:hover {
-  border-color: #2a2a55;
-}
-
-.review-label {
-  font-size: 11px;
-  font-weight: 700;
-  color: #4b4b6e;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.review-value {
-  font-size: 14px;
-  color: #e8e8f0;
-  font-weight: 500;
-}
-
-/* ===== Navigation ===== */
-.nav-buttons {
-  display: flex;
-  gap: 10px;
-  margin-top: 24px;
-}
-
-.nav-buttons > .btn:first-child {
-  flex: 0 0 auto;
-  min-width: 100px;
-}
-
-.nav-buttons > .btn:last-child {
-  flex: 1;
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 13px 20px;
-  border: none;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  font-family: inherit;
-  transition: all 0.2s ease;
-}
-
-.btn-primary {
-  color: #fff;
-  background: linear-gradient(135deg, #4ecdc4, #2fa89e);
-  box-shadow:
-    0 4px 16px rgba(78, 205, 196, 0.30),
-    inset 0 1px 0 rgba(255, 255, 255, 0.15);
-}
-
-.btn-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow:
-    0 8px 24px rgba(78, 205, 196, 0.40),
-    inset 0 1px 0 rgba(255, 255, 255, 0.15);
-}
-
-.btn-primary:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-secondary {
-  color: #8b8baa;
-  background: #0d0d22;
-  border: 1px solid #222244;
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background: #16163a;
-  color: #e8e8f0;
-  border-color: #3a3a6a;
-}
-
-.spinner {
-  animation: spin 1s linear infinite;
-}
-
-/* ===== Alert ===== */
-.alert {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 14px;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.4;
-  margin-bottom: 14px;
-}
-
-.alert-error {
-  color: #ff6b6b;
-  background: rgba(255, 107, 107, 0.08);
-  border: 1px solid rgba(255, 107, 107, 0.15);
-}
-
-.alert-icon {
-  flex-shrink: 0;
-  opacity: 0.8;
-}
-
-/* ===== Success ===== */
-.success-message {
-  text-align: center;
-  padding: 28px 0;
-}
-
-.success-icon-wrap {
-  width: 56px;
-  height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #2fa89e, #4ecdc4);
-  margin: 0 auto 16px;
-  box-shadow: 0 0 24px rgba(78, 205, 196, 0.30);
-  animation: successPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-@keyframes successPop {
-  from {
-    transform: scale(0);
-  }
-  to {
-    transform: scale(1);
-  }
-}
-
-.success-icon {
-  color: #fff;
-}
-
-.success-title {
-  margin: 0 0 6px;
-  font-size: 20px;
-  font-weight: 800;
-  color: #fff;
-}
-
-.success-text {
-  margin: 0;
-  font-size: 14px;
-  color: #6b7280;
-}
-
-/* ===== Footer ===== */
-.footer {
-  margin-top: 24px;
-  padding-top: 20px;
-  border-top: 1px solid #1a1a3a;
-  text-align: center;
-}
-
-.footer-text {
-  margin: 0;
-  font-size: 13px;
-  color: #6b7280;
-}
-
-.footer-link {
-  color: #4ecdc4;
-  font-weight: 700;
-  text-decoration: none;
-  transition: color 0.2s;
-}
-
-.footer-link:hover {
-  color: #6ee7de;
-  text-decoration: underline;
-}
-
-/* ===== Transitions ===== */
-.fade-enter-active,
-.fade-leave-active {
-  transition: all 0.25s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-  transform: translateY(-6px);
-}
-
-.scale-fade-enter-active {
-  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.scale-fade-leave-active {
-  transition: all 0.25s ease;
-}
-
-.scale-fade-enter-from {
-  opacity: 0;
-  transform: scale(0.9);
-}
-
-.scale-fade-leave-to {
-  opacity: 0;
-  transform: scale(0.9);
-}
-</style>
