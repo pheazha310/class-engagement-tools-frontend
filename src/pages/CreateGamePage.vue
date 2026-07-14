@@ -2,6 +2,7 @@
 import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import Navbar from '@/components/Navbar.vue'
+import GameJoinModal from '@/components/GameJoinModal.vue'
 import { createGameSession } from '@/services/game'
 import type { GameTypeOption, GameSessionPayload, MathChallengeSettings, VocabularyRaceSettings, QuizBattleSettings, MemoryGameSettings } from '@/types/game'
 import {
@@ -18,6 +19,8 @@ const selectedGameType = ref<GameTypeOption | null>(null)
 const isSubmitting = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
+const showJoinModal = ref(false)
+const createdJoinCode = ref('')
 
 const settings = reactive<{
   math: MathChallengeSettings
@@ -47,6 +50,11 @@ function goBack() {
   selectedGameType.value = null
   errorMessage.value = ''
   successMessage.value = ''
+}
+
+function handleJoinModalClose() {
+  showJoinModal.value = false
+  router.push('/tools')
 }
 
 function validateSettings(): boolean {
@@ -143,11 +151,17 @@ async function handleSubmit() {
       throw new Error('Invalid game type selected')
     }
 
-    await createGameSession(payload)
-    successMessage.value = 'Game session created successfully!'
-    setTimeout(() => {
-      router.push('/tools')
-    }, 1500)
+    const response = await createGameSession(payload)
+    const joinCode = (response.game_session as Record<string, unknown>)?.join_code as string | undefined
+    if (joinCode) {
+      createdJoinCode.value = joinCode
+      showJoinModal.value = true
+    } else {
+      successMessage.value = 'Game session created successfully!'
+      setTimeout(() => {
+        router.push('/tools')
+      }, 1500)
+    }
   } catch (err) {
     errorMessage.value = err instanceof Error ? err.message : 'Failed to create game session. Please try again.'
   } finally {
@@ -401,6 +415,13 @@ async function handleSubmit() {
         </div>
       </div>
     </section>
+
+    <GameJoinModal
+      v-model="showJoinModal"
+      :join-code="createdJoinCode"
+      :game-title="selectedGameType?.title"
+      @update:model-value="handleJoinModalClose"
+    />
   </div>
 </template>
 
