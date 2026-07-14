@@ -45,6 +45,13 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true, role: 'student' },
   },
 
+  // Quizzes
+  {
+    path: '/quizzes/create',
+    name: 'create-quiz',
+    component: () => import('@/pages/CreateQuiz.vue'),
+  },
+
   // Polls
   {
     path: '/polls',
