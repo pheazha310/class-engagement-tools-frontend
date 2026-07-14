@@ -172,20 +172,22 @@ const relatedTools = computed(() => {
   display: inline-flex;
   align-items: center;
   padding: 12px 24px;
-  border-radius: 8px;
+  border-radius: 10px;
   text-decoration: none;
-  font-weight: 600;
-  font-size: 14px;
-  border: 1.5px solid #e2e8f0;
-  color: #334155;
+  font-weight: 700;
+  font-size: 15px;
+  border: 1.5px solid #e6eef8;
+  color: #0f172a;
+  background: #ffffff;
   margin-top: 24px;
   margin-bottom: 32px;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
 .btn-back:hover {
-  border-color: #2563eb;
-  color: #2563eb;
+  border-color: #c7ddfb;
+  background: #f8fbff;
+  color: #0f172a;
 }
 
 @media (max-width: 768px) {
