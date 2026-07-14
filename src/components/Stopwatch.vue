@@ -4,6 +4,7 @@ import { computed, onUnmounted, ref } from 'vue'
 const elapsedSeconds = ref(0)
 const intervalId = ref<number | null>(null)
 const isRunning = ref(false)
+const isPaused = ref(false)
 
 const formattedElapsedTime = computed(() => {
   const minutes = Math.floor(elapsedSeconds.value / 60)
@@ -28,8 +29,24 @@ const stopStopwatch = () => {
   isRunning.value = false
 }
 
+const pauseStopwatch = () => {
+  stopStopwatch()
+  isPaused.value = true
+}
+
+const resumeStopwatch = () => {
+  if (!isPaused.value) return
+
+  isPaused.value = false
+  isRunning.value = true
+  intervalId.value = window.setInterval(() => {
+    elapsedSeconds.value += 1
+  }, 1000)
+}
+
 const resetStopwatch = () => {
   stopStopwatch()
+  isPaused.value = false
   elapsedSeconds.value = 0
 }
 
@@ -58,16 +75,24 @@ onUnmounted(() => {
         <button
           type="button"
           class="btn btn-secondary"
-          @click="stopStopwatch"
-          :disabled="!isRunning"
+          @click="pauseStopwatch"
+          :disabled="!isRunning || isPaused"
         >
-          ■ Stop
+          ⏸ Pause
         </button>
         <button
           type="button"
-          class="btn btn-tertiary"
+          class="btn btn-secondary"
+          @click="resumeStopwatch"
+          :disabled="!isPaused"
+        >
+          ▶ Resume
+        </button>
+        <button
+          type="button"
+          class="btn btn-secondary"
           @click="resetStopwatch"
-          :disabled="elapsedSeconds === 0 && !isRunning"
+          :disabled="elapsedSeconds === 0 && !isRunning && !isPaused"
         >
           ⟳ Reset
         </button>
@@ -114,9 +139,10 @@ onUnmounted(() => {
 }
 
 .stopwatch-action-row {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(100px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 12px;
+  justify-content: center;
 }
 
 .btn {

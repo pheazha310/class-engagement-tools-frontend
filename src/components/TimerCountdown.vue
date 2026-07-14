@@ -6,6 +6,7 @@ const secondsInput = ref(0)
 const remainingSeconds = ref(5 * 60)
 const timerId = ref<number | null>(null)
 const isRunning = ref(false)
+const isPaused = ref(false)
 
 const totalDurationSeconds = computed(() => {
   const minutes = Math.max(0, Math.floor(minutesInput.value))
@@ -53,8 +54,31 @@ const stopTimer = () => {
   isRunning.value = false
 }
 
+const pauseTimer = () => {
+  stopTimer()
+  isPaused.value = true
+}
+
+const resumeTimer = () => {
+  if (!isPaused.value || remainingSeconds.value <= 0) return
+
+  isPaused.value = false
+  isRunning.value = true
+  timerId.value = window.setInterval(() => {
+    if (remainingSeconds.value <= 1) {
+      remainingSeconds.value = 0
+      stopTimer()
+      isPaused.value = false
+      return
+    }
+
+    remainingSeconds.value -= 1
+  }, 1000)
+}
+
 const resetTimer = () => {
   stopTimer()
+  isPaused.value = false
   updateRemainingFromInputs()
 }
 
@@ -143,6 +167,22 @@ onUnmounted(() => {
           :disabled="!hasDuration || isRunning"
         >
           ▶ Start
+        </button>
+        <button
+          type="button"
+          class="btn btn-secondary"
+          @click="pauseTimer"
+          :disabled="!isRunning || isPaused"
+        >
+          ⏸ Pause
+        </button>
+        <button
+          type="button"
+          class="btn btn-secondary"
+          @click="resumeTimer"
+          :disabled="!isPaused"
+        >
+          ▶ Resume
         </button>
         <button
           type="button"
