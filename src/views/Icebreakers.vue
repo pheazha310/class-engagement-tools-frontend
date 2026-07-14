@@ -111,13 +111,25 @@ const stats = [
             <div class="activity-icon" :style="{ backgroundColor: activity.color }">
               <span class="icon-emoji">{{ activity.icon }}</span>
             </div>
-            <div class="activity-content">
-              <h3 class="activity-title">{{ activity.title }}</h3>
-              <p class="activity-description">{{ activity.description }}</p>
-              <button class="launch-btn" :style="{ backgroundColor: activity.color }">
-                Launch
-              </button>
-            </div>
+              <div class="activity-content">
+                <h3 class="activity-title">{{ activity.title }}</h3>
+                <p class="activity-description">{{ activity.description }}</p>
+                <RouterLink
+                  v-if="activity.id === 1"
+                  to="/tools/icebreakers/two-truths-one-lie"
+                  class="launch-btn"
+                  :style="{ backgroundColor: activity.color }"
+                >
+                  Launch
+                </RouterLink>
+                <button
+                  v-else
+                  class="launch-btn"
+                  :style="{ backgroundColor: activity.color }"
+                >
+                  Launch
+                </button>
+              </div>
           </div>
         </div>
       </div>
@@ -134,52 +146,6 @@ const stats = [
         </div>
       </div>
     </section>
-
-    <!-- Footer -->
-    <footer class="footer">
-      <div class="container">
-        <div class="footer-content">
-          <div class="footer-section">
-            <div class="footer-logo">
-              <span class="logo-icon">🎓</span>
-              <span class="logo-text">ClassTools</span>
-            </div>
-            <p class="footer-description">Empowering educators with innovative classroom engagement tools.</p>
-          </div>
-
-          <div class="footer-section">
-            <h4 class="footer-title">Product</h4>
-            <ul class="footer-links">
-              <li><RouterLink to="/">Features</RouterLink></li>
-              <li><RouterLink to="/">Tools</RouterLink></li>
-              <li><RouterLink to="/">Pricing</RouterLink></li>
-            </ul>
-          </div>
-
-          <div class="footer-section">
-            <h4 class="footer-title">Company</h4>
-            <ul class="footer-links">
-              <li><RouterLink to="/about">About</RouterLink></li>
-              <li><RouterLink to="/contact">Contact</RouterLink></li>
-              <li><RouterLink to="/">Careers</RouterLink></li>
-            </ul>
-          </div>
-
-          <div class="footer-section">
-            <h4 class="footer-title">Support</h4>
-            <ul class="footer-links">
-              <li><RouterLink to="/">Help Center</RouterLink></li>
-              <li><RouterLink to="/">Documentation</RouterLink></li>
-              <li><RouterLink to="/">Privacy Policy</RouterLink></li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="footer-bottom">
-          <p>&copy; 2024 ClassTools. All rights reserved.</p>
-        </div>
-      </div>
-    </footer>
   </div>
 </template>
 
@@ -418,72 +384,6 @@ const stats = [
   background: white;
 }
 
-/* Footer */
-.footer {
-  background: #1f2937;
-  color: white;
-  padding: 60px 20px 20px;
-}
-
-.footer-content {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
-  gap: 48px;
-  margin-bottom: 40px;
-}
-
-.footer-logo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 20px;
-  font-weight: 700;
-  margin-bottom: 16px;
-}
-
-.logo-icon {
-  font-size: 24px;
-}
-
-.footer-description {
-  color: #9ca3af;
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-.footer-title {
-  font-size: 16px;
-  font-weight: 600;
-  margin-bottom: 16px;
-}
-
-.footer-links {
-  list-style: none;
-}
-
-.footer-links li {
-  margin-bottom: 8px;
-}
-
-.footer-links a {
-  color: #9ca3af;
-  text-decoration: none;
-  font-size: 14px;
-  transition: color 0.3s ease;
-}
-
-.footer-links a:hover {
-  color: white;
-}
-
-.footer-bottom {
-  border-top: 1px solid #374151;
-  padding-top: 20px;
-  text-align: center;
-  color: #9ca3af;
-  font-size: 14px;
-}
-
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -537,11 +437,6 @@ const stats = [
 
   .stat-value {
     font-size: 28px;
-  }
-
-  .footer-content {
-    grid-template-columns: 1fr;
-    gap: 32px;
   }
 }
 
