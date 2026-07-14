@@ -56,6 +56,15 @@ export const usePollStore = defineStore('poll', () => {
     }
   }
 
+  async function getQrCode(pollId: number) {
+    try {
+      return await pollService.getQrCode(pollId)
+    } catch (e: any) {
+      error.value = e.response?.data?.message || 'Failed to get QR code.'
+      throw e
+    }
+  }
+
   async function updatePoll(id: number, data: Partial<PollFormData>) {
     loading.value = true
     error.value = null
@@ -140,11 +149,11 @@ export const usePollStore = defineStore('poll', () => {
     }
   }
 
-  async function submitVote(pollId: number, optionId: number) {
+  async function submitVote(pollId: number, optionId: number | null, points?: number, textResponse?: string) {
     loading.value = true
     error.value = null
     try {
-      const result = await pollService.vote(pollId, optionId)
+      const result = await pollService.vote(pollId, optionId, points, textResponse)
       results.value = result
       hasVoted.value = true
       return result
@@ -171,10 +180,12 @@ export const usePollStore = defineStore('poll', () => {
     }
   }
 
-  function updateResultsFromBroadcast(data: { totalVotes: number; results: any[] }) {
+  function updateResultsFromBroadcast(data: { totalVotes: number; results: any[]; totalPoints?: number | null; has_weights?: boolean }) {
     if (results.value) {
       results.value.totalVotes = data.totalVotes
       results.value.results = data.results
+      if (data.totalPoints !== undefined) results.value.totalPoints = data.totalPoints
+      if (data.has_weights !== undefined) results.value.has_weights = data.has_weights
     }
   }
 
@@ -202,5 +213,6 @@ export const usePollStore = defineStore('poll', () => {
     fetchResults,
     updateResultsFromBroadcast,
     clearError,
+    getQrCode,
   }
 })

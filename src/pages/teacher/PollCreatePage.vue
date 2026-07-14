@@ -8,16 +8,27 @@ const pollStore = usePollStore()
 
 const question = ref('')
 const options = ref<string[]>(['', ''])
+const optionsCorrect = ref<boolean[]>([])
 const isMultipleChoice = ref(false)
 const durationMinutes = ref<number | null>(null)
+const isAnonymous = ref(false)
+const isQuiz = ref(false)
+const isOpenText = ref(false)
+const maxPoints = ref<number | null>(null)
 const error = ref<string | null>(null)
 
 function addOption() {
-  if (options.value.length < 10) options.value.push('')
+  if (options.value.length < 10) {
+    options.value.push('')
+    optionsCorrect.value.push(false)
+  }
 }
 
 function removeOption(index: number) {
-  if (options.value.length > 2) options.value.splice(index, 1)
+  if (options.value.length > 2) {
+    options.value.splice(index, 1)
+    optionsCorrect.value.splice(index, 1)
+  }
 }
 
 async function handleCreate() {
@@ -28,21 +39,40 @@ async function handleCreate() {
     return
   }
 
-  const validOptions = options.value.map(o => o.trim()).filter(Boolean)
-  if (validOptions.length < 2) {
-    error.value = 'At least 2 options are required.'
-    return
-  }
+  if (!isOpenText.value) {
+    const validOptions = options.value.map(o => o.trim()).filter(Boolean)
+    if (validOptions.length < 2) {
+      error.value = 'At least 2 options are required.'
+      return
+    }
 
-  const poll = await pollStore.createPoll({
-    question: question.value.trim(),
-    options: validOptions,
-    is_multiple_choice: isMultipleChoice.value,
-    duration_minutes: durationMinutes.value,
-  })
+    const poll = await pollStore.createPoll({
+      question: question.value.trim(),
+      options: validOptions,
+      is_multiple_choice: isMultipleChoice.value,
+      duration_minutes: durationMinutes.value,
+      is_anonymous: isAnonymous.value,
+      is_quiz: isQuiz.value,
+      is_open_text: isOpenText.value,
+      max_points: maxPoints.value,
+      options_correct: isQuiz.value ? optionsCorrect.value : undefined,
+    })
 
-  if (poll) {
-    router.push({ name: 'teacher-polls', query: { tab: 'draft' } })
+    if (poll) {
+      router.push({ name: 'teacher-polls', query: { tab: 'draft' } })
+    }
+  } else {
+    const poll = await pollStore.createPoll({
+      question: question.value.trim(),
+      options: [],
+      is_open_text: true,
+      is_anonymous: isAnonymous.value,
+      duration_minutes: durationMinutes.value,
+    })
+
+    if (poll) {
+      router.push({ name: 'teacher-polls', query: { tab: 'draft' } })
+    }
   }
 }
 </script>
@@ -73,50 +103,53 @@ async function handleCreate() {
           />
         </div>
 
+        <!-- Poll Settings -->
         <div class="form-group">
-          <label class="form-label">Options ({{ options.length }}/10)</label>
-          <div v-for="(opt, i) in options" :key="i" class="option-row">
-            <input
-              v-model="options[i]"
-              type="text"
-              class="input"
-              :placeholder="`Option ${i + 1}`"
-              maxlength="255"
-            />
-            <button
-              v-if="options.length > 2"
-              class="btn-icon btn-icon-remove"
-              @click="removeOption(i)"
-              title="Remove option"
-            >
-              ✕
-            </button>
+          <label class="form-label">Poll Settings</label>
+          <div class="form-row">
+            <label class="form-group form-group-inline">
+              <input v-model="isMultipleChoice" type="checkbox" class="checkbox" />
+              <span class="form-label">Multiple choice</span>
+            </label>
+            <label class="form-group form-group-inline">
+              <input v-model="isAnonymous" type="checkbox" class="checkbox" />
+              <span class="form-label">Anonymous</span>
+            </label>
+            <label class="form-group form-group-inline">
+              <input v-model="isQuiz" type="checkbox" class="checkbox" />
+              <span class="form-label">Quiz mode</span>
+            </label>
+            <label class="form-group form-group-inline">
+              <input v-model="isOpenText" type="checkbox" class="checkbox" />
+              <span class="form-label">Open text</span>
+            </label>
           </div>
-          <button
-            v-if="options.length < 10"
-            class="btn btn-sm btn-ghost"
-            @click="addOption"
-          >
-            + Add option
-          </button>
+          <div v-if="!isOpenText" class="form-row" style="margin-top:8px">
+            <label class="form-group form-group-inline">
+              <span class="form-label">Max points</span>
+              <input v-model.number="maxPoints" type="number" class="input input-sm" min="1" max="100" placeholder="1" />
+            </label>
+            <label class="form-group form-group-inline">
+              <span class="form-label">Duration (min)</span>
+              <input v-model.number="durationMinutes" type="number" class="input input-sm" min="1" max="120" placeholder="Optional" />
+            </label>
+          </div>
         </div>
 
-        <div class="form-row">
-          <label class="form-group form-group-inline">
-            <input v-model="isMultipleChoice" type="checkbox" class="checkbox" />
-            <span class="form-label">Allow multiple choice</span>
-          </label>
-          <label class="form-group form-group-inline">
-            <span class="form-label">Duration (minutes)</span>
-            <input
-              v-model.number="durationMinutes"
-              type="number"
-              class="input input-sm"
-              min="1"
-              max="120"
-              placeholder="Optional"
-            />
-          </label>
+        <div v-if="!isOpenText" class="form-group">
+          <label class="form-label">Options ({{ options.length }}/10)</label>
+          <div v-for="(opt, i) in options" :key="i" class="option-row">
+            <input v-model="options[i]" type="text" class="input" :placeholder="`Option ${i + 1}`" maxlength="255" />
+            <button v-if="isQuiz" type="button" class="btn btn-sm" :class="optionsCorrect[i] ? 'btn-primary' : 'btn-ghost'" @click="optionsCorrect[i] = !optionsCorrect[i]">
+              {{ optionsCorrect[i] ? '✓' : 'Mark' }}
+            </button>
+            <button v-if="options.length > 2" class="btn-icon btn-icon-remove" @click="removeOption(i)" title="Remove">✕</button>
+          </div>
+          <button v-if="options.length < 10" class="btn btn-sm btn-ghost" @click="addOption">+ Add option</button>
+        </div>
+
+        <div v-if="isOpenText" class="alert" style="background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd">
+          Open text mode enabled. Students submit free-text responses.
         </div>
 
         <button

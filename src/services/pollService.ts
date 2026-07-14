@@ -1,5 +1,5 @@
 import api from './api'
-import type { Poll, PollFormData, PollResultsData } from '@/types/poll'
+import type { Poll, PollFormData, PollResultsData, QrCodeData } from '@/types/poll'
 
 export const pollService = {
   async getPolls(perPage = 10) {
@@ -42,13 +42,22 @@ export const pollService = {
     return response.data
   },
 
-  async vote(pollId: number, optionId: number) {
-    const response = await api.post(`/polls/${pollId}/vote`, { option_id: optionId })
+  async vote(pollId: number, optionId: number | null, points?: number, textResponse?: string) {
+    const payload: Record<string, any> = {}
+    if (optionId != null) payload.option_id = optionId
+    if (points !== undefined) payload.points = points
+    if (textResponse !== undefined) payload.text_response = textResponse
+    const response = await api.post(`/polls/${pollId}/vote`, payload)
     return response.data as PollResultsData
   },
 
   async getResults(pollId: number) {
     const response = await api.get(`/polls/${pollId}/results`)
     return response.data as PollResultsData
+  },
+
+  async getQrCode(pollId: number) {
+    const response = await api.get(`/polls/${pollId}/qr`)
+    return response.data as QrCodeData
   },
 }

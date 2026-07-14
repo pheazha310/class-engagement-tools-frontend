@@ -2,45 +2,80 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { usePollStore } from '@/stores/poll'
+import QRCodeModal from '@/components/QRCodeModal.vue'
+import type { QrCodeData } from '@/types/poll'
 
 const route = useRoute()
 const pollStore = usePollStore()
 
 const question = ref('')
 const options = ref<string[]>(['', ''])
+const optionsCorrect = ref<boolean[]>([])
 const isMultipleChoice = ref(false)
 const durationMinutes = ref<number | null>(null)
+const isAnonymous = ref(false)
+const isQuiz = ref(false)
+const isOpenText = ref(false)
+const maxPoints = ref<number | null>(null)
 const showCreateForm = ref(false)
 const selectedPollId = ref<number | null>(null)
 const tabParam = (route.query.tab as string) || 'active'
 const selectedTab = ref<'active' | 'draft' | 'ended'>(tabParam === 'draft' ? 'draft' : tabParam === 'ended' ? 'ended' : 'active')
 const createError = ref<string | null>(null)
+const qrCodeData = ref<QrCodeData | null>(null)
+const showQrModal = ref(false)
 
 function addOption() {
-  if (options.value.length < 6) options.value.push('')
+  if (options.value.length < 6) {
+    options.value.push('')
+    optionsCorrect.value.push(false)
+  }
 }
 
 function removeOption(index: number) {
-  if (options.value.length > 2) options.value.splice(index, 1)
+  if (options.value.length > 2) {
+    options.value.splice(index, 1)
+    optionsCorrect.value.splice(index, 1)
+  }
 }
 
 async function handleCreate() {
   createError.value = null
   if (!question.value.trim()) { createError.value = 'Question is required'; return }
-  const validOptions = options.value.map(o => o.trim()).filter(Boolean)
-  if (validOptions.length < 2) { createError.value = 'At least 2 options required'; return }
+  const validOptions = isOpenText.value ? [] : options.value.map(o => o.trim()).filter(Boolean)
+  if (!isOpenText.value && validOptions.length < 2) { createError.value = 'At least 2 options required'; return }
   const poll = await pollStore.createPoll({
     question: question.value.trim(),
     options: validOptions,
     is_multiple_choice: isMultipleChoice.value,
     duration_minutes: durationMinutes.value,
+    is_anonymous: isAnonymous.value,
+    is_quiz: isQuiz.value,
+    is_open_text: isOpenText.value,
+    max_points: isOpenText.value ? null : maxPoints.value,
+    options_correct: isQuiz.value && !isOpenText.value ? optionsCorrect.value : undefined,
   })
   if (poll) {
     question.value = ''
     options.value = ['', '']
+    optionsCorrect.value = []
     isMultipleChoice.value = false
     durationMinutes.value = null
+    isAnonymous.value = false
+    isQuiz.value = false
+    isOpenText.value = false
+    maxPoints.value = null
     showCreateForm.value = false
+  }
+}
+
+async function showQrCode(pollId: number) {
+  try {
+    const data = await pollStore.apiCall<QrCodeData>(`/api/polls/${pollId}/qr`)
+    qrCodeData.value = data
+    showQrModal.value = true
+  } catch {
+    // ignore
   }
 }
 
@@ -109,24 +144,54 @@ onUnmounted(() => {
         <input v-model="question" type="text" class="input" placeholder="e.g. What is your favorite programming language?" maxlength="500" />
       </label>
 
+      <!-- Poll Settings -->
       <div class="form-group">
+        <span class="form-label">Poll Settings</span>
+        <div class="form-row">
+          <label class="form-group form-group--inline">
+            <input v-model="isMultipleChoice" type="checkbox" class="checkbox" />
+            <span class="form-label">Multiple choice</span>
+          </label>
+          <label class="form-group form-group--inline">
+            <input v-model="isAnonymous" type="checkbox" class="checkbox" />
+            <span class="form-label">Anonymous</span>
+          </label>
+          <label class="form-group form-group--inline">
+            <input v-model="isQuiz" type="checkbox" class="checkbox" />
+            <span class="form-label">Quiz mode</span>
+          </label>
+          <label class="form-group form-group--inline">
+            <input v-model="isOpenText" type="checkbox" class="checkbox" />
+            <span class="form-label">Open text</span>
+          </label>
+        </div>
+        <div v-if="!isOpenText" class="form-row" style="margin-top:8px">
+          <label class="form-group form-group--inline">
+            <span class="form-label">Max points</span>
+            <input v-model.number="maxPoints" type="number" class="input input--sm" min="1" max="100" placeholder="1" />
+          </label>
+          <label class="form-group form-group--inline">
+            <span class="form-label">Duration (min)</span>
+            <input v-model.number="durationMinutes" type="number" class="input input--sm" min="1" max="120" placeholder="Optional" />
+          </label>
+        </div>
+      </div>
+
+      <!-- Options -->
+      <div v-if="!isOpenText" class="form-group">
         <span class="form-label">Options ({{ options.length }}/6)</span>
         <div v-for="(opt, i) in options" :key="i" class="option-row">
           <input v-model="options[i]" type="text" class="input" :placeholder="`Option ${i + 1}`" maxlength="255" />
+          <button v-if="isQuiz" type="button" class="btn btn-sm" :class="optionsCorrect[i] ? 'btn-primary' : 'btn-ghost'" @click="optionsCorrect[i] = !optionsCorrect[i]">
+            {{ optionsCorrect[i] ? '✓' : 'Mark' }}
+          </button>
           <button v-if="options.length > 2" class="btn-icon btn-remove" @click="removeOption(i)" title="Remove">✕</button>
         </div>
         <button v-if="options.length < 6" class="btn btn-sm btn-ghost" @click="addOption">+ Add option</button>
       </div>
 
-      <div class="form-row">
-        <label class="form-group form-group--inline">
-          <input v-model="isMultipleChoice" type="checkbox" class="checkbox" />
-          <span class="form-label">Allow multiple choice</span>
-        </label>
-        <label class="form-group form-group--inline">
-          <span class="form-label">Duration (min)</span>
-          <input v-model.number="durationMinutes" type="number" class="input input--sm" min="1" max="120" placeholder="Optional" />
-        </label>
+      <div v-if="isOpenText" class="alert" style="background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd">
+        Open text mode: students submit free-text responses.
       </div>
 
       <button class="btn btn-primary" :disabled="pollStore.loading" @click="handleCreate">
@@ -197,11 +262,20 @@ onUnmounted(() => {
           <button v-if="poll.status === 'draft'" class="btn btn-sm btn-primary" @click="handleStart(poll.id)">Start</button>
           <button v-if="poll.status === 'active'" class="btn btn-sm btn-warning" @click="handleEnd(poll.id)">End</button>
           <button class="btn btn-sm btn-ghost" @click="viewResults(poll.id)">Results</button>
+          <button v-if="poll.status !== 'ended'" class="btn btn-sm btn-ghost" @click="showQrCode(poll.id)">QR</button>
           <button v-if="poll.status === 'draft'" class="btn btn-sm btn-danger" @click="handleDelete(poll.id)">Delete</button>
         </div>
       </div>
     </div>
   </div>
+
+<QRCodeModal
+    v-if="qrCodeData"
+    :show="showQrModal"
+    :join-url="qrCodeData.join_url"
+    :room-code="qrCodeData.room_code"
+    @close="showQrModal = false"
+  />
 </template>
 
 <style scoped>
