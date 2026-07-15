@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
-import { useAuthStore } from '@/stores/authStore'
+import { useAuthStore } from '@/stores/auth'
 
 import StudentPickerView from '@/views/StudentPickerView.vue'
 import SingleStudentPickerView from '@/views/SingleStudentPickerView.vue'
@@ -24,20 +24,6 @@ const routes: RouteRecordRaw[] = [
     path: '/',
     name: 'home',
     component: HomepageView,
-  },
-
-  // Authentication
-  {
-    path: '/login',
-    name: 'login',
-    component: () => import('@/pages/Login.vue'),
-    meta: { guest: true },
-  },
-  {
-    path: '/register',
-    name: 'register',
-    component: () => import('@/pages/Register.vue'),
-    meta: { guest: true },
   },
 
   // Teacher
@@ -133,13 +119,6 @@ const routes: RouteRecordRaw[] = [
     path: '/active-poll',
     name: 'active-poll',
     component: () => import('@/pages/ActivePoll.vue'),
-    meta: { requiresAuth: true },
-  },
-  {
-    path: '/live-voting',
-    name: 'live-voting',
-    component: () => import('@/pages/LiveClassroomVoting.vue'),
-    meta: { requiresAuth: true },
   },
 
   // Admin
@@ -207,6 +186,11 @@ const routes: RouteRecordRaw[] = [
     path: '/timer',
     name: 'timer',
     component: () => import('@/views/TimerView.vue'),
+  },
+  {
+    path: '/stopwatch',
+    name: 'stopwatch',
+    component: () => import('@/views/StopwatchView.vue'),
   },
   {
     path: '/tools/:slug',

@@ -31,3 +31,24 @@ export function destroyEcho(): void {
     echo = null
   }
 }
+
+export function listenToPoll(pollId: number, callback: (data: any) => void): () => void {
+  try {
+    const echoInstance = getEcho()
+    const channel = echoInstance.private(`poll.${pollId}`)
+    channel.listen('VoteUpdated', (data: any) => {
+      callback(data)
+    })
+    return () => {
+      channel.stopListening('VoteUpdated')
+      try {
+        echoInstance.leaveChannel(`poll.${pollId}`)
+      } catch {
+        // ignore
+      }
+    }
+  } catch {
+    // Echo not available
+    return () => {}
+  }
+}

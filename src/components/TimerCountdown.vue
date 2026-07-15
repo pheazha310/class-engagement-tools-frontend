@@ -1,11 +1,17 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref, watch } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useTimerStore } from '@/stores/timerStore'
 
+const timerStore = useTimerStore()
+const { remainingSeconds, isRunning, isPaused, isCompleted, savedPresets } = storeToRefs(timerStore)
 const minutesInput = ref(5)
 const secondsInput = ref(0)
-const remainingSeconds = ref(5 * 60)
-const timerId = ref<number | null>(null)
-const isRunning = ref(false)
+const presetName = ref('')
+const isFullscreen = ref(false)
+const audioContext = ref<AudioContext | null>(null)
+const bellBuffer = ref<AudioBuffer | null>(null)
+const bellSource = ref<AudioBufferSourceNode | null>(null)
 
 const totalDurationSeconds = computed(() => {
   const minutes = Math.max(0, Math.floor(minutesInput.value))
@@ -22,57 +28,130 @@ const formattedRemainingTime = computed(() => {
 const hasDuration = computed(() => totalDurationSeconds.value > 0)
 const isFinished = computed(() => remainingSeconds.value <= 0)
 
-const updateRemainingFromInputs = () => {
-  remainingSeconds.value = totalDurationSeconds.value
+const formatPresetDuration = (durationSeconds: number) => {
+  const minutes = Math.floor(durationSeconds / 60)
+  const seconds = durationSeconds % 60
+  return `${minutes}:${String(seconds).padStart(2, '0')}`
+}
+
+const stopAlarm = () => {
+  if (!bellSource.value) return
+
+  bellSource.value.stop()
+  bellSource.value.disconnect()
+  bellSource.value = null
+}
+
+const prepareBellSound = async () => {
+  try {
+    if (!audioContext.value) {
+      audioContext.value = new AudioContext()
+    }
+
+    if (audioContext.value.state === 'suspended') {
+      await audioContext.value.resume()
+    }
+
+    if (!bellBuffer.value) {
+      const response = await fetch('/sounds/alarm.wav')
+      if (!response.ok) throw new Error('Alarm sound file could not be loaded.')
+      bellBuffer.value = await audioContext.value.decodeAudioData(await response.arrayBuffer())
+    }
+
+    return audioContext.value
+  } catch (error) {
+    console.error('Timer alarm could not be prepared:', error)
+    return null
+  }
+}
+
+const playAlarm = async () => {
+  if (!timerStore.claimCompletionAlarm()) return
+
+  const context = await prepareBellSound()
+  if (!context || !bellBuffer.value) return
+
+  stopAlarm()
+  const source = context.createBufferSource()
+  const gain = context.createGain()
+  gain.gain.setValueAtTime(1, context.currentTime)
+  source.buffer = bellBuffer.value
+  source.loop = true
+  source.connect(gain)
+  gain.connect(context.destination)
+  source.onended = () => {
+    if (bellSource.value === source) bellSource.value = null
+  }
+  bellSource.value = source
+  source.start()
+  source.stop(context.currentTime + 5)
 }
 
 const startTimer = () => {
-  if (!hasDuration.value || isRunning.value) return
-
-  if (remainingSeconds.value <= 0) {
-    updateRemainingFromInputs()
-  }
-
-  isRunning.value = true
-  timerId.value = window.setInterval(() => {
-    if (remainingSeconds.value <= 1) {
-      remainingSeconds.value = 0
-      stopTimer()
-      return
-    }
-
-    remainingSeconds.value -= 1
-  }, 1000)
+  stopAlarm()
+  void prepareBellSound()
+  timerStore.start(totalDurationSeconds.value)
 }
 
-const stopTimer = () => {
-  if (timerId.value !== null) {
-    clearInterval(timerId.value)
-    timerId.value = null
-  }
-  isRunning.value = false
+const pauseTimer = () => timerStore.pause()
+const resumeTimer = () => {
+  void prepareBellSound()
+  timerStore.resume()
 }
 
 const resetTimer = () => {
-  stopTimer()
-  updateRemainingFromInputs()
+  stopAlarm()
+  timerStore.reset(totalDurationSeconds.value)
+}
+
+const toggleFullscreen = async () => {
+  const timerSection = document.querySelector('.timer-section') as HTMLElement
+  if (!timerSection) return
+
+  try {
+    if (!isFullscreen.value) {
+      if (timerSection.requestFullscreen) {
+        await timerSection.requestFullscreen()
+        isFullscreen.value = true
+      }
+    } else {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen()
+        isFullscreen.value = false
+      }
+    }
+  } catch (error) {
+    console.error('Fullscreen request failed:', error)
+    isFullscreen.value = false
+  }
 }
 
 const setPreset = (minutes: number, seconds = 0) => {
   if (isRunning.value) return
   minutesInput.value = minutes
   secondsInput.value = seconds
-  updateRemainingFromInputs()
+}
+
+const saveCurrentPreset = () => {
+  timerStore.savePreset(presetName.value, totalDurationSeconds.value)
+  presetName.value = ''
+}
+
+const loadSavedPreset = (durationSeconds: number) => {
+  if (isRunning.value) return
+
+  stopAlarm()
+  minutesInput.value = Math.floor(durationSeconds / 60)
+  secondsInput.value = durationSeconds % 60
+  timerStore.setDuration(durationSeconds)
 }
 
 const clampMinutes = (value: number) => {
   minutesInput.value = Math.max(0, Math.min(99, value))
-  if (!isRunning.value) updateRemainingFromInputs()
 }
 
 const clampSeconds = (value: number) => {
   secondsInput.value = Math.max(0, Math.min(59, value))
-  if (!isRunning.value) updateRemainingFromInputs()
 }
 
 const decrementMinutes = () => clampMinutes(minutesInput.value - 1)
@@ -81,19 +160,37 @@ const decrementSeconds = () => clampSeconds(secondsInput.value - 1)
 const incrementSeconds = () => clampSeconds(secondsInput.value + 1)
 
 watch([minutesInput, secondsInput], () => {
-  if (!isRunning.value) {
-    updateRemainingFromInputs()
-  }
+  timerStore.setDuration(totalDurationSeconds.value)
+})
+
+watch(isCompleted, (completed) => {
+  if (completed) void playAlarm()
 })
 
 onUnmounted(() => {
-  stopTimer()
+  timerStore.dispose()
+  stopAlarm()
+  if (audioContext.value && audioContext.value.state !== 'closed') {
+    void audioContext.value.close()
+  }
+  if (isFullscreen.value && document.fullscreenElement) {
+    document.exitFullscreen()
+  }
 })
 </script>
 
 <template>
   <section class="timer-section">
     <div class="timer-card">
+      <button
+        type="button"
+        class="fullscreen-btn"
+        @click="toggleFullscreen"
+        aria-label="Toggle fullscreen"
+      >
+        ⛶
+      </button>
+      
       <div class="timer-circle">
         <div class="timer-display">{{ formattedRemainingTime }}</div>
         <p class="timer-label">{{ isFinished ? 'Finished' : 'Remaining' }}</p>
@@ -147,6 +244,22 @@ onUnmounted(() => {
         <button
           type="button"
           class="btn btn-secondary"
+          @click="pauseTimer"
+          :disabled="!isRunning || isPaused"
+        >
+          ⏸ Pause
+        </button>
+        <button
+          type="button"
+          class="btn btn-secondary"
+          @click="resumeTimer"
+          :disabled="!isPaused"
+        >
+          ▶ Resume
+        </button>
+        <button
+          type="button"
+          class="btn btn-secondary"
           @click="resetTimer"
           :disabled="!hasDuration"
         >
@@ -164,6 +277,53 @@ onUnmounted(() => {
         </div>
       </div>
 
+      <div class="saved-preset-manager">
+        <div class="save-preset-row">
+          <input
+            v-model.trim="presetName"
+            type="text"
+            maxlength="40"
+            placeholder="Preset name"
+            :disabled="isRunning"
+            aria-label="Preset name"
+            @keydown.enter.prevent="saveCurrentPreset"
+          />
+          <button
+            type="button"
+            class="save-preset-button"
+            :disabled="isRunning || !hasDuration || !presetName"
+            @click="saveCurrentPreset"
+          >
+            Save preset
+          </button>
+        </div>
+
+        <div v-if="savedPresets.length" class="saved-presets" aria-label="Saved timer presets">
+          <p class="saved-presets-label">Saved presets</p>
+          <div class="saved-preset-list">
+            <div v-for="preset in savedPresets" :key="preset.id" class="saved-preset-item">
+              <button
+                type="button"
+                class="saved-preset-button"
+                :disabled="isRunning"
+                @click="loadSavedPreset(preset.durationSeconds)"
+              >
+                {{ preset.name }} · {{ formatPresetDuration(preset.durationSeconds) }}
+              </button>
+              <button
+                type="button"
+                class="delete-preset-button"
+                :disabled="isRunning"
+                :aria-label="`Delete ${preset.name} preset`"
+                @click="timerStore.deletePreset(preset.id)"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <p class="timer-note">Enter a custom duration, then press Start. The countdown updates every second and stops at 00:00.</p>
     </div>
   </section>
@@ -174,7 +334,95 @@ onUnmounted(() => {
   padding: 36px 0 16px;
 }
 
+.fullscreen-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #0f172a;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+}
+
+.fullscreen-btn:hover {
+  background: #e2e8f0;
+}
+
+.timer-section:fullscreen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0f172a;
+  padding: 0;
+  margin: 0;
+}
+
+.timer-section:fullscreen .timer-card {
+  max-width: none;
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+  border: none;
+  padding: 60px;
+  background: #0f172a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.timer-section:fullscreen .timer-circle {
+  width: 500px;
+  height: 500px;
+  margin: 0 0 60px 0;
+  background: radial-gradient(circle at top, rgba(99, 102, 241, 0.2), transparent 45%), rgba(79, 70, 229, 0.1);
+  box-shadow: inset 0 0 0 20px rgba(99, 102, 241, 0.3);
+}
+
+.timer-section:fullscreen .timer-display {
+  font-size: 10rem;
+  color: #ffffff;
+  font-weight: 900;
+}
+
+.timer-section:fullscreen .timer-label {
+  font-size: 1.8rem;
+  color: #cbd5e1;
+  margin-top: 20px;
+}
+
+.timer-section:fullscreen .timer-controls {
+  display: none;
+}
+
+.timer-section:fullscreen .timer-presets {
+  display: none;
+}
+
+.timer-section:fullscreen .timer-note {
+  display: none;
+}
+
+.timer-section:fullscreen .timer-action-row {
+  gap: 20px;
+  margin-top: 60px;
+}
+
+.timer-section:fullscreen .btn {
+  padding: 18px 28px;
+  font-size: 1.1rem;
+  min-width: 140px;
+}
+
 .timer-card {
+  position: relative;
   max-width: 420px;
   margin: 24px auto 0;
   background: white;
@@ -337,6 +585,87 @@ onUnmounted(() => {
 .preset-pill:hover {
   border-color: #c7d2fe;
   background: #eef2ff;
+}
+
+.saved-preset-manager {
+  margin-bottom: 18px;
+  padding-top: 18px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.save-preset-row {
+  display: flex;
+  gap: 10px;
+}
+
+.save-preset-row input {
+  min-width: 0;
+  flex: 1;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: #0f172a;
+}
+
+.save-preset-button,
+.saved-preset-button,
+.delete-preset-button {
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.save-preset-button {
+  border-radius: 10px;
+  padding: 10px 14px;
+  background: #eef2ff;
+  color: #3730a3;
+}
+
+.saved-presets {
+  margin-top: 16px;
+}
+
+.saved-presets-label {
+  margin: 0 0 8px;
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.saved-preset-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.saved-preset-item {
+  display: flex;
+  overflow: hidden;
+  border: 1px solid #c7d2fe;
+  border-radius: 999px;
+}
+
+.saved-preset-button {
+  padding: 8px 12px;
+  background: #eef2ff;
+  color: #312e81;
+}
+
+.delete-preset-button {
+  width: 32px;
+  background: #e0e7ff;
+  color: #4338ca;
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.save-preset-button:disabled,
+.saved-preset-button:disabled,
+.delete-preset-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .timer-note {

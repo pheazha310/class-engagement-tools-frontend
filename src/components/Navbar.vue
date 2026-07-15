@@ -104,22 +104,24 @@ onUnmounted(() => {
       
 
         <!-- Mobile auth links (visible only in mobile menu) -->
-        <li v-if="!auth.isAuthenticated" class="mobile-auth-links">
-          <RouterLink to="/login" class="nav-link mobile-login-btn" @click="closeMobileMenu">Login</RouterLink>
-          <RouterLink to="/register" class="nav-link mobile-register-btn" @click="closeMobileMenu">Register</RouterLink>
-        </li>
-        <li v-else class="mobile-auth-links">
-          <RouterLink to="/profile" class="nav-link" @click="closeMobileMenu">Profile</RouterLink>
-          <RouterLink to="/settings" class="nav-link" @click="closeMobileMenu">Settings</RouterLink>
-          <button class="nav-link mobile-logout-btn" type="button" @click="handleLogout">Logout</button>
+        <li v-if="auth.initialized" class="mobile-auth-links">
+          <template v-if="auth.isAuthenticated">
+            <RouterLink to="/profile" class="nav-link" @click="closeMobileMenu">Profile</RouterLink>
+            <RouterLink to="/settings" class="nav-link" @click="closeMobileMenu">Settings</RouterLink>
+            <button class="nav-link mobile-logout-btn" type="button" @click="handleLogout">Logout</button>
+          </template>
+          <template v-else>
+            <RouterLink to="/login" class="nav-link mobile-login-btn" @click="closeMobileMenu">Login</RouterLink>
+            <RouterLink to="/register" class="nav-link mobile-register-btn" @click="closeMobileMenu">Register</RouterLink>
+          </template>
         </li>
       </ul>
 
       <div class="nav-buttons">
-        <template v-if="auth.isAuthenticated">
+        <template v-if="auth.initialized && auth.isAuthenticated">
           <ProfileDropdown />
         </template>
-        <template v-else>
+        <template v-else-if="auth.initialized && !auth.isAuthenticated">
           <RouterLink to="/login" class="btn btn-login">Login</RouterLink>
           <RouterLink to="/register" class="btn btn-register">Register</RouterLink>
         </template>
