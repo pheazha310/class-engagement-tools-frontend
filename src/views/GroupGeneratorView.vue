@@ -1537,7 +1537,7 @@ function processFile(file: File) {
   border-radius: 1rem;
   padding: 3rem 2rem;
   text-align: center;
-  min-height: 400px;
+  min-height: calc(100vh - 106px - 4rem);
   display: flex;
   align-items: center;
   justify-content: center;
