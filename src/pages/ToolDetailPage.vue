@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { allTools } from '@/data/toolsData'
 import Navbar from '@/components/Navbar.vue'
+import TimerCountdown from '@/components/TimerCountdown.vue'
 
 const route = useRoute()
 
@@ -16,8 +17,6 @@ const relatedTools = computed(() => {
 
 <template>
    <div class="tool-page" v-if="tool">
-    <Navbar />
-
     <section class="tool-hero">
       <div class="container">
         <div class="tool-hero-content">
@@ -34,6 +33,8 @@ const relatedTools = computed(() => {
           <h2 class="tool-section-title">About this tool</h2>
           <p class="tool-description">{{ tool.description }}</p>
         </div>
+
+        <TimerCountdown v-if="tool.slug === 'timer'" />
 
         <div class="tool-card" v-if="relatedTools.length">
           <h2 class="tool-section-title">Related tools</h2>
@@ -57,8 +58,6 @@ const relatedTools = computed(() => {
     </div>
   </div>
   <div v-else class="tool-page">
-    <Navbar />
-
     <div class="container not-found" style="padding: 160px 20px 60px; text-align: center;">
       <h1 style="font-size: 48px; font-weight: 800; color: #0f172a; margin-bottom: 16px;">Tool not found</h1>
       <p style="font-size: 18px; color: #475569; margin-bottom: 32px;">The tool you are looking for does not exist.</p>
@@ -169,20 +168,22 @@ const relatedTools = computed(() => {
   display: inline-flex;
   align-items: center;
   padding: 12px 24px;
-  border-radius: 8px;
+  border-radius: 10px;
   text-decoration: none;
-  font-weight: 600;
-  font-size: 14px;
-  border: 1.5px solid #e2e8f0;
-  color: #334155;
+  font-weight: 700;
+  font-size: 15px;
+  border: 1.5px solid #e6eef8;
+  color: #0f172a;
+  background: #ffffff;
   margin-top: 24px;
   margin-bottom: 32px;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
 .btn-back:hover {
-  border-color: #2563eb;
-  color: #2563eb;
+  border-color: #c7ddfb;
+  background: #f8fbff;
+  color: #0f172a;
 }
 
 @media (max-width: 768px) {

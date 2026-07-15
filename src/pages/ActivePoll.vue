@@ -34,10 +34,10 @@ onMounted(async () => {
   }
 })
 
-async function handleVote(optionId: number) {
+async function handleVote(optionId: number | null, points?: number, textResponse?: string) {
   if (!store.activePoll) return
   try {
-    await store.submitVote(store.activePoll.id, optionId)
+    await store.submitVote(store.activePoll.id, optionId, points, textResponse)
     toastMessage.value = 'Vote submitted successfully!'
     toastType.value = 'success'
     showResults.value = true
@@ -90,7 +90,7 @@ onUnmounted(() => {
           <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
             <LiveCounter :value="store.results.totalVotes" label="Total Votes" />
             <LiveCounter :value="store.results.results.length" label="Options" />
-            <LiveCounter :value="store.results.status" label="Status" />
+            <LiveCounter :value="store.results.status === 'active' ? 1 : 0" :label="store.results.status" />
           </div>
 
           <div class="space-y-3">
