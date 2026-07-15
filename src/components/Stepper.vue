@@ -21,9 +21,9 @@ const progress = computed(() => {
 
 <template>
   <div class="relative">
-    <div class="absolute top-5 left-0 right-0 h-0.5 bg-gray-100 rounded-full">
+    <div class="absolute top-5 left-0 right-0 h-0.5 rounded-full bg-slate-800">
       <div
-        class="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-500 ease-out"
+        class="h-full rounded-full bg-gradient-to-r from-cyan-400 via-sky-500 to-blue-600 transition-all duration-500 ease-out"
         :style="{ width: `${progress}%` }"
       />
     </div>
@@ -39,10 +39,10 @@ const progress = computed(() => {
           class="relative flex h-10 w-10 items-center justify-center rounded-full transition-all duration-500"
           :class="
             index + 1 === currentStep
-              ? 'bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-lg shadow-blue-200 scale-110'
+              ? 'bg-gradient-to-br from-cyan-400 to-blue-600 text-white shadow-lg shadow-cyan-500/20 scale-110'
               : index + 1 < currentStep
-                ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-md'
-                : 'bg-white border-2 border-gray-200 text-gray-400'
+                ? 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-md'
+                : 'border-2 border-slate-700 bg-slate-950 text-slate-500'
           "
         >
           <svg
@@ -75,10 +75,10 @@ const progress = computed(() => {
             class="text-xs font-semibold tracking-wide transition-all duration-300"
             :class="
               index + 1 === currentStep
-                ? 'text-blue-700'
+                ? 'text-cyan-300'
                 : index + 1 < currentStep
-                  ? 'text-blue-600'
-                  : 'text-gray-400'
+                  ? 'text-sky-300'
+                  : 'text-slate-500'
             "
           >
             {{ step }}

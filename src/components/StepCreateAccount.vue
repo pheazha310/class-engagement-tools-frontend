@@ -68,7 +68,7 @@ function handleNext() {
 <template>
   <form @submit.prevent="handleNext" class="space-y-5">
     <div class="space-y-1">
-      <label for="reg-name" class="text-sm font-medium text-gray-700">Full Name</label>
+      <label for="reg-name" class="text-sm font-medium text-slate-100">Full Name</label>
       <div class="relative">
         <svg class="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -81,7 +81,7 @@ function handleNext() {
           autocomplete="name"
           placeholder="John Doe"
           class="w-full rounded-xl border py-2.5 pl-10 pr-4 text-sm transition-all duration-200 focus:outline-none"
-          :class="[touched.name && errors.name ? 'border-red-300 bg-red-50/50 focus:ring-2 focus:ring-red-200' : 'border-gray-200 bg-white hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100']"
+          :class="[touched.name && errors.name ? 'border-red-300 bg-red-50/50 focus:ring-2 focus:ring-red-200' : 'border-slate-700 bg-white hover:border-slate-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-200']"
           @input="errors.name = ''"
           @blur="touched.name = true"
         />
@@ -100,7 +100,7 @@ function handleNext() {
     </div>
 
     <div class="space-y-1">
-      <label for="reg-email" class="text-sm font-medium text-gray-700">Email</label>
+      <label for="reg-email" class="text-sm font-medium text-slate-100">Email</label>
       <div class="relative">
         <svg class="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -113,7 +113,7 @@ function handleNext() {
           autocomplete="email"
           placeholder="you@example.com"
           class="w-full rounded-xl border py-2.5 pl-10 pr-4 text-sm transition-all duration-200 focus:outline-none"
-          :class="[touched.email && errors.email ? 'border-red-300 bg-red-50/50 focus:ring-2 focus:ring-red-200' : 'border-gray-200 bg-white hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100']"
+          :class="[touched.email && errors.email ? 'border-red-300 bg-red-50/50 focus:ring-2 focus:ring-red-200' : 'border-slate-700 bg-white hover:border-slate-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-200']"
           @input="errors.email = ''"
           @blur="touched.email = true"
         />
@@ -127,7 +127,7 @@ function handleNext() {
     </div>
 
     <div class="space-y-1">
-      <label for="reg-password" class="text-sm font-medium text-gray-700">Password</label>
+      <label for="reg-password" class="text-sm font-medium text-slate-100">Password</label>
       <div class="relative">
         <svg class="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -140,7 +140,7 @@ function handleNext() {
           autocomplete="new-password"
           placeholder="Create a strong password"
           class="w-full rounded-xl border py-2.5 pl-10 pr-10 text-sm transition-all duration-200 focus:outline-none"
-          :class="[touched.password && errors.password ? 'border-red-300 bg-red-50/50 focus:ring-2 focus:ring-red-200' : 'border-gray-200 bg-white hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100']"
+          :class="[touched.password && errors.password ? 'border-red-300 bg-red-50/50 focus:ring-2 focus:ring-red-200' : 'border-slate-700 bg-white hover:border-slate-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-200']"
           @input="errors.password = ''"
           @blur="touched.password = true"
         />
@@ -180,7 +180,7 @@ function handleNext() {
     </div>
 
     <div class="space-y-1">
-      <label for="reg-confirm" class="text-sm font-medium text-gray-700">Confirm Password</label>
+      <label for="reg-confirm" class="text-sm font-medium text-slate-100">Confirm Password</label>
       <div class="relative">
         <svg class="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -193,7 +193,7 @@ function handleNext() {
           autocomplete="new-password"
           placeholder="Re-enter your password"
           class="w-full rounded-xl border py-2.5 pl-10 pr-10 text-sm transition-all duration-200 focus:outline-none"
-          :class="[touched.password_confirmation && errors.password_confirmation ? 'border-red-300 bg-red-50/50 focus:ring-2 focus:ring-red-200' : 'border-gray-200 bg-white hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100']"
+          :class="[touched.password_confirmation && errors.password_confirmation ? 'border-red-300 bg-red-50/50 focus:ring-2 focus:ring-red-200' : 'border-slate-700 bg-white hover:border-slate-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-200']"
           @input="errors.password_confirmation = ''"
           @blur="touched.password_confirmation = true"
         />
@@ -229,7 +229,7 @@ function handleNext() {
     <button
       type="submit"
       :disabled="!isValid"
-      class="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-200 transition-all duration-200 hover:shadow-xl hover:shadow-blue-300 hover:from-blue-700 hover:to-blue-800 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+      class="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-cyan-400 to-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-200/30 transition-all duration-200 hover:shadow-xl hover:shadow-cyan-300/40 hover:from-cyan-300 hover:to-blue-700 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
     >
       <span class="relative z-10 flex items-center gap-2">
         Continue
