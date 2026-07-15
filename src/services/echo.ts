@@ -39,17 +39,23 @@ export function destroyEcho(): void {
   }
 }
 
-export function listenToPoll(
-  pollId: number,
-  callback: (payload: VoteUpdatedPayload) => void
-): () => void {
-  const echoInstance = getEcho()
-
-  const channel = echoInstance.channel(`poll.${pollId}`)
-  channel.listen('.vote.updated', callback as never)
-
-  // Return cleanup function
-  return () => {
-    channel.stopListening('.vote.updated')
+export function listenToPoll(pollId: number, callback: (data: any) => void): () => void {
+  try {
+    const echoInstance = getEcho()
+    const channel = echoInstance.private(`poll.${pollId}`)
+    channel.listen('VoteUpdated', (data: any) => {
+      callback(data)
+    })
+    return () => {
+      channel.stopListening('VoteUpdated')
+      try {
+        echoInstance.leaveChannel(`poll.${pollId}`)
+      } catch {
+        // ignore
+      }
+    }
+  } catch {
+    // Echo not available
+    return () => {}
   }
 }

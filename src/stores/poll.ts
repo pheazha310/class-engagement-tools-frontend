@@ -1,11 +1,13 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { getEcho } from '@/services/echo'
+import { getVoterToken } from '@/utils/voterToken'
 import type { Channel } from 'laravel-echo'
 
 export interface PollOption {
   id: number
   option_text: string
+  is_correct?: boolean
 }
 
 export interface Poll {
@@ -17,6 +19,10 @@ export interface Poll {
   room_code: string | null
   status: 'draft' | 'active' | 'ended'
   is_multiple_choice: boolean
+  is_anonymous?: boolean
+  is_quiz?: boolean
+  is_open_text?: boolean
+  max_points?: number | null
   duration_minutes: number | null
   started_at: string | null
   ended_at: string | null
@@ -32,13 +38,34 @@ export interface PollResult {
   option: string
   votes: number
   percentage: number
+  points?: number | null
+  is_correct?: boolean
+}
+
+export interface OpenTextResponse {
+  text: string
+  student_name?: string
+  student_id?: number
 }
 
 export interface PollResultsData {
   question: string
   status: string
   totalVotes: number
-  results: PollResult[]
+  totalPoints?: number | null
+  is_anonymous?: boolean
+  is_quiz?: boolean
+  is_open_text?: boolean
+  max_points?: number | null
+  has_weights?: boolean
+  results: any[]
+  quiz_summary?: {
+    correct_option_ids: number[]
+    total_votes: number
+    correct_votes: number
+    correct_percentage: number
+    correct_students: Array<{ student_id: number; student_name: string }>
+  } | null
 }
 
 export const usePollStore = defineStore('poll', () => {
@@ -59,7 +86,9 @@ export const usePollStore = defineStore('poll', () => {
   const endedPolls = computed(() => polls.value.filter(p => p.status === 'ended'))
 
   async function apiCall<T>(url: string, options?: RequestInit): Promise<T> {
-    const res = await fetch(url, {
+    const separator = url.includes('?') ? '&' : '?'
+    const urlWithToken = `${url}${separator}voter_token=${getVoterToken()}`
+    const res = await fetch(urlWithToken, {
       credentials: 'include',
       headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...options?.headers },
       ...options,
@@ -87,6 +116,11 @@ export const usePollStore = defineStore('poll', () => {
     options: string[]
     is_multiple_choice?: boolean
     duration_minutes?: number | null
+    is_anonymous?: boolean
+    is_quiz?: boolean
+    is_open_text?: boolean
+    max_points?: number | null
+    options_correct?: boolean[]
   }) {
     loading.value = true
     error.value = null
@@ -196,13 +230,17 @@ export const usePollStore = defineStore('poll', () => {
     }
   }
 
-  async function submitVote(optionId: number) {
+  async function submitVote(optionId: number | null, points?: number, textResponse?: string) {
     if (!currentPoll.value) return
     error.value = null
+    const body: Record<string, any> = { voter_token: getVoterToken() }
+    if (optionId != null) body.option_id = optionId
+    if (points !== undefined) body.points = points
+    if (textResponse !== undefined) body.text_response = textResponse
     try {
       const data = await apiCall<{ data: PollResultsData }>(`/api/polls/${currentPoll.value.id}/vote`, {
         method: 'POST',
-        body: JSON.stringify({ option_id: optionId }),
+        body: JSON.stringify(body),
       })
       hasVoted.value = true
       results.value = data.data

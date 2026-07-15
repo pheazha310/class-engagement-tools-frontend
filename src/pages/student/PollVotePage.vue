@@ -10,12 +10,16 @@ const pollStore = usePollStore()
 
 const selectedOptionId = ref<number | null>(null)
 const selectedOptionIds = ref<number[]>([])
+const selectedPoints = ref<number>(1)
+const textResponse = ref('')
 const loading = ref(false)
 const localError = ref<string | null>(null)
 
 const pollId = computed(() => Number(route.params.id))
 
 const isMulti = computed(() => pollStore.currentPoll?.is_multiple_choice ?? false)
+const isWeighted = computed(() => (pollStore.currentPoll?.max_points ?? 0) > 0)
+const isOpenText = computed(() => !!pollStore.currentPoll?.is_open_text)
 
 function toggleOption(id: number) {
   if (isMulti.value) {
@@ -32,19 +36,27 @@ async function castVote() {
   loading.value = true
   localError.value = null
 
-  const ids = isMulti.value ? selectedOptionIds.value : (selectedOptionId.value != null ? [selectedOptionId.value] : [])
-  if (ids.length === 0) {
-    loading.value = false
-    return
-  }
-
-  if (isMulti.value) {
-    for (const id of ids) {
-      await pollStore.submitVote(id)
+  if (isOpenText.value) {
+    if (!textResponse.value.trim()) {
+      loading.value = false
+      return
     }
+    await pollStore.submitVote(null, undefined, textResponse.value.trim())
   } else {
-    const optId = ids[0]
-    if (optId != null) await pollStore.submitVote(optId)
+    const ids = isMulti.value ? selectedOptionIds.value : (selectedOptionId.value != null ? [selectedOptionId.value] : [])
+    if (ids.length === 0) {
+      loading.value = false
+      return
+    }
+
+    if (isMulti.value) {
+      for (const id of ids) {
+        await pollStore.submitVote(id, isWeighted.value ? selectedPoints.value : undefined)
+      }
+    } else {
+      const optId = ids[0]
+      if (optId != null) await pollStore.submitVote(optId, isWeighted.value ? selectedPoints.value : undefined)
+    }
   }
 
   loading.value = false
@@ -56,9 +68,9 @@ async function castVote() {
 
 const winner = computed(() => {
   if (!pollStore.results || pollStore.results.results.length === 0) return null
-  const max = Math.max(...pollStore.results.results.map(r => r.votes))
+  const max = Math.max(...pollStore.results.results.map((r: any) => r.votes))
   if (max === 0) return null
-  return pollStore.results.results.filter(r => r.votes === max)
+  return pollStore.results.results.filter((r: any) => r.votes === max)
 })
 
 onMounted(async () => {
@@ -101,30 +113,54 @@ onUnmounted(() => {
 
       <!-- Voting phase -->
       <div v-if="!pollStore.hasVoted && pollStore.currentPoll.status === 'active'" class="vote-section">
-        <p class="vc-hint">{{ isMulti ? 'Select one or more options' : 'Select one option' }}</p>
-        <div class="vote-options">
-          <button
-            v-for="opt in pollStore.currentPoll.options"
-            :key="opt.id"
-            :class="['vote-option', {
-              selected: isMulti
-                ? selectedOptionIds.includes(opt.id)
-                : selectedOptionId === opt.id,
-            }]"
-            @click="toggleOption(opt.id)"
-          >
-            <span class="vote-option-text">{{ opt.option_text }}</span>
-            <span v-if="isMulti" class="vote-check">{{ selectedOptionIds.includes(opt.id) ? '✓' : '' }}</span>
-            <span v-else class="vote-radio">{{ selectedOptionId === opt.id ? '●' : '○' }}</span>
-          </button>
-        </div>
+        <!-- Open Text Mode -->
+        <template v-if="isOpenText">
+          <textarea
+            v-model="textResponse"
+            rows="4"
+            class="block w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+            placeholder="Type your response here..."
+            maxlength="1000"
+          ></textarea>
+          <p class="text-xs text-gray-400">{{ textResponse.length }}/1000</p>
+        </template>
+
+        <!-- Standard Options -->
+        <template v-else>
+          <p class="vc-hint">{{ isMulti ? 'Select one or more options' : 'Select one option' }}</p>
+          <div class="vote-options">
+            <button
+              v-for="opt in pollStore.currentPoll.options"
+              :key="opt.id"
+              :class="['vote-option', {
+                selected: isMulti
+                  ? selectedOptionIds.includes(opt.id)
+                  : selectedOptionId === opt.id,
+              }]"
+              @click="toggleOption(opt.id)"
+            >
+              <span class="vote-option-text">{{ opt.option_text }}</span>
+              <span v-if="opt.is_correct" class="text-xs text-green-600 font-medium ml-2">(Correct)</span>
+              <span v-if="isMulti" class="vote-check">{{ selectedOptionIds.includes(opt.id) ? '✓' : '' }}</span>
+              <span v-else class="vote-radio">{{ selectedOptionId === opt.id ? '●' : '○' }}</span>
+            </button>
+          </div>
+
+          <!-- Weighted Points -->
+          <div v-if="isWeighted" class="mt-2">
+            <label class="mb-1 block text-sm font-medium text-gray-600 dark:text-gray-400">
+              Points: <strong class="text-indigo-600">{{ selectedPoints }}</strong> / {{ pollStore.currentPoll.max_points }}
+            </label>
+            <input v-model.number="selectedPoints" type="range" :min="1" :max="pollStore.currentPoll.max_points ?? 1" class="w-full accent-indigo-600" />
+          </div>
+        </template>
 
         <button
           class="btn btn-primary btn-full"
-          :disabled="loading || (isMulti ? selectedOptionIds.length === 0 : selectedOptionId == null)"
+          :disabled="loading || (isOpenText ? !textResponse.trim() : (isMulti ? selectedOptionIds.length === 0 : selectedOptionId == null))"
           @click="castVote"
         >
-          {{ loading ? 'Submitting...' : 'Submit Vote' }}
+          {{ loading ? 'Submitting...' : isWeighted && !isOpenText ? `Submit Vote (${selectedPoints} pts)` : 'Submit Vote' }}
         </button>
       </div>
 
@@ -133,7 +169,7 @@ onUnmounted(() => {
         <div v-if="pollStore.hasVoted" class="voted-banner">✓ You voted</div>
 
         <LivePollChart
-          :results="pollStore.results.results"
+          :results="pollStore.results.results as any"
           :totalVotes="pollStore.results.totalVotes"
           :status="pollStore.results.status"
           :animate="true"

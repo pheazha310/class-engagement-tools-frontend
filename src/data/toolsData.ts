@@ -42,6 +42,7 @@ export const categories: Category[] = [
     slug: 'classroom',
     tools: [
       { title: 'Timer', slug: 'timer', icon: '⏱️', description: 'Run countdowns, stopwatches, and Pomodoro sessions with alerts.', category: 'Classroom Control' },
+      { title: 'Stopwatch', slug: 'stopwatch', icon: '⏱️', description: 'Measure activity duration with an easy-start stopwatch.', category: 'Classroom Control', route: '/stopwatch' },
       { title: 'Soundboard', slug: 'soundboard', icon: '🔊', description: 'Bring excitement to lessons with applause, countdown, and success sounds.', category: 'Classroom Control' },
     ]
   },

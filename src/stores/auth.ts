@@ -15,6 +15,7 @@ export interface AuthUser {
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<AuthUser | null>(null)
   const loading = ref(false)
+  const initialized = ref(false)
 
   const isAuthenticated = computed(() => user.value !== null)
   const userName = computed(() => user.value?.name ?? '')
@@ -71,6 +72,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function fetchUser() {
+    loading.value = true
     try {
       const res = await fetch('/api/user', { credentials: 'include' })
       if (res.ok) {
@@ -81,6 +83,9 @@ export const useAuthStore = defineStore('auth', () => {
       }
     } catch {
       clearUser()
+    } finally {
+      loading.value = false
+      initialized.value = true
     }
   }
 
@@ -161,6 +166,7 @@ export const useAuthStore = defineStore('auth', () => {
     userInitials,
     profileImageUrl,
     fetchUser,
+    initialized,
     login,
     register,
     logout,
