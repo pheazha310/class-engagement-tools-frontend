@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { ref, watch, onBeforeUnmount } from 'vue'
+import { RouterLink } from 'vue-router'
 import type { SavedWheel, WheelTheme } from '@/types/wheel'
 import { getThemeById, defaultThemeId } from '@/types/wheel'
 import { listSavedWheels, deleteSavedWheel } from '@/services/wheel'
 
 const props = defineProps<{
   modelValue: boolean
+  isAuthenticated?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -36,7 +38,9 @@ async function loadWheels() {
 
 watch(() => props.modelValue, (open) => {
   if (open) {
-    loadWheels()
+    if (props.isAuthenticated) {
+      loadWheels()
+    }
   } else {
     deleteConfirmId.value = null
     deletingId.value = null
@@ -124,7 +128,14 @@ onBeforeUnmount(() => {
           {{ error }}
         </div>
 
-        <div v-if="loading" class="loading-state">
+        <div v-if="!props.isAuthenticated" class="auth-prompt">
+          <p class="auth-prompt-text">
+            <strong>Please login first</strong> to view your saved wheels.
+          </p>
+          <RouterLink to="/login" class="auth-prompt-link">Go to login</RouterLink>
+        </div>
+
+        <div v-else-if="loading" class="loading-state">
           <div class="loading-spinner" />
           <span class="loading-text">Loading wheels...</span>
         </div>
@@ -282,6 +293,40 @@ onBeforeUnmount(() => {
   border: 1px solid #5a1f1f;
   border-radius: 10px;
   padding: 10px 12px;
+}
+
+.auth-prompt {
+  background: #1f1f38;
+  border: 1px solid #2a2a45;
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.auth-prompt-text {
+  color: #ddd;
+  font-size: 14px;
+  margin: 0;
+}
+
+.auth-prompt-text strong {
+  color: #4ecdc4;
+}
+
+.auth-prompt-link {
+  display: inline-flex;
+  align-items: center;
+  color: #22d3ee;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 13px;
+  align-self: flex-start;
+}
+
+.auth-prompt-link:hover {
+  text-decoration: underline;
 }
 
 .loading-state {

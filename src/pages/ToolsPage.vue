@@ -2,15 +2,12 @@
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { categories, allTools } from '@/data/toolsData'
-import Navbar from '@/components/Navbar.vue'
 
 const groupedTools = computed(() => categories)
 </script>
 
 <template>
   <div class="tools-page">
-    <Navbar />
-
     <section class="tools-hero" style="padding-top: 120px;">
       <div class="container">
         <h1 class="tools-hero-title">All Tools</h1>
