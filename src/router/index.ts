@@ -157,6 +157,11 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/TimerView.vue'),
   },
   {
+    path: '/stopwatch',
+    name: 'stopwatch',
+    component: () => import('@/views/StopwatchView.vue'),
+  },
+  {
     path: '/tools/:slug',
     name: 'tool-detail',
     component: ToolDetailPage,
