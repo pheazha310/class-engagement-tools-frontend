@@ -3,8 +3,8 @@ import { ref, reactive, computed, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import CountdownTimer from '@/components/CountdownTimer.vue'
 import QuestionDisplay from '@/components/QuestionDisplay.vue'
-import { fetchGameQuestions, submitAnswer, fetchGameResults, type Question, type SubmitAnswerResponse } from '@/services/game'
-import type { AnswerSubmission } from '@/types/game'
+import { fetchGameQuestions, submitAnswer, fetchGameResults, type SubmitAnswerResponse, type GameResultResponse } from '@/services/game'
+import type { AnswerSubmission, Question, QuestionOption } from '@/types/game'
 
 const route = useRoute()
 const router = useRouter()
@@ -23,7 +23,7 @@ const answers = ref<AnswerSubmission[]>([])
 const score = ref(0)
 const isAnswerSubmitted = ref(false)
 const lastResult = ref<SubmitAnswerResponse | null>(null)
-const gameResults = ref<SubmitAnswerResponse['answers']>([])
+const gameResults = ref<GameResultResponse['answers']>([])
 const totalGameScore = ref(0)
 const totalMaxScore = ref(0)
 const questionStartTime = ref(Date.now())
@@ -33,6 +33,12 @@ const timePerQuestion = computed(() => (settings.timePerQuestion as number) || 3
 const progressPercent = computed(() => {
   if (questions.value.length === 0) return 0
   return Math.round((currentIndex.value / questions.value.length) * 100)
+})
+
+const correctAnswerLabel = computed(() => {
+  const q = currentQuestion.value
+  if (!q || !q.options || !q.correctAnswer) return ''
+  return q.options.find(o => o.id === q.correctAnswer)?.label ?? ''
 })
 
 const DEMO_QUESTIONS: Question[] = [
@@ -220,7 +226,7 @@ async function finishGame() {
     if (data.answers?.length) gameResults.value = data.answers
   } catch {
     if (!totalMaxScore.value && questions.value.length) {
-      totalMaxScore.value = questions.value.reduce((sum, q) => sum + q.points, 0)
+      totalMaxScore.value = questions.value.reduce((sum: number, q: Question) => sum + q.points, 0)
     }
   }
 }
@@ -339,7 +345,7 @@ onUnmounted(() => {
             <p class="result-score">+{{ currentQuestion.points }} points for this question</p>
             <div v-if="!lastResult?.isCorrect && currentQuestion.correctAnswer && currentQuestion.options" class="correct-answer">
               <span class="correct-label">Correct answer:</span>
-              <span class="correct-value">{{ currentQuestion.options.find(o => o.id === currentQuestion.correctAnswer)?.label }}</span>
+              <span class="correct-value">{{ correctAnswerLabel }}</span>
             </div>
             <button class="btn-next" @click="nextQuestion">
               {{ currentIndex < questions.length - 1 ? 'Next Question →' : 'See Results →' }}

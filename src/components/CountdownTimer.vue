@@ -25,8 +25,8 @@ const dashOffset = computed(() => {
 })
 
 const color = computed(() => {
-  if (timeRemaining.value <= props.dangerThreshold) return '#dc2626'
-  if (timeRemaining.value <= props.warningThreshold) return '#f59e0b'
+  if (props.dangerThreshold != null && timeRemaining.value <= props.dangerThreshold) return '#dc2626'
+  if (props.warningThreshold != null && timeRemaining.value <= props.warningThreshold) return '#f59e0b'
   return '#6366f1'
 })
 
@@ -84,14 +84,14 @@ defineExpose({ reset, timeRemaining, stopTimer, startTimer })
 </script>
 
 <template>
-  <div class="countdown-timer" :class="{ 'countdown-timer--danger': timeRemaining <= dangerThreshold }">
+  <div class="countdown-timer" :class="{ 'countdown-timer--danger': dangerThreshold != null && timeRemaining <= dangerThreshold }">
     <div v-if="label" class="countdown-timer-label">{{ label }}</div>
     <svg
       viewBox="0 0 100 100"
       class="countdown-timer-svg"
       role="timer"
       :aria-label="`${label || 'Timer'}: ${formattedTime} remaining`"
-      :style="{ width: size + 'px', height: size + 'px' }"
+      :style="{ width: (size ?? 120) + 'px', height: (size ?? 120) + 'px' }"
     >
       <defs>
         <linearGradient id="timerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -125,7 +125,7 @@ defineExpose({ reset, timeRemaining, stopTimer, startTimer })
         y="54"
         text-anchor="middle"
         dominant-baseline="middle"
-        :font-size="size * 0.22"
+        :font-size="(size ?? 120) * 0.22"
         font-weight="800"
         :fill="color"
         font-family="'SF Mono', 'Fira Code', Consolas, monospace"
