@@ -2,14 +2,11 @@
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { categories } from '@/data/toolsData'
-import Navbar from '@/components/Navbar.vue'
 import SiteFooter from '@/components/SiteFooter.vue'
 </script>
 
 <template>
   <div class="homepage">
-    <Navbar />
-
     <!-- Hero Section -->
     <section class="hero">
       <div class="hero-content">
