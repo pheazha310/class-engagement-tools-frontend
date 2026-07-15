@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { RouterLink } from 'vue-router'
 import type { Participant, WheelTheme } from '@/types/wheel'
 
 const props = defineProps<{
@@ -10,6 +11,7 @@ const props = defineProps<{
   theme: WheelTheme
   loading?: boolean
   error?: string | null
+  isAuthenticated?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -65,45 +67,54 @@ function handleBackdropClick(event: MouseEvent) {
           {{ error }}
         </div>
 
-        <div class="form-group">
-          <label for="wheel-name" class="form-label">Wheel Name</label>
-          <input
-            id="wheel-name"
-            v-model="localName"
-            type="text"
-            class="form-input"
-            placeholder="e.g. Morning Circle"
-            maxlength="255"
-            required
-          />
+        <div v-if="!props.isAuthenticated" class="auth-prompt">
+          <p class="auth-prompt-text">
+            <strong>Please login first</strong> to save your wheel.
+          </p>
+          <RouterLink to="/login" class="auth-prompt-link">Go to login</RouterLink>
         </div>
 
-        <div class="form-group">
-          <label for="wheel-description" class="form-label">Description (optional)</label>
-          <textarea
-            id="wheel-description"
-            v-model="localDescription"
-            class="form-input form-textarea"
-            placeholder="What is this wheel for?"
-            maxlength="1000"
-          />
-        </div>
-
-        <div class="modal-preview">
-          <div class="modal-preview-label">Preview</div>
-          <div class="modal-preview-meta">
-            <span class="modal-preview-name">{{ localName || 'Untitled Wheel' }}</span>
-            <span class="modal-preview-count">{{ participants.length }} participant{{ participants.length === 1 ? '' : 's' }}</span>
-          </div>
-          <div class="modal-theme-row">
-            <span
-              v-for="(color, index) in theme.colors"
-              :key="index"
-              class="modal-theme-swatch"
-              :style="{ backgroundColor: color }"
+        <template v-else>
+          <div class="form-group">
+            <label for="wheel-name" class="form-label">Wheel Name</label>
+            <input
+              id="wheel-name"
+              v-model="localName"
+              type="text"
+              class="form-input"
+              placeholder="e.g. Morning Circle"
+              maxlength="255"
+              required
             />
           </div>
-        </div>
+
+          <div class="form-group">
+            <label for="wheel-description" class="form-label">Description (optional)</label>
+            <textarea
+              id="wheel-description"
+              v-model="localDescription"
+              class="form-input form-textarea"
+              placeholder="What is this wheel for?"
+              maxlength="1000"
+            />
+          </div>
+
+          <div class="modal-preview">
+            <div class="modal-preview-label">Preview</div>
+            <div class="modal-preview-meta">
+              <span class="modal-preview-name">{{ localName || 'Untitled Wheel' }}</span>
+              <span class="modal-preview-count">{{ participants.length }} participant{{ participants.length === 1 ? '' : 's' }}</span>
+            </div>
+            <div class="modal-theme-row">
+              <span
+                v-for="(color, index) in theme.colors"
+                :key="index"
+                class="modal-theme-swatch"
+                :style="{ backgroundColor: color }"
+              />
+            </div>
+          </div>
+        </template>
       </div>
 
       <div class="modal-footer">
@@ -111,6 +122,7 @@ function handleBackdropClick(event: MouseEvent) {
           Cancel
         </button>
         <button
+          v-if="props.isAuthenticated"
           type="button"
           class="btn btn-primary"
           :style="{
@@ -203,6 +215,40 @@ function handleBackdropClick(event: MouseEvent) {
   border: 1px solid #5a1f1f;
   border-radius: 10px;
   padding: 10px 12px;
+}
+
+.auth-prompt {
+  background: #1f1f38;
+  border: 1px solid #2a2a45;
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.auth-prompt-text {
+  color: #ddd;
+  font-size: 14px;
+  margin: 0;
+}
+
+.auth-prompt-text strong {
+  color: #4ecdc4;
+}
+
+.auth-prompt-link {
+  display: inline-flex;
+  align-items: center;
+  color: #22d3ee;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 13px;
+  align-self: flex-start;
+}
+
+.auth-prompt-link:hover {
+  text-decoration: underline;
 }
 
 .form-group {

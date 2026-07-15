@@ -7,6 +7,8 @@ import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import ConfirmationDialog from '@/components/ConfirmationDialog.vue'
 import ToastNotification from '@/components/ToastNotification.vue'
+import QRCodeModal from '@/components/QRCodeModal.vue'
+import type { QrCodeData } from '@/types/poll'
 
 const router = useRouter()
 const store = usePollStore()
@@ -16,6 +18,8 @@ const showDeleteDialog = ref(false)
 const pollToDelete = ref<number | null>(null)
 const toastMessage = ref<string | null>(null)
 const toastType = ref<'success' | 'error'>('success')
+const qrCodeData = ref<QrCodeData | null>(null)
+const showQrModal = ref(false)
 
 const filteredPolls = computed(() => {
   if (!searchQuery.value.trim()) return store.polls
@@ -90,6 +94,16 @@ async function endPoll(id: number) {
 function viewResults(id: number) {
   router.push(`/polls/${id}/results`)
 }
+
+async function showQrCode(id: number) {
+  try {
+    qrCodeData.value = await store.getQrCode(id)
+    showQrModal.value = true
+  } catch {
+    toastMessage.value = 'Failed to generate QR code.'
+    toastType.value = 'error'
+  }
+}
 </script>
 
 <template>
@@ -150,6 +164,7 @@ function viewResults(id: number) {
         @start="startPoll"
         @end="endPoll"
         @view="viewResults"
+        @qr="showQrCode"
       />
     </div>
 
@@ -167,6 +182,14 @@ function viewResults(id: number) {
       :message="toastMessage"
       :type="toastType"
       @close="toastMessage = null"
+    />
+
+    <QRCodeModal
+      v-if="qrCodeData"
+      :show="showQrModal"
+      :join-url="qrCodeData.join_url"
+      :room-code="qrCodeData.room_code"
+      @close="showQrModal = false"
     />
   </div>
 </template>

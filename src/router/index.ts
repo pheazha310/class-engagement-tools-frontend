@@ -167,29 +167,44 @@ router.beforeEach((to, from, next) => {
 
   if (to.meta.requiresAuth && !authStore.user) {
     next('/login')
-  } else if (to.meta.guest && authStore.user) {
-    if (authStore.user.role === 'admin') {
-      next('/admin/users')
-    } else if (authStore.user.role === 'teacher') {
-      next('/teacher/dashboard')
-    } else if (authStore.user.role === 'student') {
-      next('/student/dashboard')
-    } else {
-      next('/polls')
-    }
-  } else if (to.meta.role && authStore.user?.role !== to.meta.role) {
-    if (authStore.user?.role === 'admin') {
-      next('/admin/users')
-    } else if (authStore.user?.role === 'teacher') {
-      next('/teacher/dashboard')
-    } else if (authStore.user?.role === 'student') {
-      next('/student/dashboard')
-    } else {
-      next('/polls')
-    }
-  } else {
-    next()
+    return
   }
+
+  if (to.meta.guest && authStore.user) {
+    switch (authStore.user.role) {
+      case 'admin':
+        next('/admin/users')
+        break
+      case 'teacher':
+        next('/teacher/dashboard')
+        break
+      case 'student':
+        next('/student/dashboard')
+        break
+      default:
+        next('/polls')
+    }
+    return
+  }
+
+  if (to.meta.role && authStore.user?.role !== to.meta.role) {
+    switch (authStore.user?.role) {
+      case 'admin':
+        next('/admin/users')
+        break
+      case 'teacher':
+        next('/teacher/dashboard')
+        break
+      case 'student':
+        next('/student/dashboard')
+        break
+      default:
+        next('/polls')
+    }
+    return
+  }
+
+  next()
 })
 
 export default router
