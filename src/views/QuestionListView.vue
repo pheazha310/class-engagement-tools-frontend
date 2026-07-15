@@ -83,7 +83,7 @@ async function executeDelete() {
 }
 
 function goBackToQuiz() {
-  window.location.href = '/quizzes'
+  router.push({ name: 'teacher-quizzes' })
 }
 </script>
 
@@ -183,7 +183,7 @@ function goBackToQuiz() {
 .questions-page {
   position: relative;
   min-height: 100vh;
-  padding: 5rem 1rem 4rem;
+  padding: 7rem 1rem 4rem;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
@@ -212,7 +212,7 @@ function goBackToQuiz() {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 1.75rem;
+  margin-bottom: 2.5rem;
   padding: 0 0.25rem;
   flex-wrap: wrap;
 }
