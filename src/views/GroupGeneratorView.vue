@@ -28,6 +28,7 @@ const quantity = ref(3)
 const generateTeamNames = ref(true)
 const generatedGroups = ref<Group[]>([])
 const isGenerating = ref(false)
+const showConfigModal = ref(false)
 
 // Team name adjectives and nouns
 const adjectives = [
@@ -223,6 +224,7 @@ function generateGroups() {
         break
     }
     isGenerating.value = false
+    showConfigModal.value = false
   }, 300)
 }
 
@@ -496,7 +498,7 @@ function processFile(file: File) {
           </svg>
           <span>Back</span>
         </button>
-        <div class="header__title-group">
+        <div class="header__content">
           <h1 class="header__title">Group Generator</h1>
           <p class="header__subtitle">Automatically organize students into balanced classroom groups.</p>
         </div>
@@ -505,155 +507,173 @@ function processFile(file: File) {
 
     <!-- Main Content -->
     <main class="main">
-      <div class="layout">
-        <!-- Left Panel -->
-        <div class="left-panel">
-          <!-- Step 1: Student List -->
-          <section class="card">
-            <div class="step-header">
-              <div class="step-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1e40af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                </svg>
-              </div>
-              <div>
-                <h2 class="card__title">Student List</h2>
-                <span class="step-badge">STEP 1</span>
-              </div>
-            </div>
 
-            <div class="form">
-              <textarea
-                v-model="studentText"
-                class="textarea"
-                placeholder="Paste student names here, one per line..."
-                rows="8"
-              ></textarea>
-              <span class="hint">Separate names with Enter</span>
+      <!-- Configuration Modal -->
+      <div v-if="showConfigModal" class="modal-overlay" @click.self="showConfigModal = false">
+        <div class="modal">
+          <div class="modal__header">
+            <h2 class="modal__title">Configure Groups</h2>
+            <button class="modal__close" @click="showConfigModal = false">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
 
-              <div
-                class="upload-zone"
-                @dragover="handleDragOver"
-                @drop="handleDrop"
-              >
-                <svg class="upload-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="17 8 12 3 7 8" />
-                  <line x1="12" y1="3" x2="12" y2="15" />
-                </svg>
-                <p class="upload-text">
-                  Drag & drop or <label class="upload-link"><input type="file" accept=".csv,.txt,.xlsx" class="hidden" @change="handleFileUpload">upload file</label>
-                </p>
-                <p class="upload-hint">Supports .csv, .txt, .xlsx files (with columns: ID, Name, Gender)</p>
-              </div>
-            </div>
-          </section>
-
-          <!-- Step 2: Configuration -->
-          <section class="card">
-            <div class="step-header">
-              <div class="step-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1e40af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="4" y1="21" x2="4" y2="14" />
-                  <line x1="4" y1="10" x2="4" y2="3" />
-                  <line x1="12" y1="21" x2="12" y2="12" />
-                  <line x1="12" y1="8" x2="12" y2="3" />
-                  <line x1="20" y1="21" x2="20" y2="16" />
-                  <line x1="20" y1="12" x2="20" y2="3" />
-                  <line x1="1" y1="14" x2="7" y2="14" />
-                  <line x1="9" y1="8" x2="15" y2="8" />
-                  <line x1="17" y1="16" x2="23" y2="16" />
-                </svg>
-              </div>
-              <div>
-                <h2 class="card__title">Configuration</h2>
-                <span class="step-badge">STEP 2</span>
-              </div>
-            </div>
-
-            <div class="config">
-              <label class="label">Generation Method</label>
-              <div class="method-grid">
-                <button
-                  v-for="m in ['random', 'balanced', 'gender']"
-                  :key="m"
-                  class="method-btn"
-                  :class="{ 'method-btn--active': method === m }"
-                  @click="method = m as GenerationMethod"
-                >
-                  <svg v-if="m === 'random'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5" />
-                  </svg>
-                  <svg v-else-if="m === 'balanced'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4" />
-                  </svg>
-                  <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <div class="modal__body">
+            <!-- Step 1: Student List -->
+            <section class="card">
+              <div class="step-header">
+                <div class="step-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1e40af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
                     <circle cx="9" cy="7" r="4" />
                     <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
                     <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                   </svg>
-                  <span class="method-label">{{ m.charAt(0).toUpperCase() + m.slice(1) }}</span>
-                </button>
+                </div>
+                <div>
+                  <h3 class="card__title">Student List</h3>
+                  <span class="step-badge">STEP 1</span>
+                </div>
               </div>
 
-              <div class="row">
-                <div class="field field--grow">
-                  <label class="label">Targeting</label>
-                  <select v-model="target" class="select">
-                    <option value="groups">Number of Groups</option>
-                    <option value="size">Group Size</option>
-                  </select>
+              <div class="form">
+                <textarea
+                  v-model="studentText"
+                  class="textarea"
+                  placeholder="Paste student names here, one per line..."
+                  rows="5"
+                ></textarea>
+                <span class="hint">Separate names with Enter</span>
+
+                <div
+                  class="upload-zone"
+                  @dragover="handleDragOver"
+                  @drop="handleDrop"
+                >
+                  <svg class="upload-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
+                  <p class="upload-text">
+                    Drag & drop or <label class="upload-link"><input type="file" accept=".csv,.txt,.xlsx" class="hidden" @change="handleFileUpload">upload file</label>
+                  </p>
+                  <p class="upload-hint">Supports .csv, .txt, .xlsx files (with columns: ID, Name, Gender)</p>
+                </div>
+              </div>
+            </section>
+
+            <!-- Step 2: Configuration -->
+            <section class="card">
+              <div class="step-header">
+                <div class="step-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1e40af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="4" y1="21" x2="4" y2="14" />
+                    <line x1="4" y1="10" x2="4" y2="3" />
+                    <line x1="12" y1="21" x2="12" y2="12" />
+                    <line x1="12" y1="8" x2="12" y2="3" />
+                    <line x1="20" y1="21" x2="20" y2="16" />
+                    <line x1="20" y1="12" x2="20" y2="3" />
+                    <line x1="1" y1="14" x2="7" y2="14" />
+                    <line x1="9" y1="8" x2="15" y2="8" />
+                    <line x1="17" y1="16" x2="23" y2="16" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="card__title">Configuration</h3>
+                  <span class="step-badge">STEP 2</span>
+                </div>
+              </div>
+
+              <div class="config">
+                <label class="label">Generation Method</label>
+                <div class="method-grid">
+                  <button
+                    v-for="m in ['random', 'balanced', 'gender']"
+                    :key="m"
+                    class="method-btn"
+                    :class="{ 'method-btn--active': method === m }"
+                    @click="method = m as GenerationMethod"
+                  >
+                    <svg v-if="m === 'random'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5" />
+                    </svg>
+                    <svg v-else-if="m === 'balanced'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4" />
+                    </svg>
+                    <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                      <circle cx="9" cy="7" r="4" />
+                      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                    </svg>
+                    <span class="method-label">{{ m.charAt(0).toUpperCase() + m.slice(1) }}</span>
+                  </button>
                 </div>
 
-                <div class="field field--quantity">
-                  <label class="label">Quantity</label>
-                  <div class="number-input">
-                    <button class="num-btn" @click="quantity > 2 && quantity--">−</button>
-                    <input type="number" v-model="quantity" class="num-field" min="2" />
-                    <button class="num-btn" @click="quantity++">+</button>
+                <div class="row">
+                  <div class="field field--grow">
+                    <label class="label">Targeting</label>
+                    <select v-model="target" class="select">
+                      <option value="groups">Number of Groups</option>
+                      <option value="size">Group Size</option>
+                    </select>
+                  </div>
+
+                  <div class="field field--quantity">
+                    <label class="label">Quantity</label>
+                    <div class="number-input">
+                      <button class="num-btn" @click="quantity > 2 && quantity--">−</button>
+                      <input type="number" v-model="quantity" class="num-field" min="2" />
+                      <button class="num-btn" @click="quantity++">+</button>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div class="toggle-row">
-                <label class="toggle-label">Generate Team Names</label>
+                <div class="toggle-row">
+                  <label class="toggle-label">Generate Team Names</label>
+                  <button
+                    class="toggle"
+                    :class="{ 'toggle--on': generateTeamNames }"
+                    @click="generateTeamNames = !generateTeamNames"
+                  >
+                    <span class="toggle__thumb"></span>
+                  </button>
+                </div>
+
                 <button
-                  class="toggle"
-                  :class="{ 'toggle--on': generateTeamNames }"
-                  @click="generateTeamNames = !generateTeamNames"
+                  class="generate-btn"
+                  :disabled="!hasStudents || isGenerating"
+                  @click="generateGroups"
                 >
-                  <span class="toggle__thumb"></span>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+                  </svg>
+                  {{ isGenerating ? 'Generating...' : 'Generate Groups' }}
                 </button>
               </div>
-
-              <button
-                class="generate-btn"
-                :disabled="!hasStudents || isGenerating"
-                @click="generateGroups"
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
-                </svg>
-                {{ isGenerating ? 'Generating...' : 'Generate Groups' }}
-              </button>
-            </div>
-          </section>
+            </section>
+          </div>
         </div>
+      </div>
 
+      <div class="layout">
         <!-- Right Panel: Results -->
         <div class="right-panel">
-          <div v-if="isEmpty" class="empty-state">
-            <div class="empty-icon">
-              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
-              </svg>
+          <div v-if="isEmpty" class="welcome-card">
+            <div class="welcome-card__content">
+              <h3 class="welcome-card__title">Welcome to Group Generator</h3>
+              <p class="welcome-card__desc">Automatically organize students into balanced classroom groups. Click the button below to get started.</p>
+              <button class="start-btn" @click="showConfigModal = true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+                Create Group Generator
+              </button>
             </div>
-            <p class="empty-title">No groups generated yet</p>
-            <p class="empty-desc">Configure the settings on the left and click Generate Groups to see the magic happen.</p>
           </div>
 
           <div v-else class="results">
@@ -663,6 +683,13 @@ function processFile(file: File) {
                 <span class="text-sm text-slate-500 ml-3">Created for {{ totalStudents }} students</span>
               </div>
               <div class="actions">
+                <button class="secondary-btn" @click="showConfigModal = true" title="Configure">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                  Configure
+                </button>
                 <button class="secondary-btn" @click="regenerate">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
@@ -756,26 +783,28 @@ function processFile(file: File) {
   min-height: 100vh;
   background: #f5f3ff;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  padding-top: 90px;
+  padding-top: 0;
 }
 
 .header {
-  background: white;
-  border-bottom: 1px solid #e2e8f0;
-  position: fixed;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-bottom: none;
+  position: sticky;
   top: 0;
   left: 0;
   right: 0;
-  z-index: 50;
+  z-index: 40;
+  padding: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .header__inner {
   max-width: 80rem;
   margin: 0 auto;
-  padding: 1.5rem 2rem;
   display: flex;
   align-items: center;
   gap: 1.5rem;
+  padding: 1.25rem 2rem;
 }
 
 .back-btn {
@@ -793,6 +822,7 @@ function processFile(file: File) {
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .back-btn:hover {
@@ -804,21 +834,21 @@ function processFile(file: File) {
   transform: translateX(0);
 }
 
-.header__title-group {
-  flex: 1;
-}
-
 .header__title {
-  font-size: 1.75rem;
+  font-size: 1.875rem;
   font-weight: 800;
-  color: #1e40af;
+  color: white;
   margin: 0;
+  line-height: 1.2;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .header__subtitle {
-  color: #64748b;
-  font-size: 0.9rem;
-  margin: 0.25rem 0 0;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 0.875rem;
+  margin: 0.375rem 0 0;
+  font-weight: 400;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .header__actions {
@@ -854,20 +884,13 @@ function processFile(file: File) {
 
 .layout {
   display: grid;
-  grid-template-columns: 400px 1fr;
+  grid-template-columns: 1fr;
   gap: 1.5rem;
   align-items: start;
 }
 
 .left-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  position: sticky;
-  top: 84px;
-  max-height: calc(100vh - 104px);
-  overflow-y: auto;
-  padding-right: 0.5rem;
+  display: none;
 }
 
 .left-panel::-webkit-scrollbar {
@@ -890,8 +913,8 @@ function processFile(file: File) {
 
 .card {
   background: white;
-  border-radius: 1rem;
-  padding: 1.5rem;
+  border-radius: 0.75rem;
+  padding: 0.6rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
   border: 1px solid #f1f5f9;
 }
@@ -899,22 +922,22 @@ function processFile(file: File) {
 .step-header {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
 }
 
 .step-icon {
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2rem;
+  height: 2rem;
   display: flex;
   align-items: center;
   justify-content: center;
   background: #dbeafe;
-  border-radius: 0.5rem;
+  border-radius: 0.375rem;
 }
 
 .card__title {
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: 700;
   color: #0f172a;
   margin: 0;
@@ -922,7 +945,7 @@ function processFile(file: File) {
 
 .step-badge {
   display: block;
-  font-size: 0.7rem;
+  font-size: 0.6rem;
   color: #94a3b8;
   font-weight: 600;
   text-transform: uppercase;
@@ -932,17 +955,17 @@ function processFile(file: File) {
 .form {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.3rem;
 }
 
 .textarea {
   width: 100%;
-  padding: 0.75rem;
+  padding: 0.4rem;
   border: 1px solid #e2e8f0;
   border-radius: 0.5rem;
   font-family: inherit;
-  font-size: 0.9rem;
-  resize: vertical;
+  font-size: 0.85rem;
+  resize: none;
   outline: none;
   transition: border-color 0.2s;
 }
@@ -952,14 +975,14 @@ function processFile(file: File) {
 }
 
 .hint {
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   color: #94a3b8;
 }
 
 .upload-zone {
   border: 2px dashed #cbd5e1;
   border-radius: 0.5rem;
-  padding: 2rem 1rem;
+  padding: 0.5rem;
   text-align: center;
   cursor: pointer;
   transition: all 0.2s;
@@ -971,14 +994,15 @@ function processFile(file: File) {
 }
 
 .upload-icon {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.3rem;
   color: #64748b;
 }
 
 .upload-text {
-  font-size: 0.9rem;
+  font-size: 0.75rem;
   color: #334155;
   margin: 0;
+  line-height: 1.4;
 }
 
 .upload-link {
@@ -993,23 +1017,23 @@ function processFile(file: File) {
 }
 
 .upload-hint {
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   color: #94a3b8;
-  margin: 0.25rem 0 0;
+  margin: 0.1rem 0 0;
 }
 
 .label {
   display: block;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: #0f172a;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
 }
 
 .config {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 0.6rem;
 }
 
 .method-grid {
@@ -1022,8 +1046,8 @@ function processFile(file: File) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
-  padding: 1rem 0.5rem;
+  gap: 0.3rem;
+  padding: 0.6rem 0.4rem;
   border: 2px solid #e2e8f0;
   border-radius: 0.5rem;
   background: white;
@@ -1044,14 +1068,14 @@ function processFile(file: File) {
 }
 
 .method-label {
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   font-weight: 600;
 }
 
 .row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .field {
@@ -1064,7 +1088,7 @@ function processFile(file: File) {
 }
 
 .field--quantity {
-  width: 160px;
+  width: 140px;
   flex-shrink: 0;
 }
 
@@ -1149,6 +1173,7 @@ function processFile(file: File) {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 0.3rem 0;
 }
 
 .toggle-label {
@@ -1194,18 +1219,18 @@ function processFile(file: File) {
   justify-content: center;
   gap: 0.5rem;
   width: 100%;
-  padding: 0.9rem;
+  padding: 0.65rem;
   background: #1e40af;
   color: white;
   border: none;
   border-radius: 0.75rem;
   font-family: inherit;
-  font-size: 1rem;
+  font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
   box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
-  margin-top: 0.5rem;
+  margin-top: 0.4rem;
 }
 
 .generate-btn:hover:not(:disabled) {
@@ -1225,11 +1250,11 @@ function processFile(file: File) {
 
 /* Right Panel */
 .right-panel {
-  min-height: 500px;
-  max-height: calc(100vh - 104px);
+  min-height: calc(100vh - 106px);
+  max-height: calc(100vh - 106px);
   overflow-y: auto;
   position: sticky;
-  top: 104px;
+  top: 86px;
   padding-right: 0.5rem;
 }
 
@@ -1258,25 +1283,52 @@ function processFile(file: File) {
   justify-content: center;
   padding: 4rem 2rem;
   text-align: center;
+  min-height: 400px;
 }
 
 .empty-icon {
   color: #cbd5e1;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
 }
 
 .empty-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #334155;
-  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 0.75rem;
 }
 
 .empty-desc {
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   color: #64748b;
-  margin: 0;
+  margin: 0 0 1.5rem;
   max-width: 32rem;
+}
+
+.start-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 0.75rem;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.start-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.5);
+}
+
+.start-btn:active {
+  transform: translateY(0);
 }
 
 .results {
@@ -1289,13 +1341,14 @@ function processFile(file: File) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 1.25rem;
+  padding: 1.5rem;
   background: white;
-  border-radius: 0.75rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border-radius: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   position: sticky;
   top: 0;
   z-index: 10;
+  border: 2px solid #e2e8f0;
 }
 
 .badge {
@@ -1406,6 +1459,111 @@ function processFile(file: File) {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1.25rem;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.modal {
+  background: #f5f3ff;
+  border-radius: 1rem;
+  max-width: 700px;
+  width: 100%;
+  max-height: 95vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: white;
+  border-radius: 1rem 1rem 0 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.modal__title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.modal__close {
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 0.375rem;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.modal__close:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.modal__body {
+  padding: 0.75rem;
+}
+
+/* Welcome Card */
+.welcome-card {
+  background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+  border: 2px dashed #cbd5e1;
+  border-radius: 1rem;
+  padding: 3rem 2rem;
+  text-align: center;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.welcome-card__content {
+  max-width: 32rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.welcome-card__title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.welcome-card__desc {
+  font-size: 0.95rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.5;
 }
 
 .group-card {
