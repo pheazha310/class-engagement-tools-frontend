@@ -7,6 +7,7 @@ const remainingSeconds = ref(5 * 60)
 const timerId = ref<number | null>(null)
 const isRunning = ref(false)
 const isPaused = ref(false)
+const isFullscreen = ref(false)
 
 const totalDurationSeconds = computed(() => {
   const minutes = Math.max(0, Math.floor(minutesInput.value))
@@ -82,6 +83,28 @@ const resetTimer = () => {
   updateRemainingFromInputs()
 }
 
+const toggleFullscreen = async () => {
+  const timerSection = document.querySelector('.timer-section') as HTMLElement
+  if (!timerSection) return
+
+  try {
+    if (!isFullscreen.value) {
+      if (timerSection.requestFullscreen) {
+        await timerSection.requestFullscreen()
+        isFullscreen.value = true
+      }
+    } else {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen()
+        isFullscreen.value = false
+      }
+    }
+  } catch (error) {
+    console.error('Fullscreen request failed:', error)
+    isFullscreen.value = false
+  }
+}
+
 const setPreset = (minutes: number, seconds = 0) => {
   if (isRunning.value) return
   minutesInput.value = minutes
@@ -112,12 +135,24 @@ watch([minutesInput, secondsInput], () => {
 
 onUnmounted(() => {
   stopTimer()
+  if (isFullscreen.value && document.fullscreenElement) {
+    document.exitFullscreen()
+  }
 })
 </script>
 
 <template>
   <section class="timer-section">
     <div class="timer-card">
+      <button
+        type="button"
+        class="fullscreen-btn"
+        @click="toggleFullscreen"
+        aria-label="Toggle fullscreen"
+      >
+        ⛶
+      </button>
+      
       <div class="timer-circle">
         <div class="timer-display">{{ formattedRemainingTime }}</div>
         <p class="timer-label">{{ isFinished ? 'Finished' : 'Remaining' }}</p>
@@ -214,7 +249,95 @@ onUnmounted(() => {
   padding: 36px 0 16px;
 }
 
+.fullscreen-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #0f172a;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+}
+
+.fullscreen-btn:hover {
+  background: #e2e8f0;
+}
+
+.timer-section:fullscreen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0f172a;
+  padding: 0;
+  margin: 0;
+}
+
+.timer-section:fullscreen .timer-card {
+  max-width: none;
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+  border: none;
+  padding: 60px;
+  background: #0f172a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.timer-section:fullscreen .timer-circle {
+  width: 500px;
+  height: 500px;
+  margin: 0 0 60px 0;
+  background: radial-gradient(circle at top, rgba(99, 102, 241, 0.2), transparent 45%), rgba(79, 70, 229, 0.1);
+  box-shadow: inset 0 0 0 20px rgba(99, 102, 241, 0.3);
+}
+
+.timer-section:fullscreen .timer-display {
+  font-size: 10rem;
+  color: #ffffff;
+  font-weight: 900;
+}
+
+.timer-section:fullscreen .timer-label {
+  font-size: 1.8rem;
+  color: #cbd5e1;
+  margin-top: 20px;
+}
+
+.timer-section:fullscreen .timer-controls {
+  display: none;
+}
+
+.timer-section:fullscreen .timer-presets {
+  display: none;
+}
+
+.timer-section:fullscreen .timer-note {
+  display: none;
+}
+
+.timer-section:fullscreen .timer-action-row {
+  gap: 20px;
+  margin-top: 60px;
+}
+
+.timer-section:fullscreen .btn {
+  padding: 18px 28px;
+  font-size: 1.1rem;
+  min-width: 140px;
+}
+
 .timer-card {
+  position: relative;
   max-width: 420px;
   margin: 24px auto 0;
   background: white;

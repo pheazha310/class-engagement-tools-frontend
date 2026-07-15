@@ -5,6 +5,7 @@ const elapsedSeconds = ref(0)
 const intervalId = ref<number | null>(null)
 const isRunning = ref(false)
 const isPaused = ref(false)
+const isFullscreen = ref(false)
 
 const formattedElapsedTime = computed(() => {
   const minutes = Math.floor(elapsedSeconds.value / 60)
@@ -50,8 +51,33 @@ const resetStopwatch = () => {
   elapsedSeconds.value = 0
 }
 
+const toggleFullscreen = async () => {
+  const stopwatchSection = document.querySelector('.stopwatch-section') as HTMLElement
+  if (!stopwatchSection) return
+
+  try {
+    if (!isFullscreen.value) {
+      if (stopwatchSection.requestFullscreen) {
+        await stopwatchSection.requestFullscreen()
+        isFullscreen.value = true
+      }
+    } else {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen()
+        isFullscreen.value = false
+      }
+    }
+  } catch (error) {
+    console.error('Fullscreen request failed:', error)
+    isFullscreen.value = false
+  }
+}
+
 onUnmounted(() => {
   stopStopwatch()
+  if (isFullscreen.value && document.fullscreenElement) {
+    document.exitFullscreen()
+  }
 })
 </script>
 
@@ -62,6 +88,16 @@ onUnmounted(() => {
         <div class="stopwatch-time">{{ formattedElapsedTime }}</div>
         <div class="stopwatch-label">Elapsed Time</div>
       </div>
+
+      <button
+        type="button"
+        class="fullscreen-button"
+        :aria-label="isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'"
+        :title="isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'"
+        @click="toggleFullscreen"
+      >
+        ⛶
+      </button>
 
       <div class="stopwatch-action-row">
         <button
@@ -106,7 +142,54 @@ onUnmounted(() => {
   padding: 24px 0;
 }
 
+.stopwatch-section:fullscreen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0f172a;
+  padding: 0;
+  margin: 0;
+}
+
+.stopwatch-section:fullscreen .stopwatch-card {
+  max-width: none;
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+  border: none;
+  padding: 60px;
+  background: #0f172a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stopwatch-section:fullscreen .stopwatch-display {
+  gap: 20px;
+  margin-bottom: 60px;
+}
+
+.stopwatch-section:fullscreen .stopwatch-action-row {
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.stopwatch-section:fullscreen .btn {
+  padding: 18px 28px;
+  font-size: 1.1rem;
+  min-width: 140px;
+}
+
+.stopwatch-section:fullscreen .fullscreen-button {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
+}
+
 .stopwatch-card {
+  position: relative;
   max-width: 420px;
   margin: 24px auto 0;
   background: white;
@@ -115,6 +198,29 @@ onUnmounted(() => {
   border: 1px solid rgba(148, 163, 184, 0.16);
   padding: 32px;
   text-align: center;
+}
+
+.fullscreen-button {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 10px;
+  background: #f1f5f9;
+  color: #0f172a;
+  cursor: pointer;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.fullscreen-button:hover {
+  background: #e2e8f0;
 }
 
 .stopwatch-display {
@@ -131,11 +237,22 @@ onUnmounted(() => {
   color: #0f172a;
 }
 
+.stopwatch-section:fullscreen .stopwatch-time {
+  font-size: 10rem;
+  color: #ffffff;
+  font-weight: 900;
+}
+
 .stopwatch-label {
   font-size: 0.9rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: #64748b;
+}
+
+.stopwatch-section:fullscreen .stopwatch-label {
+  font-size: 1.8rem;
+  color: #cbd5e1;
 }
 
 .stopwatch-action-row {
