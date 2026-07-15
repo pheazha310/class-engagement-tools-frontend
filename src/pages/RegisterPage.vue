@@ -221,7 +221,7 @@ const roleOptions: { value: Role; label: string }[] = [
       </Transition>
 
       <!-- Form -->
-      <form v-else novalidate @submit.prevent="submit()">
+      <form v-if="!success" novalidate @submit.prevent="submit()">
         <Transition name="fade">
           <div v-if="error" class="alert alert-error">
             <svg class="alert-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">

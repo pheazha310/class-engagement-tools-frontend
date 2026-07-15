@@ -3,6 +3,8 @@ import { useAuthStore } from '@/stores/authStore'
 
 import StudentPickerView from '@/views/StudentPickerView.vue'
 import SingleStudentPickerView from '@/views/SingleStudentPickerView.vue'
+import MultipleStudentPickerView from '@/views/MultipleStudentPickerView.vue'
+import LuckyDrawView from '@/views/LuckyDrawView.vue'
 import HomepageView from '@/views/Homepage.vue'
 import ToolsPage from '@/pages/ToolsPage.vue'
 import ToolDetailPage from '@/pages/ToolDetailPage.vue'
@@ -153,6 +155,11 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/SharedWheelView.vue'),
   },
   {
+    path: '/card-picker',
+    name: 'card-picker',
+    component: () => import('@/pages/CardPicker.vue'),
+  },
+  {
     path: '/student-picker',
     name: 'student-picker',
     component: StudentPickerView,
@@ -161,6 +168,16 @@ const routes: RouteRecordRaw[] = [
     path: '/single-student-picker',
     name: 'single-student-picker',
     component: SingleStudentPickerView,
+  },
+  {
+    path: '/multiple-student-picker',
+    name: 'multiple-student-picker',
+    component: MultipleStudentPickerView,
+  },
+  {
+    path: '/lucky-draw',
+    name: 'lucky-draw',
+    component: LuckyDrawView,
   },
   {
     path: '/tools',
