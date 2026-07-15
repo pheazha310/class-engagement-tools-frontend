@@ -68,6 +68,34 @@ const passwordMatch = computed(() =>
   form.value.password === form.value.passwordConfirmation
 )
 
+const passwordStrength = computed(() => {
+  const pwd = form.value.password
+  if (!pwd) return 0
+  let score = 0
+  if (pwd.length >= 8) score += 25
+  if (pwd.length >= 12) score += 15
+  if (/[A-Z]/.test(pwd)) score += 20
+  if (/[a-z]/.test(pwd)) score += 15
+  if (/[0-9]/.test(pwd)) score += 15
+  if (/[^A-Za-z0-9]/.test(pwd)) score += 10
+  return Math.min(score, 100)
+})
+
+const passwordStrengthLabel = computed(() => {
+  if (passwordStrength.value === 0) return ''
+  if (passwordStrength.value < 30) return 'Weak'
+  if (passwordStrength.value < 60) return 'Fair'
+  if (passwordStrength.value < 80) return 'Good'
+  return 'Strong'
+})
+
+const passwordStrengthColor = computed(() => {
+  if (passwordStrength.value < 30) return '#ef4444'
+  if (passwordStrength.value < 60) return '#f59e0b'
+  if (passwordStrength.value < 80) return '#3b82f6'
+  return '#10b981'
+})
+
 const step1Valid = computed(
   () =>
     form.value.name.trim() !== '' &&
@@ -84,6 +112,13 @@ const step3Valid = computed(
     form.value.province !== '' &&
     form.value.schoolName !== ''
 )
+
+const steps = [
+  { number: 1, label: 'Account', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
+  { number: 2, label: 'Role', icon: 'M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0' },
+  { number: 3, label: 'Location', icon: 'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z' },
+  { number: 4, label: 'Review', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
+]
 
 async function fetchCountries() {
   loadingCountries.value = true
@@ -144,6 +179,11 @@ function prevStep() {
   if (step.value > 1) step.value--
 }
 
+function goToStep(n: number) {
+  if (n >= step.value) return // only allow going back
+  step.value = n
+}
+
 async function submit() {
   error.value = ''
   submitting.value = true
@@ -166,13 +206,37 @@ async function submit() {
   }
 
   success.value = true
-  setTimeout(() => router.replace('/'), 1400)
+  setTimeout(() => router.replace('/'), 2000)
 }
 
-const roleOptions: { value: Role; label: string }[] = [
-  { value: 'student', label: 'Student' },
-  { value: 'teacher', label: 'Teacher' },
+const roleOptions: { value: Role; label: string; icon: string; desc: string; features: string[] }[] = [
+  {
+    value: 'student',
+    label: 'Student',
+    icon: '🎓',
+    desc: 'Join classes and participate in activities',
+    features: ['Join live polls and quizzes', 'View real-time results', 'Engage with interactive tools'],
+  },
+  {
+    value: 'teacher',
+    label: 'Teacher',
+    icon: '👨‍🏫',
+    desc: 'Create classes and manage your students',
+    features: ['Create polls & quizzes', 'Monitor student engagement', 'Access classroom analytics'],
+  },
 ]
+
+const stepErrors = computed(() => {
+  const errs: Record<string, string> = {}
+  if (step.value === 1) {
+    if (!form.value.name.trim()) errs.name = 'Name is required'
+    if (!form.value.email.trim()) errs.email = 'Email is required'
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.value.email)) errs.email = 'Invalid email format'
+    if (form.value.password.length > 0 && form.value.password.length < 6) errs.password = 'At least 6 characters'
+    if (form.value.passwordConfirmation && !passwordMatch.value) errs.confirm = 'Passwords do not match'
+  }
+  return errs
+})
 </script>
 
 <template>
@@ -193,37 +257,66 @@ const roleOptions: { value: Role; label: string }[] = [
         <p class="auth-subtitle">Join the platform in a few simple steps</p>
       </div>
 
-      <!-- Progress Steps -->
-      <div class="progress">
-        <div
-          v-for="i in 4"
-          :key="i"
-          class="progress-step"
-          :class="{
-            'progress-step--active': step === i,
-            'progress-step--done': step > i,
-          }"
-        >
-          <div class="progress-circle">{{ step > i ? '✓' : i }}</div>
-          <span class="progress-label">{{ ['Register', 'Role', 'Location', 'Review'][i - 1] }}</span>
+      <!-- Premium Progress Stepper -->
+      <div class="auth-stepper">
+        <div class="auth-stepper__track">
+          <div
+            class="auth-stepper__fill"
+            :style="{ width: `${((step - 1) / 3) * 100}%` }"
+          />
+        </div>
+        <div class="auth-stepper__steps">
+          <button
+            v-for="s in steps"
+            :key="s.number"
+            type="button"
+            class="auth-stepper__step"
+            :class="{
+              'auth-stepper__step--active': step === s.number,
+              'auth-stepper__step--done': step > s.number,
+              'auth-stepper__step--clickable': step > s.number,
+            }"
+            :disabled="step <= s.number"
+            @click="goToStep(s.number)"
+          >
+            <div class="auth-stepper__circle">
+              <svg v-if="step > s.number" class="auth-stepper__check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path :d="s.icon" />
+              </svg>
+              <div v-if="step === s.number" class="auth-stepper__pulse" />
+            </div>
+            <span class="auth-stepper__label">{{ s.label }}</span>
+          </button>
         </div>
       </div>
 
-      <!-- Success State / Form -->
+      <!-- Success State -->
       <template v-if="success">
         <Transition name="scale-fade">
-          <div class="success-message">
-            <div class="success-icon-wrap">
-              <svg class="success-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <div class="auth-success">
+            <div class="auth-success__orb" />
+            <div class="auth-success__icon-wrap">
+              <svg class="auth-success__icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             </div>
-            <h3 class="success-title">Account Created!</h3>
-            <p class="success-text">Redirecting to homepage...</p>
+            <div class="auth-success__particles">
+              <span v-for="i in 12" :key="i" class="auth-success__particle" :style="{ '--angle': `${i * 30}deg`, '--delay': `${i * 0.05}s` }" />
+            </div>
+            <h3 class="auth-success__title">Account Created!</h3>
+            <p class="auth-success__text">Welcome aboard! Redirecting to your dashboard...</p>
+            <div class="auth-success__dots">
+              <span v-for="i in 3" :key="i" class="auth-success__dot" :style="{ animationDelay: `${i * 0.2}s` }" />
+            </div>
           </div>
         </Transition>
       </template>
-      <form v-else class="auth-form" novalidate @submit.prevent="submit()">
+
+      <!-- Form -->
+      <form v-else class="auth-form" novalidate @submit.prevent="step < 4 ? nextStep() : submit()">
         <Transition name="fade">
           <div v-if="error" class="alert alert--error">
             <svg class="alert-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -236,235 +329,398 @@ const roleOptions: { value: Role; label: string }[] = [
         </Transition>
 
         <!-- Step 1: Account Info -->
-        <div v-show="step === 1" class="step-content">
-          <h2 class="step-title">Personal Information</h2>
-          <p class="step-desc">Tell us about yourself</p>
+        <div v-show="step === 1" class="auth-step-panel">
+          <div class="auth-step-panel__header">
+            <h2 class="auth-step-panel__title">Personal Information</h2>
+            <p class="auth-step-panel__desc">Tell us about yourself to get started</p>
+          </div>
 
-          <label class="form-group">
-            <span class="form-label">Full Name</span>
-            <div class="input-wrap">
-              <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-              </svg>
-              <input v-model="form.name" type="text" class="input" placeholder="John Doe" required />
-            </div>
-          </label>
+          <div class="auth-step-panel__body">
+            <label class="form-group">
+              <span class="form-label">Full Name</span>
+              <div class="input-wrap">
+                <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+                <input
+                  v-model="form.name"
+                  type="text"
+                  class="input"
+                  :class="{ 'input--error': stepErrors.name }"
+                  placeholder="John Doe"
+                  required
+                />
+                <svg v-if="form.name.trim() && !stepErrors.name" class="input-valid" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                  <polyline points="22 4 12 14.01 9 11.01" />
+                </svg>
+              </div>
+              <Transition name="fade">
+                <span v-if="stepErrors.name" class="field-error">{{ stepErrors.name }}</span>
+              </Transition>
+            </label>
 
-          <label class="form-group">
-            <span class="form-label">Email Address</span>
-            <div class="input-wrap">
-              <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                <polyline points="22,6 12,13 2,6" />
-              </svg>
-              <input v-model="form.email" type="email" class="input" placeholder="john@example.com" required />
-            </div>
-          </label>
+            <label class="form-group">
+              <span class="form-label">Email Address</span>
+              <div class="input-wrap">
+                <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                  <polyline points="22,6 12,13 2,6" />
+                </svg>
+                <input
+                  v-model="form.email"
+                  type="email"
+                  class="input"
+                  :class="{ 'input--error': stepErrors.email }"
+                  placeholder="john@example.com"
+                  required
+                />
+                <svg v-if="form.email.trim() && !stepErrors.email" class="input-valid" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                  <polyline points="22 4 12 14.01 9 11.01" />
+                </svg>
+              </div>
+              <Transition name="fade">
+                <span v-if="stepErrors.email" class="field-error">{{ stepErrors.email }}</span>
+              </Transition>
+            </label>
 
-          <label class="form-group">
-            <span class="form-label">Password</span>
-            <div class="input-wrap">
-              <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-              </svg>
-              <input
-                v-model="form.password"
-                :type="showPassword ? 'text' : 'password'"
-                class="input"
-                placeholder="At least 6 characters"
-                required
-              />
-              <button type="button" class="password-toggle" @click="showPassword = !showPassword" tabindex="-1">
-                <svg v-if="!showPassword" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                  <circle cx="12" cy="12" r="3" />
-                </svg>
-                <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                  <line x1="1" y1="1" x2="23" y2="23" />
-                </svg>
-              </button>
-            </div>
-          </label>
+            <div class="auth-grid-2">
+              <label class="form-group">
+                <span class="form-label">Password</span>
+                <div class="input-wrap">
+                  <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                  <input
+                    v-model="form.password"
+                    :type="showPassword ? 'text' : 'password'"
+                    class="input"
+                    :class="{ 'input--error': stepErrors.password }"
+                    placeholder="At least 6 characters"
+                    required
+                  />
+                  <button type="button" class="password-toggle" @click="showPassword = !showPassword" tabindex="-1">
+                    <svg v-if="!showPassword" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                    <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                      <line x1="1" y1="1" x2="23" y2="23" />
+                    </svg>
+                  </button>
+                </div>
+                <!-- Password strength -->
+                <div v-if="form.password.length > 0" class="auth-pw-strength">
+                  <div class="auth-pw-strength__bar">
+                    <div
+                      class="auth-pw-strength__fill"
+                      :style="{ width: `${passwordStrength}%`, backgroundColor: passwordStrengthColor }"
+                    />
+                  </div>
+                  <span class="auth-pw-strength__label" :style="{ color: passwordStrengthColor }">
+                    {{ passwordStrengthLabel }}
+                  </span>
+                </div>
+                <Transition name="fade">
+                  <span v-if="stepErrors.password" class="field-error">{{ stepErrors.password }}</span>
+                </Transition>
+              </label>
 
-          <label class="form-group">
-            <span class="form-label">Confirm Password</span>
-            <div class="input-wrap">
-              <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-              </svg>
-              <input
-                v-model="form.passwordConfirmation"
-                :type="showConfirmPassword ? 'text' : 'password'"
-                class="input"
-                :class="{ 'input--error': form.passwordConfirmation && !passwordMatch }"
-                placeholder="Repeat password"
-                required
-              />
-              <button type="button" class="password-toggle" @click="showConfirmPassword = !showConfirmPassword" tabindex="-1">
-                <svg v-if="!showConfirmPassword" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                  <circle cx="12" cy="12" r="3" />
-                </svg>
-                <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                  <line x1="1" y1="1" x2="23" y2="23" />
-                </svg>
-              </button>
+              <label class="form-group">
+                <span class="form-label">Confirm Password</span>
+                <div class="input-wrap">
+                  <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                  <input
+                    v-model="form.passwordConfirmation"
+                    :type="showConfirmPassword ? 'text' : 'password'"
+                    class="input"
+                    :class="{ 'input--error': form.passwordConfirmation && !passwordMatch }"
+                    placeholder="Repeat password"
+                    required
+                  />
+                  <button type="button" class="password-toggle" @click="showConfirmPassword = !showConfirmPassword" tabindex="-1">
+                    <svg v-if="!showConfirmPassword" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                    <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                      <line x1="1" y1="1" x2="23" y2="23" />
+                    </svg>
+                  </button>
+                </div>
+                <Transition name="fade">
+                  <span v-if="stepErrors.confirm" class="field-error">{{ stepErrors.confirm }}</span>
+                </Transition>
+              </label>
             </div>
-            <Transition name="fade">
-              <span v-if="form.passwordConfirmation && !passwordMatch" class="field-error">Passwords do not match</span>
-            </Transition>
-          </label>
+          </div>
         </div>
 
         <!-- Step 2: Role -->
-        <div v-show="step === 2" class="step-content">
-          <h2 class="step-title">Select Your Role</h2>
-          <p class="step-desc">Choose how you'll use the platform</p>
+        <div v-show="step === 2" class="auth-step-panel">
+          <div class="auth-step-panel__header">
+            <h2 class="auth-step-panel__title">Select Your Role</h2>
+            <p class="auth-step-panel__desc">Choose how you'll use the platform</p>
+          </div>
 
-          <div class="role-grid">
-            <button
-              v-for="opt in roleOptions"
-              :key="opt.value"
-              type="button"
-              class="role-btn"
-              :class="{ 'role-btn--active': form.role === opt.value }"
-              @click="form.role = opt.value"
-            >
-              <span class="role-icon">
-                {{ opt.value === 'student' ? '🎓' : '👨‍🏫' }}
-              </span>
-              <span class="role-label">{{ opt.label }}</span>
-              <span class="role-desc">
-                {{ opt.value === 'student' ? 'Join classes and participate' : 'Create classes and manage' }}
-              </span>
-            </button>
+          <div class="auth-step-panel__body">
+            <div class="auth-role-grid">
+              <button
+                v-for="opt in roleOptions"
+                :key="opt.value"
+                type="button"
+                class="auth-role-card"
+                :class="{ 'auth-role-card--active': form.role === opt.value }"
+                @click="form.role = opt.value"
+              >
+                <div class="auth-role-card__indicator">
+                  <div v-if="form.role === opt.value" class="auth-role-card__check">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </div>
+                </div>
+                <div class="auth-role-card__icon">{{ opt.icon }}</div>
+                <span class="auth-role-card__label">{{ opt.label }}</span>
+                <span class="auth-role-card__desc">{{ opt.desc }}</span>
+                <ul class="auth-role-card__features">
+                  <li v-for="(feat, fi) in opt.features" :key="fi">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    {{ feat }}
+                  </li>
+                </ul>
+              </button>
+            </div>
           </div>
         </div>
 
         <!-- Step 3: Location -->
-        <div v-show="step === 3" class="step-content">
-          <h2 class="step-title">Your Location</h2>
-          <p class="step-desc">Tell us where you're based</p>
+        <div v-show="step === 3" class="auth-step-panel">
+          <div class="auth-step-panel__header">
+            <h2 class="auth-step-panel__title">Your Location</h2>
+            <p class="auth-step-panel__desc">Tell us where you're based</p>
+          </div>
 
-          <label class="form-group">
-            <span class="form-label">Country</span>
-            <div class="input-wrap">
-              <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="2" y1="12" x2="22" y2="12" />
-                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-              </svg>
-              <select
-                v-model="form.countryCode"
-                class="input input--select"
-                :disabled="loadingCountries"
-                @change="form.countryName = countries.find(c => c.code === form.countryCode)?.name ?? ''; fetchProvinces()"
-              >
-                <option value="" disabled>{{ loadingCountries ? 'Loading...' : 'Select a country' }}</option>
-                <option v-for="c in countries" :key="c.code" :value="c.code">{{ c.name }}</option>
-              </select>
-              <svg v-if="loadingCountries" class="input-spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" stroke-linecap="round" />
-              </svg>
-            </div>
-          </label>
+          <div class="auth-step-panel__body auth-step-panel__body--location">
+            <label class="form-group">
+              <span class="form-label">Country</span>
+              <div class="input-wrap">
+                <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="2" y1="12" x2="22" y2="12" />
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                </svg>
+                <select
+                  v-model="form.countryCode"
+                  class="input input--select"
+                  :disabled="loadingCountries"
+                  @change="form.countryName = countries.find(c => c.code === form.countryCode)?.name ?? ''; fetchProvinces()"
+                >
+                  <option value="" disabled>{{ loadingCountries ? 'Loading...' : 'Select a country' }}</option>
+                  <option v-for="c in countries" :key="c.code" :value="c.code">{{ c.name }}</option>
+                </select>
+                <svg v-if="loadingCountries" class="input-spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" stroke-linecap="round" />
+                </svg>
+              </div>
+            </label>
 
-          <label class="form-group">
-            <span class="form-label">Province</span>
-            <div class="input-wrap">
-              <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                <circle cx="12" cy="10" r="3" />
-              </svg>
-              <select
-                v-model="form.province"
-                class="input input--select"
-                :disabled="!form.countryCode || loadingProvinces"
-                @change="fetchSchools()"
-              >
-                <option value="" disabled>
-                  {{ loadingProvinces ? 'Loading...' : form.countryCode ? 'Select a province' : 'Select a country first' }}
-                </option>
-                <option v-for="p in provinces" :key="p.id" :value="p.name">{{ p.name }}</option>
-              </select>
-              <svg v-if="loadingProvinces" class="input-spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" stroke-linecap="round" />
-              </svg>
-            </div>
-          </label>
+            <label class="form-group">
+              <span class="form-label">Province</span>
+              <div class="input-wrap">
+                <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                  <circle cx="12" cy="10" r="3" />
+                </svg>
+                <select
+                  v-model="form.province"
+                  class="input input--select"
+                  :disabled="!form.countryCode || loadingProvinces"
+                  @change="fetchSchools()"
+                >
+                  <option value="" disabled>
+                    {{ loadingProvinces ? 'Loading...' : form.countryCode ? 'Select a province' : 'Select a country first' }}
+                  </option>
+                  <option v-for="p in provinces" :key="p.id" :value="p.name">{{ p.name }}</option>
+                </select>
+                <svg v-if="loadingProvinces" class="input-spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" stroke-linecap="round" />
+                </svg>
+              </div>
+            </label>
 
-          <label class="form-group">
-            <span class="form-label">School</span>
-            <div class="input-wrap">
-              <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
-                <path d="M6 12v5c3 3 9 3 12 0v-5" />
-              </svg>
-              <select
-                v-model="form.schoolName"
-                class="input input--select"
-                :disabled="!form.province || loadingSchools"
-              >
-                <option value="" disabled>
-                  {{ loadingSchools ? 'Loading...' : form.province ? 'Select a school' : 'Select a province first' }}
-                </option>
-                <option v-for="s in schools" :key="s.id" :value="s.name">{{ s.name }}</option>
-              </select>
-              <svg v-if="loadingSchools" class="input-spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" stroke-linecap="round" />
-              </svg>
-            </div>
-          </label>
+            <label class="form-group">
+              <span class="form-label">School</span>
+              <div class="input-wrap">
+                <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+                  <path d="M6 12v5c3 3 9 3 12 0v-5" />
+                </svg>
+                <select
+                  v-model="form.schoolName"
+                  class="input input--select"
+                  :disabled="!form.province || loadingSchools"
+                >
+                  <option value="" disabled>
+                    {{ loadingSchools ? 'Loading...' : form.province ? 'Select a school' : 'Select a province first' }}
+                  </option>
+                  <option v-for="s in schools" :key="s.id" :value="s.name">{{ s.name }}</option>
+                </select>
+                <svg v-if="loadingSchools" class="input-spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" stroke-linecap="round" />
+                </svg>
+              </div>
+            </label>
+          </div>
         </div>
 
         <!-- Step 4: Review -->
-        <div v-show="step === 4" class="step-content">
-          <h2 class="step-title">Review Your Details</h2>
-          <p class="step-desc">Please verify everything looks correct</p>
+        <div v-show="step === 4" class="auth-step-panel">
+          <div class="auth-step-panel__header">
+            <h2 class="auth-step-panel__title">Review Your Details</h2>
+            <p class="auth-step-panel__desc">Please verify everything looks correct before submitting</p>
+          </div>
 
-          <div class="review-grid">
-            <div class="review-item">
-              <span class="review-label">Name</span>
-              <span class="review-value">{{ form.name }}</span>
-            </div>
-            <div class="review-item">
-              <span class="review-label">Email</span>
-              <span class="review-value">{{ form.email }}</span>
-            </div>
-            <div class="review-item">
-              <span class="review-label">Role</span>
-              <span class="review-value">{{ form.role.charAt(0).toUpperCase() + form.role.slice(1) }}</span>
-            </div>
-            <div class="review-item">
-              <span class="review-label">Country</span>
-              <span class="review-value">{{ form.countryName }}</span>
-            </div>
-            <div class="review-item">
-              <span class="review-label">Province</span>
-              <span class="review-value">{{ form.province }}</span>
-            </div>
-            <div class="review-item">
-              <span class="review-label">School</span>
-              <span class="review-value">{{ form.schoolName }}</span>
+          <div class="auth-step-panel__body">
+            <div class="auth-review-grid">
+              <div class="auth-review-section">
+                <div class="auth-review-section__header">
+                  <div class="auth-review-section__icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                  </div>
+                  <span class="auth-review-section__title">Account</span>
+                  <button type="button" class="auth-review-section__edit" @click="goToStep(1)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                    </svg>
+                    Edit
+                  </button>
+                </div>
+                <div class="auth-review-section__body">
+                  <div class="auth-review-row">
+                    <span class="auth-review-row__label">Name</span>
+                    <span class="auth-review-row__value">{{ form.name }}</span>
+                  </div>
+                  <div class="auth-review-row">
+                    <span class="auth-review-row__label">Email</span>
+                    <span class="auth-review-row__value">{{ form.email }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="auth-review-section">
+                <div class="auth-review-section__header">
+                  <div class="auth-review-section__icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M10 6H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-5m-4 0V5a2 2 0 1 1 4 0v1m-4 0a2 2 0 1 0 4 0" />
+                    </svg>
+                  </div>
+                  <span class="auth-review-section__title">Role</span>
+                  <button type="button" class="auth-review-section__edit" @click="goToStep(2)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                    </svg>
+                    Edit
+                  </button>
+                </div>
+                <div class="auth-review-section__body">
+                  <div class="auth-review-row">
+                    <span class="auth-review-row__label">Role</span>
+                    <span class="auth-review-row__badge" :class="form.role === 'teacher' ? 'auth-review-row__badge--teacher' : 'auth-review-row__badge--student'">
+                      {{ form.role === 'teacher' ? '👨‍🏫 Teacher' : '🎓 Student' }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="auth-review-section">
+                <div class="auth-review-section__header">
+                  <div class="auth-review-section__icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 0 1-2.827 0l-4.244-4.243a8 8 0 1 1 11.314 0z" />
+                      <circle cx="12" cy="10" r="3" />
+                    </svg>
+                  </div>
+                  <span class="auth-review-section__title">Location</span>
+                  <button type="button" class="auth-review-section__edit" @click="goToStep(3)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                    </svg>
+                    Edit
+                  </button>
+                </div>
+                <div class="auth-review-section__body">
+                  <div class="auth-review-row">
+                    <span class="auth-review-row__label">Country</span>
+                    <span class="auth-review-row__value">{{ form.countryName || '—' }}</span>
+                  </div>
+                  <div class="auth-review-row">
+                    <span class="auth-review-row__label">Province</span>
+                    <span class="auth-review-row__value">{{ form.province || '—' }}</span>
+                  </div>
+                  <div class="auth-review-row">
+                    <span class="auth-review-row__label">School</span>
+                    <span class="auth-review-row__value">{{ form.schoolName || '—' }}</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
+        <!-- Step indicator dots -->
+        <div class="auth-step-dots">
+          <span
+            v-for="i in 4"
+            :key="i"
+            class="auth-step-dot"
+            :class="{ 'auth-step-dot--active': step === i, 'auth-step-dot--done': step > i }"
+          />
+        </div>
+
         <!-- Navigation -->
         <div class="nav-buttons">
-          <button v-if="step > 1" type="button" class="auth-btn auth-btn--secondary" @click="prevStep">
+          <button
+            v-if="step > 1"
+            type="button"
+            class="auth-btn auth-btn--secondary"
+            @click="prevStep"
+          >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <line x1="19" y1="12" x2="5" y2="12" />
               <polyline points="12 19 5 12 12 5" />
             </svg>
             Back
           </button>
-          <button type="button" class="auth-btn auth-btn--primary" :disabled="submitting" @click="step < 4 ? nextStep() : submit()">
+          <div v-else />
+
+          <button
+            type="button"
+            class="auth-btn auth-btn--primary"
+            :disabled="
+              submitting ||
+              (step === 1 && !step1Valid) ||
+              (step === 2 && !step2Valid) ||
+              (step === 3 && !step3Valid)
+            "
+            @click="step < 4 ? nextStep() : submit()"
+          >
             <template v-if="submitting">
               <svg class="auth-spinner" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" stroke-linecap="round" />
@@ -472,10 +728,13 @@ const roleOptions: { value: Role; label: string }[] = [
               Creating account...
             </template>
             <template v-else>
-              {{ step < 4 ? 'Continue' : 'Create Account' }}
+              <span>{{ step < 4 ? 'Continue' : 'Create Account' }}</span>
               <svg v-if="step < 4" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="5" y1="12" x2="19" y2="12" />
                 <polyline points="12 5 19 12 12 19" />
+              </svg>
+              <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12" />
               </svg>
             </template>
           </button>
