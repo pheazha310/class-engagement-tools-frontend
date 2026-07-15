@@ -1,0 +1,88 @@
+Hi backend dev,
+
+Can you please create these API endpoints for the Quiz feature? The frontend is already built and expects the following:
+
+---
+
+## 1. POST /api/quizzes — Create a quiz
+
+**Request body:**
+- `title` (string, required)
+- `description` (string, optional)
+- `subject` (string, required)
+- `class_name` (string, required)
+- `duration` (integer, required) — in minutes
+- `passing_score` (integer, optional, default 50) — 0 to 100
+- `due_date` (datetime, required) — format: Y-m-d\TH:i
+- `shuffle_questions` (boolean, optional, default false)
+- `status` (string, optional, default "draft") — "draft" or "published"
+
+**Success response (201):**
+```json
+{
+  "data": {
+    "id": 1,
+    "teacher_id": 1,
+    "title": "Mathematics Final Exam",
+    "description": "Covers chapters 5-8",
+    "subject": "Mathematics",
+    "class_name": "Grade 10A",
+    "duration": 60,
+    "passing_score": 50,
+    "due_date": "2026-07-20T23:59",
+    "shuffle_questions": false,
+    "status": "draft",
+    "created_at": "2026-07-14T10:00:00Z",
+    "updated_at": "2026-07-14T10:00:00Z"
+  }
+}
+```
+
+---
+
+## 2. GET /api/quizzes — List all quizzes
+
+**Query params (all optional):** `?search=math&status=draft&subject=Mathematics&class_name=Grade 10A`
+
+`search` should match against `title`, `subject`, and `class_name`. Order by newest first.
+
+**Response (200):** Same as above but `data` is an array.
+
+---
+
+## 3. GET /api/quizzes/{id} — Get one quiz
+
+**Response (200):** Single quiz object in `data`.
+
+---
+
+## 4. PUT /api/quizzes/{id} — Update a quiz
+
+Same request body as POST. All fields optional (partial update).
+
+**Response (200):** Updated quiz object in `data`.
+
+---
+
+## 5. DELETE /api/quizzes/{id} — Delete a quiz
+
+**Response (200):** `{ "message": "Quiz deleted successfully." }`
+
+---
+
+## 6. POST /api/quizzes/{id}/duplicate — Duplicate a quiz
+
+Creates a copy with " (Copy)" appended to title. Sets status to "draft".
+
+**Response (201):** New quiz object in `data`.
+
+---
+
+**Important notes:**
+- All responses MUST wrap data in a `data` key
+- Validation errors should return 422 with `{ "message": "...", "errors": { "field": ["..."] } }`
+- Set `teacher_id` from the authenticated user (auth()->id())
+- Use Sanctum auth middleware for all routes
+- Frontend expects response.data.data to access the data
+
+Thanks!

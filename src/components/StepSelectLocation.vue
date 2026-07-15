@@ -87,8 +87,8 @@ loadCountries()
 
 <template>
   <div>
-    <p class="mb-1 text-center text-sm text-gray-500">Select your location to find nearby schools</p>
-    <p class="mb-6 text-center text-xs text-gray-400">Each selection filters the next level</p>
+    <p class="mb-1 text-center text-sm text-slate-300">Select your location to find nearby schools</p>
+    <p class="mb-6 text-center text-xs text-slate-500">Each selection filters the next level</p>
 
     <div class="space-y-3">
       <div
@@ -99,13 +99,13 @@ loadCountries()
         <div class="flex flex-col items-center pt-2.5">
           <div
             class="flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-300"
-            :class="getSelectedLabel(level.key) ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'"
+            :class="getSelectedLabel(level.key) ? 'bg-cyan-400/20 text-cyan-300' : 'bg-slate-800 text-slate-500'"
           >
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" :d="level.icon" />
             </svg>
           </div>
-          <div v-if="idx < locationLevels.length - 1" class="mt-1 h-full w-px bg-gray-200 min-h-[2rem]" />
+          <div v-if="idx < locationLevels.length - 1" class="mt-1 h-full w-px bg-slate-700 min-h-[2rem]" />
         </div>
         <div class="flex-1 pb-1">
           <SearchableSelect
@@ -114,7 +114,7 @@ loadCountries()
             :label="level.label"
             :placeholder="`Select ${level.label.toLowerCase()}`"
             :loading="(loadingMap[level.key] as any).value"
-            :disabled="disabledMap[level.key]()"
+            :disabled="disabledMap[level.key]?.() ?? false"
             @update:model-value="(val: any) => { (valueMap[level.key] as any).value = val }"
           />
         </div>
@@ -124,7 +124,7 @@ loadCountries()
     <div class="mt-8 flex gap-3">
       <button
         type="button"
-        class="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 transition-all duration-200 hover:bg-gray-50 hover:border-gray-300 active:scale-[0.98]"
+        class="flex-1 rounded-xl border border-slate-700 px-4 py-2.5 text-sm font-medium text-slate-300 transition-all duration-200 hover:bg-slate-900 hover:border-slate-500 active:scale-[0.98]"
         @click="store.prevStep()"
       >
         <svg class="mr-1.5 inline h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -135,7 +135,7 @@ loadCountries()
       <button
         type="button"
         :disabled="!provinceId"
-        class="group relative flex-1 overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-200 transition-all duration-200 hover:shadow-xl hover:shadow-blue-300 hover:from-blue-700 hover:to-blue-800 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none active:scale-[0.98]"
+        class="group relative flex-1 overflow-hidden rounded-xl bg-gradient-to-r from-cyan-400 to-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-200/30 transition-all duration-200 hover:shadow-xl hover:shadow-cyan-300/40 hover:from-cyan-300 hover:to-blue-700 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none active:scale-[0.98]"
         @click="handleSave"
       >
         <span class="flex items-center justify-center gap-2">

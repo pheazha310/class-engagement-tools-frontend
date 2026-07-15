@@ -88,8 +88,8 @@ loadSchools()
 
 <template>
   <div>
-    <p class="mb-1 text-center text-sm text-gray-500">Select your school from the list or search on the map</p>
-    <p class="mb-6 text-center text-xs text-gray-400">You can also request a new school if not listed</p>
+    <p class="mb-1 text-center text-sm text-slate-300">Select your school from the list or search on the map</p>
+    <p class="mb-6 text-center text-xs text-slate-500">You can also request a new school if not listed</p>
 
     <div class="space-y-4">
       <div class="relative">
@@ -100,20 +100,20 @@ loadSchools()
           v-model="searchQuery"
           type="text"
           placeholder="Search schools by name..."
-          class="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm transition-all duration-200 hover:border-gray-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+            class="w-full rounded-xl border border-slate-700 bg-white py-2.5 pl-10 pr-4 text-sm transition-all duration-200 hover:border-slate-500 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-200"
         />
       </div>
 
-      <div class="rounded-xl border border-gray-200 overflow-hidden">
-        <div class="border-b border-gray-100 bg-gray-50/50 px-4 py-2">
-          <span class="text-xs font-medium text-gray-500 uppercase tracking-wider">
+      <div class="rounded-xl border border-slate-700 overflow-hidden">
+        <div class="border-b border-slate-800 bg-slate-900/70 px-4 py-2">
+          <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">
             Available Schools
             <span v-if="schools.length" class="ml-1 text-blue-500">({{ schools.length }})</span>
           </span>
         </div>
         <div class="max-h-44 overflow-y-auto divide-y divide-gray-50">
           <div v-if="loading" class="flex items-center justify-center py-8">
-            <svg class="h-6 w-6 animate-spin text-blue-600" fill="none" viewBox="0 0 24 24">
+            <svg class="h-6 w-6 animate-spin text-cyan-400" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
@@ -123,50 +123,50 @@ loadSchools()
             v-else
             :key="school.id"
             type="button"
-            class="flex w-full items-center gap-3 px-4 py-3 text-left text-sm transition-all duration-150 hover:bg-blue-50"
-            :class="selectedSchoolId === school.id ? 'bg-blue-50' : ''"
+            class="flex w-full items-center gap-3 px-4 py-3 text-left text-sm transition-all duration-150 hover:bg-slate-900"
+            :class="selectedSchoolId === school.id ? 'bg-slate-900' : ''"
             @click="selectSchool(school.id)"
           >
             <div
               class="flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all duration-200 flex-shrink-0"
-              :class="selectedSchoolId === school.id ? 'border-blue-600' : 'border-gray-300'"
+              :class="selectedSchoolId === school.id ? 'border-cyan-400' : 'border-slate-500'"
             >
               <div
                 v-if="selectedSchoolId === school.id"
-                class="h-2.5 w-2.5 rounded-full bg-blue-600 animate-scale-check"
+                class="h-2.5 w-2.5 rounded-full bg-cyan-400 animate-scale-check"
               />
             </div>
             <div class="flex-1 min-w-0">
-              <div class="font-medium text-gray-900 truncate">{{ school.name }}</div>
-              <div v-if="school.address" class="mt-0.5 text-xs text-gray-400 truncate">{{ school.address }}</div>
+            <div class="font-medium text-slate-100 truncate">{{ school.name }}</div>
+            <div v-if="school.address" class="mt-0.5 text-xs text-slate-500 truncate">{{ school.address }}</div>
             </div>
-            <svg class="h-4 w-4 flex-shrink-0 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="h-4 w-4 flex-shrink-0 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
             </svg>
           </button>
           <div v-if="!loading && schools.length === 0" class="px-4 py-8 text-center">
-            <svg class="mx-auto mb-2 h-8 w-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="mx-auto mb-2 h-8 w-8 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
-            <p class="text-sm text-gray-400">No schools found in your selected province.</p>
+            <p class="text-sm text-slate-500">No schools found in your selected province.</p>
           </div>
         </div>
       </div>
 
-      <div class="rounded-xl border border-gray-200 overflow-hidden bg-white">
-        <div class="border-b border-gray-100 bg-gray-50/50 px-4 py-2">
-          <span class="text-xs font-medium text-gray-500 uppercase tracking-wider">School Location</span>
+      <div class="rounded-xl border border-slate-700 overflow-hidden bg-slate-950">
+        <div class="border-b border-slate-800 bg-slate-900/70 px-4 py-2">
+          <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">School Location</span>
         </div>
         <div class="p-3">
           <GoogleMap v-model="mapValue" height="260px" @place-selected="handlePlaceSelected" />
         </div>
       </div>
 
-      <div class="relative rounded-xl border-2 border-dashed border-gray-200 bg-gray-50/50 p-5 text-center transition-all duration-200 hover:border-blue-200 hover:bg-blue-50/30">
-        <p class="text-sm text-gray-500 mb-3">Can't find your school?</p>
+      <div class="relative rounded-xl border-2 border-dashed border-slate-700 bg-slate-950/60 p-5 text-center transition-all duration-200 hover:border-cyan-400/40 hover:bg-slate-900">
+        <p class="text-sm text-slate-400 mb-3">Can't find your school?</p>
         <button
           type="button"
-          class="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-blue-700 shadow-sm border border-blue-200 transition-all duration-200 hover:bg-blue-50 hover:shadow-md active:scale-[0.98]"
+          class="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-cyan-300 shadow-sm border border-slate-700 transition-all duration-200 hover:bg-slate-800 hover:shadow-md active:scale-[0.98]"
           @click="showRequestModal = true"
         >
           <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -180,7 +180,7 @@ loadSchools()
     <div class="mt-6 flex gap-3">
       <button
         type="button"
-        class="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 transition-all duration-200 hover:bg-gray-50 hover:border-gray-300 active:scale-[0.98]"
+        class="flex-1 rounded-xl border border-slate-700 px-4 py-2.5 text-sm font-medium text-slate-300 transition-all duration-200 hover:bg-slate-900 hover:border-slate-500 active:scale-[0.98]"
         @click="store.prevStep()"
       >
         <svg class="mr-1.5 inline h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -191,7 +191,7 @@ loadSchools()
       <button
         type="button"
         :disabled="!selectedSchoolId"
-        class="group relative flex-1 overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-200 transition-all duration-200 hover:shadow-xl hover:shadow-blue-300 hover:from-blue-700 hover:to-blue-800 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none active:scale-[0.98]"
+        class="group relative flex-1 overflow-hidden rounded-xl bg-gradient-to-r from-cyan-400 to-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-200/30 transition-all duration-200 hover:shadow-xl hover:shadow-cyan-300/40 hover:from-cyan-300 hover:to-blue-700 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none active:scale-[0.98]"
         @click="handleSave"
       >
         <span class="flex items-center justify-center gap-2">
