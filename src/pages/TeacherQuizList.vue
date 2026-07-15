@@ -56,6 +56,18 @@ function editQuiz(id: string) {
   router.push(`/quizzes/${id}/edit`)
 }
 
+function viewQuestions(id: string) {
+  router.push(`/quizzes/${id}/questions`)
+}
+
+function viewRankings(id: string) {
+  router.push(`/quizzes/${id}/rankings`)
+}
+
+function viewReport(id: string) {
+  router.push(`/quizzes/${id}/report`)
+}
+
 function confirmDelete(id: string) {
   quizToDelete.value = id
   showDeleteDialog.value = true
@@ -256,6 +268,7 @@ function isOverdue(dueDate: string) {
             </div>
           </div>
 
+          <!-- ===== MAIN ACTIONS ===== -->
           <div class="quiz-card-actions">
             <button
               class="card-action-btn card-action-btn--view"
@@ -277,6 +290,40 @@ function isOverdue(dueDate: string) {
                 <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
               </svg>
               Delete
+            </button>
+          </div>
+
+          <!-- ===== NAVIGATION ACTIONS ===== -->
+          <div class="quiz-card-nav">
+            <button
+              class="nav-btn nav-btn--questions"
+              title="Manage questions"
+              @click="viewQuestions(quiz.id)"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /><line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+              Questions
+            </button>
+            <button
+              class="nav-btn nav-btn--rankings"
+              title="View rankings"
+              @click="viewRankings(quiz.id)"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 9 6 9 8.5V15a2 2 0 0 1-2 2H4" /><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5C17 4 15 6 15 8.5V15a2 2 0 0 0 2 2h3" /><path d="M12 3v18" />
+              </svg>
+              Rankings
+            </button>
+            <button
+              class="nav-btn nav-btn--report"
+              title="Export report"
+              @click="viewReport(quiz.id)"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" />
+              </svg>
+              Report
             </button>
           </div>
         </div>
@@ -310,7 +357,7 @@ function isOverdue(dueDate: string) {
 .quiz-dashboard {
   position: relative;
   min-height: 100vh;
-  padding: 5rem 1rem 4rem;
+  padding: 7rem 1rem 4rem;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
@@ -731,6 +778,61 @@ function isOverdue(dueDate: string) {
   border-color: #f43f5e;
   color: #e11d48;
   background: #fef2f2;
+}
+
+/* ============================================================
+   CARD NAVIGATION (Questions / Rankings / Report)
+   ============================================================ */
+.quiz-card-nav {
+  display: flex;
+  gap: 0.35rem;
+  padding-top: 0.6rem;
+  margin-top: 0.6rem;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.nav-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.5rem;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.7rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.nav-btn svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+.nav-btn:hover {
+  transform: translateY(-1px);
+}
+
+.nav-btn--questions:hover {
+  background: #f0fdfa;
+  color: #0d9488;
+}
+
+.nav-btn--rankings:hover {
+  background: #fefce8;
+  color: #a16207;
+}
+
+.nav-btn--report:hover {
+  background: #f0f9ff;
+  color: #0369a1;
 }
 
 /* ============================================================

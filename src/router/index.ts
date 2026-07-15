@@ -73,6 +73,37 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/pages/CreateQuiz.vue'),
   },
 
+  // Questions
+  {
+    path: '/quizzes/:quizId/questions',
+    name: 'question-list',
+    component: () => import('@/views/QuestionListView.vue'),
+  },
+  {
+    path: '/quizzes/:quizId/questions/create',
+    name: 'question-create',
+    component: () => import('@/views/QuestionFormView.vue'),
+  },
+  {
+    path: '/quizzes/:quizId/questions/:questionId/edit',
+    name: 'question-edit',
+    component: () => import('@/views/QuestionFormView.vue'),
+  },
+
+  // Rankings
+  {
+    path: '/quizzes/:quizId/rankings',
+    name: 'quiz-rankings',
+    component: () => import('@/views/RankingView.vue'),
+  },
+
+  // Reports
+  {
+    path: '/quizzes/:quizId/report',
+    name: 'quiz-report',
+    component: () => import('@/views/ReportView.vue'),
+  },
+
   // Polls
   {
     path: '/polls',
