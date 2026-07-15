@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import Navbar from '@/components/Navbar.vue'
 
 const router = useRouter()
 
@@ -63,8 +62,6 @@ function openFeature(feature: FeatureCard) {
 
 <template>
   <div class="dashboard">
-    <Navbar />
-
     <!-- Header -->
     <header class="header">
       <div class="header__inner">

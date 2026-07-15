@@ -2,7 +2,6 @@
 import { computed } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { categories } from '@/data/toolsData'
-import Navbar from '@/components/Navbar.vue'
 
 const route = useRoute()
 
@@ -15,8 +14,6 @@ const category = computed(() => {
 
 <template>
   <div class="category-page" v-if="category">
-    <Navbar />
-
     <section class="category-hero">
       <div class="container">
         <div class="category-hero-content">
@@ -52,7 +49,6 @@ const category = computed(() => {
   </div>
 
   <div v-else class="category-page">
-    <Navbar />
     <div class="container not-found" style="padding: 160px 20px 60px; text-align: center;">
       <h1 style="font-size: 48px; font-weight: 800; color: #0f172a; margin-bottom: 16px;">Category not found</h1>
       <p style="font-size: 18px; color: #475569; margin-bottom: 32px;">The category you are looking for does not exist.</p>

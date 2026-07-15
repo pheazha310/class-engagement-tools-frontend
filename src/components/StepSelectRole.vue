@@ -43,8 +43,8 @@ const isValid = computed(() => selectedRole.value !== null)
 
 <template>
   <div>
-    <p class="mb-2 text-center text-sm text-gray-500">Choose how you'll use the platform</p>
-    <p class="mb-6 text-center text-xs text-gray-400">You can change this later in settings</p>
+    <p class="mb-2 text-center text-sm text-slate-300">Choose how you'll use the platform</p>
+    <p class="mb-6 text-center text-xs text-slate-500">You can change this later in settings</p>
 
     <div class="grid gap-5 sm:grid-cols-2">
       <button
@@ -54,8 +54,8 @@ const isValid = computed(() => selectedRole.value !== null)
         class="group relative overflow-hidden rounded-2xl border-2 p-6 text-left transition-all duration-300"
         :class="[
           selectedRole === role.id
-            ? `${role.borderColor} ${role.lightBg} shadow-lg ${role.shadowColor} scale-[1.02]`
-            : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-md hover:-translate-y-0.5',
+            ? `${role.borderColor} bg-slate-900 shadow-lg shadow-cyan-500/10 scale-[1.02]`
+            : 'border-slate-700 bg-slate-950 hover:border-slate-500 hover:shadow-md hover:-translate-y-0.5',
         ]"
         @click="selectRole(role.id)"
         @mouseenter="hoveredRole = role.id"
@@ -70,7 +70,7 @@ const isValid = computed(() => selectedRole.value !== null)
         <div class="relative flex items-start justify-between mb-4">
           <div
             class="inline-flex rounded-xl p-3.5 transition-all duration-300"
-            :class="selectedRole === role.id ? `bg-gradient-to-br ${role.gradient} text-white shadow-md` : 'bg-gray-100 text-gray-500 group-hover:bg-gray-200'"
+            :class="selectedRole === role.id ? `bg-gradient-to-br ${role.gradient} text-white shadow-md` : 'bg-slate-800 text-slate-400 group-hover:bg-slate-700'"
           >
             <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" :d="role.icon" />
@@ -90,18 +90,18 @@ const isValid = computed(() => selectedRole.value !== null)
 
         <h3
           class="mb-2 text-lg font-bold transition-colors"
-          :class="selectedRole === role.id ? (role.id === 'teacher' ? 'text-blue-800' : 'text-emerald-800') : 'text-gray-900 group-hover:text-gray-800'"
+          :class="selectedRole === role.id ? (role.id === 'teacher' ? 'text-cyan-200' : 'text-emerald-200') : 'text-slate-100 group-hover:text-white'"
         >
           {{ role.title }}
         </h3>
-        <p class="mb-4 text-sm leading-relaxed text-gray-500">{{ role.description }}</p>
+        <p class="mb-4 text-sm leading-relaxed text-slate-400">{{ role.description }}</p>
 
         <ul class="space-y-1.5">
           <li
             v-for="feature in role.features"
             :key="feature"
             class="flex items-center gap-2 text-xs"
-            :class="selectedRole === role.id ? (role.id === 'teacher' ? 'text-blue-600' : 'text-emerald-600') : 'text-gray-400'"
+            :class="selectedRole === role.id ? (role.id === 'teacher' ? 'text-cyan-300' : 'text-emerald-300') : 'text-slate-500'"
           >
             <svg class="h-3.5 w-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
@@ -115,7 +115,7 @@ const isValid = computed(() => selectedRole.value !== null)
     <div class="mt-8 flex gap-3">
       <button
         type="button"
-        class="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 transition-all duration-200 hover:bg-gray-50 hover:border-gray-300 active:scale-[0.98]"
+        class="flex-1 rounded-xl border border-slate-700 px-4 py-2.5 text-sm font-medium text-slate-300 transition-all duration-200 hover:bg-slate-900 hover:border-slate-500 active:scale-[0.98]"
         @click="store.prevStep()"
       >
         <svg class="mr-1.5 inline h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -126,7 +126,7 @@ const isValid = computed(() => selectedRole.value !== null)
       <button
         type="button"
         :disabled="!isValid"
-        class="group relative flex-1 overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-200 transition-all duration-200 hover:shadow-xl hover:shadow-blue-300 hover:from-blue-700 hover:to-blue-800 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none active:scale-[0.98]"
+        class="group relative flex-1 overflow-hidden rounded-xl bg-gradient-to-r from-cyan-400 to-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-200/30 transition-all duration-200 hover:shadow-xl hover:shadow-cyan-300/40 hover:from-cyan-300 hover:to-blue-700 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none active:scale-[0.98]"
         @click="store.nextStep()"
       >
         <span class="flex items-center justify-center gap-2">

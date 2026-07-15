@@ -101,16 +101,16 @@ onMounted(() => {
 
 <template>
   <div>
-    <p class="mb-1 text-center text-sm text-gray-500">Review your information before submitting</p>
-    <p class="mb-6 text-center text-xs text-gray-400">Please check that everything is correct</p>
+    <p class="mb-1 text-center text-sm text-slate-300">Review your information before submitting</p>
+    <p class="mb-6 text-center text-xs text-slate-500">Please check that everything is correct</p>
 
     <div v-if="loadingLabels" class="space-y-4">
-      <div v-for="i in 4" :key="i" class="rounded-xl border border-gray-100 bg-white overflow-hidden">
-        <div class="border-b border-gray-100 bg-gray-50/50 px-5 py-3">
-          <div class="h-4 w-24 animate-pulse rounded bg-gray-200" />
+        <div v-for="i in 4" :key="i" class="rounded-xl border border-slate-700 bg-slate-950 overflow-hidden">
+        <div class="border-b border-slate-800 bg-slate-900/70 px-5 py-3">
+          <div class="h-4 w-24 animate-pulse rounded bg-slate-700" />
         </div>
         <div class="p-5 space-y-3">
-          <div v-for="j in 3" :key="j" class="h-5 animate-pulse rounded bg-gray-100" />
+          <div v-for="j in 3" :key="j" class="h-5 animate-pulse rounded bg-slate-800" />
         </div>
       </div>
     </div>
@@ -119,16 +119,16 @@ onMounted(() => {
       <div
         v-for="(section, idx) in summarySections"
         :key="section.title"
-        class="rounded-xl border border-gray-100 bg-white overflow-hidden transition-all duration-200 hover:shadow-sm"
+        class="rounded-xl border border-slate-700 bg-slate-950 overflow-hidden transition-all duration-200 hover:shadow-sm"
         :style="{ animationDelay: `${idx * 100}ms` }"
       >
-        <div class="flex items-center gap-2.5 border-b border-gray-100 bg-gray-50/50 px-5 py-3">
-          <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
+        <div class="flex items-center gap-2.5 border-b border-slate-800 bg-slate-900/70 px-5 py-3">
+          <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-cyan-400/20 text-cyan-300">
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" :d="section.icon" />
             </svg>
           </div>
-          <span class="text-sm font-semibold text-gray-700">{{ section.title }}</span>
+          <span class="text-sm font-semibold text-slate-100">{{ section.title }}</span>
         </div>
         <div class="divide-y divide-gray-50">
           <div
@@ -136,33 +136,33 @@ onMounted(() => {
             :key="field.label"
             class="flex items-center justify-between px-5 py-3"
           >
-            <span class="text-sm text-gray-500">{{ field.label }}</span>
-            <span v-if="field.badge" class="rounded-full px-3 py-0.5 text-xs font-semibold"
-              :class="store.data.role === 'teacher' ? 'bg-blue-50 text-blue-700' : 'bg-emerald-50 text-emerald-700'"
+            <span class="text-sm text-slate-400">{{ field.label }}</span>
+            <span v-if="'badge' in field && field.badge" class="rounded-full px-3 py-0.5 text-xs font-semibold"
+              :class="store.data.role === 'teacher' ? 'bg-cyan-400/15 text-cyan-200' : 'bg-emerald-400/15 text-emerald-200'"
             >
               {{ field.value }}
             </span>
-            <span v-else class="text-sm font-medium text-gray-900 text-right max-w-[60%] truncate">{{ field.value || '\u2014' }}</span>
+            <span v-else class="text-sm font-medium text-slate-100 text-right max-w-[60%] truncate">{{ field.value || '\u2014' }}</span>
           </div>
         </div>
       </div>
 
-      <div v-if="mapValue.latitude" class="rounded-xl border border-gray-200 overflow-hidden">
-        <div class="border-b border-gray-100 bg-gray-50/50 px-5 py-3">
-          <span class="text-sm font-semibold text-gray-700">School Location Preview</span>
+      <div v-if="mapValue.latitude" class="rounded-xl border border-slate-700 overflow-hidden">
+        <div class="border-b border-slate-800 bg-slate-900/70 px-5 py-3">
+          <span class="text-sm font-semibold text-slate-100">School Location Preview</span>
         </div>
         <GoogleMap v-model="mapValue" height="200px" />
       </div>
     </div>
 
-    <div v-if="store.error" class="mt-4 rounded-xl bg-red-50 border border-red-100 px-5 py-4">
+    <div v-if="store.error" class="mt-4 rounded-xl bg-red-500/10 border border-red-500/20 px-5 py-4">
       <div class="flex items-start gap-3">
         <svg class="h-5 w-5 flex-shrink-0 text-red-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
           <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
         </svg>
         <div>
-          <p class="text-sm font-medium text-red-800">Registration Error</p>
-          <p class="text-sm text-red-600 mt-0.5">{{ store.error }}</p>
+          <p class="text-sm font-medium text-red-200">Registration Error</p>
+          <p class="text-sm text-red-300 mt-0.5">{{ store.error }}</p>
         </div>
       </div>
     </div>
@@ -170,7 +170,7 @@ onMounted(() => {
     <div class="mt-8 flex gap-3">
       <button
         type="button"
-        class="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 transition-all duration-200 hover:bg-gray-50 hover:border-gray-300 active:scale-[0.98]"
+        class="flex-1 rounded-xl border border-slate-700 px-4 py-2.5 text-sm font-medium text-slate-300 transition-all duration-200 hover:bg-slate-900 hover:border-slate-500 active:scale-[0.98]"
         @click="store.prevStep()"
       >
         <svg class="mr-1.5 inline h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -181,7 +181,7 @@ onMounted(() => {
       <button
         type="button"
         :disabled="store.loading"
-        class="group relative flex-1 overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-200 transition-all duration-200 hover:shadow-xl hover:shadow-blue-300 hover:from-blue-700 hover:to-blue-800 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none active:scale-[0.98]"
+        class="group relative flex-1 overflow-hidden rounded-xl bg-gradient-to-r from-cyan-400 to-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-200/30 transition-all duration-200 hover:shadow-xl hover:shadow-cyan-300/40 hover:from-cyan-300 hover:to-blue-700 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none active:scale-[0.98]"
         @click="handleFinish"
       >
         <span v-if="store.loading" class="flex items-center justify-center gap-2">
