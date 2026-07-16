@@ -223,11 +223,6 @@ const routes: RouteRecordRaw[] = [
     meta: { hideNavbar: true },
   },
   {
-    path: '/live-voting',
-    name: 'live-voting',
-    component: () => import('@/pages/LiveVotingPage.vue'),
-  },
-  {
     path: '/teacher/polls',
     name: 'teacher-polls',
     component: () => import('@/pages/teacher/PollDashboard.vue'),

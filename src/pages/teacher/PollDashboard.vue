@@ -128,7 +128,7 @@ onUnmounted(() => {
 <template>
   <div class="poll-dashboard">
     <div class="pd-header">
-      <h1 class="pd-title">Live Voting</h1>
+      <h1 class="pd-title">Polls</h1>
       <button class="btn btn-primary" @click="showCreateForm = !showCreateForm">
         {{ showCreateForm ? 'Cancel' : '+ New Poll' }}
       </button>

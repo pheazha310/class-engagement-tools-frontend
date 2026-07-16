@@ -85,8 +85,6 @@ onUnmounted(() => {
             <RouterLink to="/tools/category/games" class="dropdown-item" @click="closeMobileMenu">Games</RouterLink>
             <RouterLink to="/tools/category/engagement" class="dropdown-item" @click="closeMobileMenu">Engagement</RouterLink>
             <RouterLink to="/tools/category/fun" class="dropdown-item" @click="closeMobileMenu">Fun Activities</RouterLink>
-            <div class="dropdown-divider"></div>
-            <RouterLink to="/live-voting" class="dropdown-item" @click="closeMobileMenu">📊 Live Voting</RouterLink>
           </div>
         </li>
         <li class="nav-dropdown-trigger" @mouseenter="activeParticipantsDropdown = true" @mouseleave="activeParticipantsDropdown = false">
