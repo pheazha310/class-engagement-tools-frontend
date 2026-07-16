@@ -200,7 +200,7 @@ function saveQuestion() {
 
   if (isEditingQuestion.value && editingQuestionLocalId.value !== null) {
     const idx = questions.value.findIndex((q) => q.localId === editingQuestionLocalId.value)
-    if (idx !== -1) questions.value[idx].formData = payload
+    if (idx !== -1) questions.value[idx]!.formData = payload
   } else {
     questions.value.push({ localId: nextLocalId++, formData: payload })
   }
@@ -227,10 +227,16 @@ function editQuestionById(id: string) {
 
 // ── Submit ──
 async function handleSubmit() {
-  if (!validate()) return
+  console.log('handleSubmit called', { title: form.title, subject: form.subject, class_name: form.class_name, duration: form.duration, due_date: form.due_date })
+  if (!validate()) {
+    console.log('Validation failed', errors.value)
+    alert('Please fill in all required fields correctly.')
+    return
+  }
 
   loading.value = true
   toastMessage.value = null
+  console.log('Submitting quiz...')
 
   try {
     if (isEditMode.value && quizId.value) {
@@ -282,9 +288,12 @@ async function handleSubmit() {
     let msg = ''
     if (errData?.errors) msg = Object.values(errData.errors).flat().join('. ')
     else if (errData?.message) msg = errData.message
+    else if (axiosError.message) msg = axiosError.message
     else msg = isEditMode.value ? 'Failed to update quiz.' : 'Failed to create quiz.'
     toastMessage.value = msg
     toastType.value = 'error'
+    console.error('Quiz submit error:', e)
+    alert('Error: ' + msg)
   } finally {
     loading.value = false
     submittingQuestions.value = false
@@ -662,7 +671,7 @@ const totalPoints = computed(() =>
         <!-- ===================== ACTIONS ===================== -->
         <div v-else class="quiz-actions">
           <button type="button" class="btn btn-cancel" @click="router.push('/quizzes')">Cancel</button>
-          <button type="submit" :disabled="!isFormValid" class="btn btn-submit">
+          <button type="submit" class="btn btn-submit">
             <svg class="btn-submit-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M12 5v14" /><path d="M5 12h14" />
             </svg>

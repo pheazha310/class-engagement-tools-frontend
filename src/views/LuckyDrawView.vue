@@ -259,10 +259,10 @@ function formatTime(date: Date) {
             <div class="wheel-circle__inner">
               <div class="wheel-circle__winner">
                 <div class="wheel-circle__prize">🎉</div>
-                <div class="wheel-circle__winner-avatar" :style="{ background: winners[0].color }">
-                  {{ winners[0].initials }}
+                <div class="wheel-circle__winner-avatar" :style="{ background: winners[0]!.color }">
+                  {{ winners[0]!.initials }}
                 </div>
-                <div class="wheel-circle__winner-name">{{ winners[0].name }}</div>
+                <div class="wheel-circle__winner-name">{{ winners[0]!.name }}</div>
               </div>
             </div>
           </div>

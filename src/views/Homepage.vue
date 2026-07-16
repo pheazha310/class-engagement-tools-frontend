@@ -21,6 +21,7 @@ import SiteFooter from '@/components/SiteFooter.vue'
       </div>
     </section>
 
+
     <!-- Featured Tools Section -->
     <section class="featured-tools">
       <div class="container">
@@ -68,6 +69,12 @@ import SiteFooter from '@/components/SiteFooter.vue'
               teaching. That's why we've created tools that are intuitive, effective, and
               accessible to all teachers.
             </p>
+            <p>
+              Our mission is to empower educators with the resources they need to create
+              engaging, inclusive, and effective learning environments. We believe that every
+              student deserves access to high-quality educational tools that make learning fun
+              and meaningful.
+            </p>
           </div>
           <div class="about-stats">
             <div class="stat-item">
@@ -82,6 +89,176 @@ import SiteFooter from '@/components/SiteFooter.vue'
               <div class="stat-number">15+</div>
               <div class="stat-label">Interactive Tools</div>
             </div>
+            <div class="stat-item">
+              <div class="stat-number">98%</div>
+              <div class="stat-label">Satisfaction Rate</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-number">24/7</div>
+              <div class="stat-label">Support Available</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-number">100%</div>
+              <div class="stat-label">Free to Use</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features">
+      <div class="container">
+        <h2 class="section-title">Why Choose ClassTools?</h2>
+        <p class="section-subtitle">
+          We provide everything you need to create engaging and interactive classroom experiences.
+        </p>
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon">🎯</div>
+            <h3>Easy to Use</h3>
+            <p>Intuitive interface designed for educators. No technical skills required - start using tools in seconds.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">📱</div>
+            <h3>Works Everywhere</h3>
+            <p>Access tools on any device - desktop, tablet, or mobile. Perfect for modern classrooms.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🔒</div>
+            <h3>Safe & Secure</h3>
+            <p>Your data is protected with enterprise-grade security. We prioritize student privacy.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">💡</div>
+            <h3>Constantly Updated</h3>
+            <p>Regular new features and improvements based on educator feedback. Always evolving.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🌍</div>
+            <h3>Global Community</h3>
+            <p>Join thousands of educators worldwide sharing best practices and success stories.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🎓</div>
+            <h3>Education-Focused</h3>
+            <p>Built by educators who understand classroom needs. Every feature serves a purpose.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="testimonials">
+      <div class="container">
+        <h2 class="section-title">What Educators Say</h2>
+        <p class="section-subtitle">
+          Join thousands of teachers who are transforming their classrooms with ClassTools.
+        </p>
+        <div class="testimonials-grid">
+          <div class="testimonial-card">
+            <div class="testimonial-content">
+              <p>"ClassTools has completely transformed how I engage my students. The Random Wheel and Student Picker are game-changers!"</p>
+            </div>
+            <div class="testimonial-author">
+              <div class="testimonial-avatar">👩‍🏫</div>
+              <div class="testimonial-info">
+                <h4>Sarah Johnson</h4>
+                <p>Elementary School Teacher</p>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial-card">
+            <div class="testimonial-content">
+              <p>"The Group Generator saves me so much time. I can create balanced groups in seconds and focus on teaching."</p>
+            </div>
+            <div class="testimonial-author">
+              <div class="testimonial-avatar">👨‍🏫</div>
+              <div class="testimonial-info">
+                <h4>Michael Chen</h4>
+                <p>High School Teacher</p>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial-card">
+            <div class="testimonial-content">
+              <p>"My students love the educational games! They're learning while having fun. Best tool I've ever used."</p>
+            </div>
+            <div class="testimonial-author">
+              <div class="testimonial-avatar">👩‍🏫</div>
+              <div class="testimonial-info">
+                <h4>Emily Rodriguez</h4>
+                <p>Middle School Teacher</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Team Section -->
+    <section class="team-section">
+      <div class="container">
+        <h2 class="section-title">Meet Our Team</h2>
+        <p class="section-subtitle">
+          We're a passionate group of educators, developers, and designers dedicated to transforming education.
+        </p>
+        <div class="team-grid">
+          <div class="team-card">
+            <div class="team-avatar">
+              <img src="@/assets/images/Sophea.jpg" alt="Sophea Phal" class="avatar-image" />
+            </div>
+            <h3 class="team-name">Sophea Phal</h3>
+            <p class="team-role">Scrum Master</p>
+            <p class="team-bio">Database Management</p>
+          </div>
+          <div class="team-card">
+            <div class="team-avatar">
+              <img src="@/assets/images/oun.jpg" alt="Sophea Sophorn" class="avatar-image" />
+            </div>
+            <h3 class="team-name">Sophea Sophorn</h3>
+            <p class="team-role">Backend Developer</p>
+            <p class="team-bio">Responsible for Backend Development</p>
+          </div>
+          <div class="team-card">
+            <div class="team-avatar">
+              <img src="@/assets/images/Me.jpg" alt="Sreykeo Keun" class="avatar-image" />
+            </div>
+            <h3 class="team-name">Sreykeo Keun</h3>
+            <p class="team-role">Frontend Developer & QA</p>
+            <p class="team-bio">Responsible for Frontend Development and Quality Assurance</p>
+          </div>
+          <div class="team-card">
+            <div class="team-avatar">
+              <img src="@/assets/images/San.jpg" alt="San Svit" class="avatar-image" />
+            </div>
+            <h3 class="team-name">San Svit</h3>
+            <p class="team-role">Frontend Developer</p>
+            <p class="team-bio">Responsible for Frontend Development</p>
+          </div>
+          <div class="team-card">
+            <div class="team-avatar">
+              <img src="@/assets/images/Mary.jpg" alt="Mary Sao" class="avatar-image" />
+            </div>
+            <h3 class="team-name">Mary Sao</h3>
+            <p class="team-role">Frontend Developer</p>
+            <p class="team-bio">Responsible for Frontend Development</p>
+          </div>
+          <div class="team-card">
+            <div class="team-avatar">
+              <img src="@/assets/images/Vanna.jpg" alt="Vanna Len" class="avatar-image" />
+            </div>
+            <h3 class="team-name">Vanna Len</h3>
+            <p class="team-role">Backend Developer</p>
+            <p class="team-bio">Responsible for Backend Development</p>
+          </div>
+          <div class="team-card">
+            <div class="team-avatar">
+              <img src="@/assets/images/Nita.jpg" alt="Chroun Nita" class="avatar-image" />
+            </div>
+            <h3 class="team-name">Chroun Nita</h3>
+            <p class="team-role">Frontend Developer & QA</p>
+            <p class="team-bio">Responsible for Frontend Development and Quality Assurance</p>
           </div>
         </div>
       </div>
@@ -627,6 +804,63 @@ h1, h2, h3 {
   flex-wrap: wrap;
 }
 
+/* About Me Section */
+.about-me {
+  padding: 80px 20px;
+  background: white;
+}
+
+.about-me-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: center;
+  margin-top: 48px;
+}
+
+.about-me-image {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.about-me-text h3 {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #1f2937;
+}
+
+.about-me-role {
+  font-size: 16px;
+  font-weight: 600;
+  color: #2563eb;
+  margin-bottom: 16px;
+}
+
+.about-me-text p {
+  color: #4b5563;
+  font-size: 16px;
+  margin-bottom: 16px;
+  line-height: 1.8;
+}
+
+.image-placeholder {
+  width: 100%;
+  max-width: 300px;
+  aspect-ratio: 1;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  border-radius: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+}
+
+.placeholder-icon {
+  font-size: 80px;
+}
+
 /* Featured Tools Section */
 .featured-tools {
   padding: 80px 20px;
@@ -744,6 +978,20 @@ h1, h2, h3 {
   overflow: hidden;
 }
 
+.tool-link {
+  display: inline-block;
+  margin-top: 12px;
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  transition: color 0.3s ease;
+}
+
+.tool-link:hover {
+  color: #1d4ed8;
+}
+
 /* About Section */
 .about {
   padding: 80px 20px;
@@ -777,6 +1025,7 @@ h1, h2, h3 {
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border-radius: 12px;
   border: 1px solid #e2e8f0;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .stat-number {
@@ -791,6 +1040,182 @@ h1, h2, h3 {
   font-size: 14px;
   color: #64748b;
   font-weight: 500;
+}
+
+/* Features Section */
+.features {
+  padding: 80px 20px;
+  background: #f9fafb;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin-top: 48px;
+}
+
+.feature-card {
+  background: white;
+  border-radius: 12px;
+  padding: 32px;
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.feature-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.feature-card h3 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: #1f2937;
+}
+
+.feature-card p {
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Testimonials Section */
+.testimonials {
+  padding: 80px 20px;
+  background: white;
+}
+
+.testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  margin-top: 48px;
+}
+
+.testimonial-card {
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.testimonial-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+.testimonial-content {
+  margin-bottom: 24px;
+}
+
+.testimonial-content p {
+  color: #4b5563;
+  font-size: 16px;
+  line-height: 1.8;
+  font-style: italic;
+}
+
+.testimonial-author {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.testimonial-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+}
+
+.testimonial-info h4 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 4px;
+}
+
+.testimonial-info p {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Team Section */
+.team-section {
+  padding: 80px 20px;
+  background: #f9fafb;
+}
+
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 24px;
+  margin-top: 48px;
+}
+
+.team-card {
+  background: white;
+  border-radius: 12px;
+  padding: 32px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.team-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+.team-avatar {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.team-name {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #1f2937;
+}
+
+.team-role {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2563eb;
+  margin-bottom: 12px;
+}
+
+.team-bio {
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.6;
 }
 
 /* Call-to-Action Section */
@@ -859,8 +1284,29 @@ h1, h2, h3 {
     grid-template-columns: 1fr;
   }
 
+  .about-me-content {
+    grid-template-columns: 1fr;
+  }
+
   .about-stats {
     grid-template-columns: 1fr;
+  }
+
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .testimonials-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .team-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .footer-content {
+    grid-template-columns: 1fr;
+    gap: 32px;
   }
 
   .cta-title {
@@ -879,6 +1325,22 @@ h1, h2, h3 {
 
   .about-content {
     grid-template-columns: 1fr;
+  }
+
+  .features-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .testimonials-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .team-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .footer-content {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 </style>

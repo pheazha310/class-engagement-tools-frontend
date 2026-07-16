@@ -80,8 +80,8 @@ const studentText = computed({
       let gender: 'male' | 'female' | 'other' | undefined = undefined
       
       if (genderMatch) {
-        name = line.substring(0, genderMatch.index).trim()
-        const genderValue = genderMatch[1].toLowerCase().trim()
+        name = line.substring(0, genderMatch.index!).trim()
+        const genderValue = genderMatch[1]!.toLowerCase().trim()
         if (genderValue === 'male' || genderValue === 'm') {
           gender = 'male'
         } else if (genderValue === 'female' || genderValue === 'f') {
@@ -124,7 +124,7 @@ function shuffle<T>(array: T[]): T[] {
   const arr = [...array]
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]]
+    [arr[i]!, arr[j]!] = [arr[j]!, arr[i]!]
   }
   return arr
 }
@@ -165,7 +165,7 @@ function generateBalancedGroups(): Group[] {
         students: [],
       }
     }
-    groups[groupIndex].students.push(shuffled[i])
+    groups[groupIndex].students.push(shuffled[i]!)
   }
 
   return groups.filter(g => g.students.length > 0)
@@ -328,7 +328,7 @@ function exportPDF() {
     }
 
     // Group header with color
-    const color = groupCardColors[idx % groupCardColors.length]
+    const color = groupCardColors[idx % groupCardColors.length]!
     const rgb = hexToRgb(color)
 
     doc.setFillColor(rgb.r, rgb.g, rgb.b)
@@ -379,9 +379,9 @@ function exportPDF() {
 function hexToRgb(hex: string): { r: number; g: number; b: number } {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
   return result ? {
-    r: parseInt(result[1], 16),
-    g: parseInt(result[2], 16),
-    b: parseInt(result[3], 16)
+    r: parseInt(result[1]!, 16),
+    g: parseInt(result[2]!, 16),
+    b: parseInt(result[3]!, 16)
   } : { r: 0, g: 0, b: 0 }
 }
 
@@ -415,7 +415,7 @@ function processFile(file: File) {
       try {
         const data = new Uint8Array(e.target?.result as ArrayBuffer)
         const workbook = XLSX.read(data, { type: 'array' })
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]]
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]!]!
         const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 }) as any[][]
         
         // Process each row - look for Name and Gender columns

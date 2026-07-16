@@ -29,7 +29,7 @@ async function loadRankings(filters?: { search?: string; class_name?: string; st
   loading.value = true
   error.value = null
   try {
-    rankings.value = await rankingService.filterRankings(quizId, filters || {})
+    rankings.value = await rankingService.filterRankings(quizId, (filters || {}) as import('@/types/ranking').RankingFilters)
   } catch (e: any) {
     const msg = e.response?.data?.message || 'Failed to load rankings.'
     error.value = msg

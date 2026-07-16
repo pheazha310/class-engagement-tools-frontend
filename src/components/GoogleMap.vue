@@ -155,7 +155,9 @@ function addMarker(location: google.maps.LatLngLiteral, title?: string) {
 }
 
 function placeMarker(location: google.maps.LatLng | google.maps.LatLngLiteral) {
-  const latlng = 'lat' in location ? { lat: location.lat(), lng: location.lng() } : location
+  const latlng = location instanceof google.maps.LatLng
+    ? { lat: location.lat(), lng: location.lng() }
+    : location
   addMarker(latlng)
   emit('update:modelValue', {
     ...props.modelValue,
@@ -176,14 +178,16 @@ function showInfoWindow(location: google.maps.LatLng | google.maps.LatLngLiteral
 
 function reverseGeocode(latlng: google.maps.LatLng | google.maps.LatLngLiteral) {
   if (!geocoder) return
-  const loc = 'lat' in latlng ? latlng : new google.maps.LatLng(latlng.lat, latlng.lng)
+  const loc = latlng instanceof google.maps.LatLng
+    ? latlng
+    : new google.maps.LatLng(latlng.lat, latlng.lng)
   geocoder.geocode({ location: loc }, (results, status) => {
     if (status === 'OK' && results?.[0]) {
       const address = results[0].formatted_address
       emit('update:modelValue', {
         ...props.modelValue,
-        latitude: 'lat' in latlng ? latlng.lat() : latlng.lat,
-        longitude: 'lng' in latlng ? latlng.lng() : latlng.lng,
+        latitude: latlng instanceof google.maps.LatLng ? latlng.lat() : latlng.lat,
+        longitude: latlng instanceof google.maps.LatLng ? latlng.lng() : latlng.lng,
         address,
       })
       showInfoWindow(loc, address)
