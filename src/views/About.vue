@@ -1,30 +1,10 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
+import SiteFooter from '@/components/SiteFooter.vue'
 </script>
 
 <template>
   <div class="about-page">
-    <!-- Navigation Bar -->
-    <nav class="navbar">
-      <div class="nav-container">
-        <div class="nav-logo">
-          <img src="@/assets/photo_logo.jpg" alt="Graduation" class="image" />
-        </div>
-
-        <ul class="nav-menu">
-          <li><RouterLink to="/" class="nav-link">Home</RouterLink></li>
-          <li><RouterLink to="/about" class="nav-link active">About</RouterLink></li>
-          <li><RouterLink to="/" class="nav-link">Tools</RouterLink></li>
-          <li><RouterLink to="/contact" class="nav-link">Contact</RouterLink></li>
-        </ul>
-
-        <div class="nav-buttons">
-          <RouterLink to="/login" class="btn btn-login">Login</RouterLink>
-          <RouterLink to="/register" class="btn btn-register">Register</RouterLink>
-        </div>
-      </div>
-    </nav>
-
     <!-- Hero Section -->
     <section class="hero">
       <div class="hero-content">
@@ -244,49 +224,7 @@ import { RouterLink } from 'vue-router'
       </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="footer">
-      <div class="container">
-        <div class="footer-content">
-          <div class="footer-section">
-            <div class="footer-logo">
-              <span class="logo-icon">🎓</span>
-              <span class="logo-text">ClassTools</span>
-            </div>
-            <p class="footer-description">Empowering educators with innovative classroom engagement tools.</p>
-          </div>
-          <div class="footer-section">
-            <h4 class="footer-title">Product</h4>
-            <ul class="footer-links">
-              <li><RouterLink to="/">Features</RouterLink></li>
-              <li><RouterLink to="/">Tools</RouterLink></li>
-              <li><RouterLink to="/">Pricing</RouterLink></li>
-            </ul>
-          </div>
-          <div class="footer-section">
-            <h4 class="footer-title">Company</h4>
-            <ul class="footer-links">
-              <li><RouterLink to="/about" class="active-link">About</RouterLink></li>
-              <li><RouterLink to="/contact">Contact</RouterLink></li>
-              <li><RouterLink to="/">Careers</RouterLink></li>
-            </ul>
-          </div>
-
-          <div class="footer-section">
-            <h4 class="footer-title">Support</h4>
-            <ul class="footer-links">
-              <li><RouterLink to="/">Help Center</RouterLink></li>
-              <li><RouterLink to="/">Documentation</RouterLink></li>
-              <li><RouterLink to="/">Privacy Policy</RouterLink></li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="footer-bottom">
-          <p>&copy; 2024 ClassTools. All rights reserved.</p>
-        </div>
-      </div>
-    </footer>
+    <SiteFooter />
   </div>
 </template>
 
@@ -306,7 +244,7 @@ import { RouterLink } from 'vue-router'
 }
 
 .about-page {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   line-height: 1.6;
   color: #1f2937;
 }
@@ -755,72 +693,6 @@ import { RouterLink } from 'vue-router'
   flex-wrap: wrap;
 }
 
-/* Footer */
-.footer {
-  background: #1f2937;
-  color: white;
-  padding: 60px 20px 20px;
-}
-
-.footer-content {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
-  gap: 48px;
-  margin-bottom: 40px;
-}
-
-.footer-logo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 20px;
-  font-weight: 700;
-  margin-bottom: 16px;
-}
-
-.footer-description {
-  color: #9ca3af;
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-.footer-title {
-  font-size: 16px;
-  font-weight: 600;
-  margin-bottom: 16px;
-}
-
-.footer-links {
-  list-style: none;
-}
-
-.footer-links li {
-  margin-bottom: 8px;
-}
-
-.footer-links a {
-  color: #9ca3af;
-  text-decoration: none;
-  font-size: 14px;
-  transition: color 0.3s ease;
-}
-
-.footer-links a:hover {
-  color: white;
-}
-
-.footer-links a.active-link {
-  color: white;
-}
-
-.footer-bottom {
-  border-top: 1px solid #374151;
-  padding-top: 20px;
-  text-align: center;
-  color: #9ca3af;
-  font-size: 14px;
-}
-
 /* Responsive Design */
 @media (max-width: 768px) {
   .nav-menu {
@@ -859,11 +731,6 @@ import { RouterLink } from 'vue-router'
     font-size: 36px;
   }
 
-  .footer-content {
-    grid-template-columns: 1fr;
-    gap: 32px;
-  }
-
   .cta-title {
     font-size: 28px;
   }
@@ -893,10 +760,6 @@ import { RouterLink } from 'vue-router'
   }
 
   .team-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .footer-content {
     grid-template-columns: repeat(2, 1fr);
   }
 }

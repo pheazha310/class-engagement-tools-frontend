@@ -122,6 +122,14 @@ const stats = [
                 >
                   Launch
                 </RouterLink>
+                <RouterLink
+                  v-else-if="activity.id === 2"
+                  to="/tools/icebreakers/would-you-rather"
+                  class="launch-btn"
+                  :style="{ backgroundColor: activity.color }"
+                >
+                  Launch
+                </RouterLink>
                 <button
                   v-else
                   class="launch-btn"

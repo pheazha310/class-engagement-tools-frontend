@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { RouterLink } from 'vue-router'
+import SiteFooter from '@/components/SiteFooter.vue'
 
 const formData = ref({
   name: '',
@@ -20,27 +20,6 @@ const handleSubmit = () => {
 
 <template>
   <div class="contact-page">
-    <!-- Navigation Bar -->
-    <nav class="navbar">
-      <div class="nav-container">
-        <div class="nav-logo">
-          <img src="@/assets/photo_logo.jpg" alt="Graduation" class="image" />
-        </div>
-
-        <ul class="nav-menu">
-          <li><RouterLink to="/" class="nav-link">Home</RouterLink></li>
-          <li><RouterLink to="/about" class="nav-link">About</RouterLink></li>
-          <li><RouterLink to="/" class="nav-link">Tools</RouterLink></li>
-          <li><RouterLink to="/contact" class="nav-link active">Contact</RouterLink></li>
-        </ul>
-
-        <div class="nav-buttons">
-          <RouterLink to="/login" class="btn btn-login">Login</RouterLink>
-          <RouterLink to="/register" class="btn btn-register">Register</RouterLink>
-        </div>
-      </div>
-    </nav>
-
     <!-- Hero Section -->
     <section class="hero">
       <div class="hero-content">
@@ -209,70 +188,7 @@ Penh, Cambodia</p>
       </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="footer">
-      <div class="container">
-        <div class="footer-content">
-          <div class="footer-section footer-brand">
-            <div class="footer-logo">
-              <span class="logo-icon">🎓</span>
-              <span class="logo-text">ClassTools</span>
-            </div>
-            <p class="footer-description">
-              Empowering educators with innovative classroom engagement tools. Transform your teaching experience today.
-            </p>
-            <div class="footer-social">
-              <a href="https://facebook.com/classtools" target="_blank" rel="noopener noreferrer" class="social-icon-link">📘</a>
-              <a href="https://twitter.com/classtools" target="_blank" rel="noopener noreferrer" class="social-icon-link">🐦</a>
-              <a href="https://linkedin.com/company/classtools" target="_blank" rel="noopener noreferrer" class="social-icon-link">💼</a>
-              <a href="https://instagram.com/classtools" target="_blank" rel="noopener noreferrer" class="social-icon-link">📷</a>
-              <a href="https://youtube.com/classtools" target="_blank" rel="noopener noreferrer" class="social-icon-link">📺</a>
-            </div>
-          </div>
-          <div class="footer-section">
-            <h4 class="footer-title">Product</h4>
-            <ul class="footer-links">
-              <li><RouterLink to="/">Features</RouterLink></li>
-              <li><RouterLink to="/">Tools</RouterLink></li>
-              <li><RouterLink to="/">Pricing</RouterLink></li>
-              <li><RouterLink to="/">Updates</RouterLink></li>
-            </ul>
-          </div>
-          <div class="footer-section">
-            <h4 class="footer-title">Company</h4>
-            <ul class="footer-links">
-              <li><RouterLink to="/about">About Us</RouterLink></li>
-              <li><RouterLink to="/contact" class="active-link">Contact</RouterLink></li>
-              <li><RouterLink to="/">Careers</RouterLink></li>
-              <li><RouterLink to="/">Blog</RouterLink></li>
-            </ul>
-          </div>
-
-          <div class="footer-section">
-            <h4 class="footer-title">Support</h4>
-            <ul class="footer-links">
-              <li><RouterLink to="/">Help Center</RouterLink></li>
-              <li><RouterLink to="/">Documentation</RouterLink></li>
-              <li><RouterLink to="/">Privacy Policy</RouterLink></li>
-              <li><RouterLink to="/">Terms of Service</RouterLink></li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="footer-bottom">
-          <div class="footer-bottom-content">
-            <p>&copy; 2024 ClassTools. All rights reserved.</p>
-            <div class="footer-bottom-links">
-              <a href="/">Privacy Policy</a>
-              <span>•</span>
-              <a href="/">Terms of Service</a>
-              <span>•</span>
-              <a href="/">Cookie Policy</a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </footer>
+    <SiteFooter />
   </div>
 </template>
 
@@ -291,7 +207,7 @@ Penh, Cambodia</p>
 }
 
 .contact-page {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   line-height: 1.6;
   color: #1f2937;
 }
@@ -690,162 +606,6 @@ Penh, Cambodia</p>
   line-height: 1.6;
 }
 
-.footer {
-  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
-  color: white;
-  padding: 80px 20px 30px;
-  position: relative;
-}
-
-.footer::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #2563eb 0%, #1d4ed8 50%, #2563eb 100%);
-}
-
-.footer-content {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
-  gap: 48px;
-  margin-bottom: 40px;
-}
-
-.footer-brand {
-  padding-right: 20px;
-}
-
-.footer-logo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 20px;
-  font-weight: 700;
-  margin-bottom: 16px;
-}
-
-.footer-description {
-  color: #9ca3af;
-  font-size: 14px;
-  line-height: 1.8;
-  margin-bottom: 20px;
-}
-
-.footer-social {
-  display: flex;
-  gap: 12px;
-}
-
-.social-icon-link {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  background: #374151;
-  border-radius: 8px;
-  text-decoration: none;
-  font-size: 20px;
-  transition: all 0.3s ease;
-}
-
-.social-icon-link:hover {
-  background: #2563eb;
-  transform: translateY(-2px);
-}
-
-.footer-title {
-  font-size: 16px;
-  font-weight: 600;
-  margin-bottom: 20px;
-  color: white;
-  position: relative;
-  padding-bottom: 10px;
-}
-
-.footer-title::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 40px;
-  height: 2px;
-  background: #2563eb;
-}
-
-.footer-links {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.footer-links li {
-  margin-bottom: 12px;
-}
-
-.footer-links a {
-  color: #9ca3af;
-  text-decoration: none;
-  font-size: 14px;
-  transition: all 0.3s ease;
-  display: inline-block;
-}
-
-.footer-links a:hover {
-  color: white;
-  transform: translateX(4px);
-}
-
-.footer-links a.active-link {
-  color: white;
-  font-weight: 500;
-}
-
-.footer-bottom {
-  border-top: 1px solid #374151;
-  padding-top: 30px;
-  margin-top: 20px;
-}
-
-.footer-bottom-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.footer-bottom p {
-  color: #9ca3af;
-  font-size: 14px;
-  margin: 0;
-}
-
-.footer-bottom-links {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.footer-bottom-links a {
-  color: #9ca3af;
-  text-decoration: none;
-  font-size: 14px;
-  transition: color 0.3s ease;
-}
-
-.footer-bottom-links a:hover {
-  color: white;
-}
-
-.footer-bottom-links span {
-  color: #4b5563;
-}
-
 @media (max-width: 768px) {
   .nav-menu {
     display: none;
@@ -879,38 +639,6 @@ Penh, Cambodia</p>
 
   .faq-list {
     grid-template-columns: 1fr;
-  }
-
-  .footer-content {
-    grid-template-columns: 1fr;
-    gap: 40px;
-  }
-
-  .footer-brand {
-    padding-right: 0;
-    text-align: center;
-  }
-
-  .footer-social {
-    justify-content: center;
-  }
-
-  .footer-title::after {
-    left: 50%;
-    transform: translateX(-50%);
-  }
-
-  .footer-links {
-    text-align: center;
-  }
-
-  .footer-bottom-content {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .footer-bottom-links {
-    justify-content: center;
   }
 
   .form-map-grid {
@@ -952,25 +680,6 @@ Penh, Cambodia</p>
 
   .faq-list {
     grid-template-columns: repeat(2, 1fr);
-  }
-
-  .footer-content {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .footer-brand {
-    grid-column: 1 / -1;
-    padding-right: 0;
-    text-align: center;
-  }
-
-  .footer-social {
-    justify-content: center;
-  }
-
-  .footer-title::after {
-    left: 50%;
-    transform: translateX(-50%);
   }
 }
 </style>

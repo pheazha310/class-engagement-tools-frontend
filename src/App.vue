@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
+import Navbar from '@/components/Navbar.vue'
 </script>
 
 <template>
+  <Navbar />
   <RouterView />
 </template>
 
@@ -15,5 +17,19 @@ import { RouterView } from 'vue-router'
 
 html {
   scroll-behavior: smooth;
+  font-family:
+    'Inter',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    sans-serif;
+}
+
+body {
+  font-family: inherit;
 }
 </style>
