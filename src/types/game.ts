@@ -132,3 +132,8 @@ export const defaultMemoryGameSettings: MemoryGameSettings = {
   timeLimit: 120,
   pairs: 8,
 }
+
+export interface LeaderboardEntry {
+  participantName: string
+  score: number
+}

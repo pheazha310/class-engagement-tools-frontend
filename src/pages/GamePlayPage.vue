@@ -3,7 +3,9 @@ import { ref, reactive, computed, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import CountdownTimer from '@/components/CountdownTimer.vue'
 import QuestionDisplay from '@/components/QuestionDisplay.vue'
+import LiveLeaderboard from '@/components/LiveLeaderboard.vue'
 import { fetchGameQuestions, submitAnswer, fetchGameResults, type SubmitAnswerResponse, type GameResultResponse } from '@/services/game'
+import { subscribeToGameSession, type ScoreUpdatedPayload } from '@/services/websocket'
 import type { AnswerSubmission, Question, QuestionOption } from '@/types/game'
 
 const route = useRoute()
@@ -27,6 +29,9 @@ const gameResults = ref<GameResultResponse['answers']>([])
 const totalGameScore = ref(0)
 const totalMaxScore = ref(0)
 const questionStartTime = ref(Date.now())
+const gameSessionId = ref<number | null>(null)
+
+let unsubscribeScoreUpdates: (() => void) | null = null
 
 const currentQuestion = computed(() => questions.value[currentIndex.value] ?? null)
 const timePerQuestion = computed(() => (settings.timePerQuestion as number) || 30)
@@ -134,6 +139,47 @@ function extractGameSettings(session: Record<string, unknown>): Record<string, u
   return { timePerQuestion: readSetting(sessionSettings, 'timePerQuestion', 30) }
 }
 
+function handleScoreUpdate(payload: ScoreUpdatedPayload) {
+  const participantName = studentName.value || ''
+  const matchesCurrentUser = payload.participantName === participantName
+
+  if (matchesCurrentUser) {
+    score.value = payload.score
+    totalGameScore.value = payload.score
+  }
+}
+
+async function subscribeToScoreUpdates() {
+  try {
+    if (!gameSessionId.value) return
+    unsubscribeScoreUpdates = await subscribeToGameSession(
+      gameSessionId.value,
+      handleScoreUpdate,
+    )
+  } catch {
+    // WebSocket connection failed, continue with HTTP-only mode
+  }
+}
+
+async function resolveGameSessionId() {
+  try {
+    const baseUrl = typeof import.meta.env.VITE_API_URL === 'string' ? import.meta.env.VITE_API_URL.trim() : ''
+    const normalizedBase = baseUrl.replace(/\/$/, '')
+    const path = normalizedBase ? `${normalizedBase}/api/game-sessions/join/${encodeURIComponent(joinCode.value)}` : `/api/game-sessions/join/${encodeURIComponent(joinCode.value)}`
+    const response = await fetch(path, { method: 'GET', headers: { Accept: 'application/json' } })
+    if (response.ok) {
+      const data = await response.json()
+      const session = (data as { game_session?: Record<string, unknown> }).game_session as Record<string, unknown> | undefined
+      const id = session?.id
+      if (id !== undefined) {
+        gameSessionId.value = typeof id === 'string' ? Number.parseInt(id, 10) : Number(id)
+      }
+    }
+  } catch {
+    // Failed to resolve game session ID, skip WebSocket subscription
+  }
+}
+
 async function loadQuestions() {
   errorMessage.value = ''
   try {
@@ -147,6 +193,9 @@ async function loadQuestions() {
     questions.value = DEMO_QUESTIONS
     gameStatus.value = 'waiting'
   }
+
+  await resolveGameSessionId()
+  await subscribeToScoreUpdates()
 }
 
 function startGame() {
@@ -202,7 +251,12 @@ function handleAnswerSubmit(answerText: string) {
   isAnswerSubmitted.value = true
   gameStatus.value = 'question-result'
 
-  submitAnswer(joinCode.value, submission).catch(() => {})
+  submitAnswer(joinCode.value, submission).then((response) => {
+    if (typeof response.total_score === 'number') {
+      score.value = response.total_score
+      totalGameScore.value = response.total_score
+    }
+  }).catch(() => {})
 }
 
 function nextQuestion() {
@@ -250,7 +304,10 @@ watch(joinCode, () => {
 })
 
 onUnmounted(() => {
-  //
+  if (unsubscribeScoreUpdates) {
+    unsubscribeScoreUpdates()
+    unsubscribeScoreUpdates = null
+  }
 })
 </script>
 
@@ -276,19 +333,29 @@ onUnmounted(() => {
       </div>
 
       <template v-else-if="gameStatus === 'waiting'">
-        <div class="waiting-state">
-          <div class="waiting-icon">
-            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10" />
-              <polyline points="12 6 12 12 16 14" />
-            </svg>
+        <div class="game-play-layout">
+          <div class="game-sidebar">
+            <LiveLeaderboard
+              :game-session-id="gameSessionId"
+              :current-player-name="studentName || undefined"
+            />
           </div>
-          <h2 class="waiting-title">Waiting for the Host</h2>
-          <p class="waiting-text">Your teacher will start the game shortly. Get ready to answer!</p>
-          <div class="questions-preview">
-            <span class="preview-label">{{ questions.length }} question{{ questions.length !== 1 ? 's' : '' }} loaded</span>
+          <div class="game-main">
+            <div class="waiting-state">
+              <div class="waiting-icon">
+                <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+              </div>
+              <h2 class="waiting-title">Waiting for the Host</h2>
+              <p class="waiting-text">Your teacher will start the game shortly. Get ready to answer!</p>
+              <div class="questions-preview">
+                <span class="preview-label">{{ questions.length }} question{{ questions.length !== 1 ? 's' : '' }} loaded</span>
+              </div>
+              <button class="btn-start" @click="startGame">Start Now (Demo)</button>
+            </div>
           </div>
-          <button class="btn-start" @click="startGame">Start Now (Demo)</button>
         </div>
       </template>
 
@@ -314,6 +381,10 @@ onUnmounted(() => {
               <span class="score-label">Score</span>
               <span class="score-value">{{ score }}</span>
             </div>
+            <LiveLeaderboard
+              :game-session-id="gameSessionId"
+              :current-player-name="studentName || undefined"
+            />
           </div>
 
           <div class="game-main">
@@ -330,65 +401,85 @@ onUnmounted(() => {
       </template>
 
       <template v-else-if="gameStatus === 'question-result' && currentQuestion">
-        <div class="result-state">
-          <div class="result-card">
-            <div class="result-icon" :class="lastResult?.isCorrect ? 'result-icon--correct' : 'result-icon--wrong'">
-              <svg v-if="lastResult?.isCorrect" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-              <svg v-else width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
+        <div class="game-play-layout">
+          <div class="game-sidebar">
+            <LiveLeaderboard
+              :game-session-id="gameSessionId"
+              :current-player-name="studentName || undefined"
+            />
+          </div>
+          <div class="game-main">
+            <div class="result-state">
+              <div class="result-card">
+                <div class="result-icon" :class="lastResult?.isCorrect ? 'result-icon--correct' : 'result-icon--wrong'">
+                  <svg v-if="lastResult?.isCorrect" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  <svg v-else width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </div>
+                <h2 class="result-title">{{ lastResult?.isCorrect ? 'Correct!' : 'Not quite right' }}</h2>
+                <p class="result-score">+{{ currentQuestion.points }} points for this question</p>
+                <div v-if="!lastResult?.isCorrect && currentQuestion.correctAnswer && currentQuestion.options" class="correct-answer">
+                  <span class="correct-label">Correct answer:</span>
+                  <span class="correct-value">{{ correctAnswerLabel }}</span>
+                </div>
+                <button class="btn-next" @click="nextQuestion">
+                  {{ currentIndex < questions.length - 1 ? 'Next Question →' : 'See Results →' }}
+                </button>
+              </div>
             </div>
-            <h2 class="result-title">{{ lastResult?.isCorrect ? 'Correct!' : 'Not quite right' }}</h2>
-            <p class="result-score">+{{ currentQuestion.points }} points for this question</p>
-            <div v-if="!lastResult?.isCorrect && currentQuestion.correctAnswer && currentQuestion.options" class="correct-answer">
-              <span class="correct-label">Correct answer:</span>
-              <span class="correct-value">{{ correctAnswerLabel }}</span>
-            </div>
-            <button class="btn-next" @click="nextQuestion">
-              {{ currentIndex < questions.length - 1 ? 'Next Question →' : 'See Results →' }}
-            </button>
           </div>
         </div>
       </template>
 
       <template v-else-if="gameStatus === 'finished'">
-        <div class="results-state">
-          <div class="results-card">
-            <div class="results-icon">
-              <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M6 9H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2" />
-                <rect x="6" y="14" width="12" height="6" rx="1" />
-                <circle cx="12" cy="20" r="1" />
-              </svg>
-            </div>
-            <h2 class="results-title">Game Over!</h2>
-            <div class="final-score">
-              <span class="final-score-value">{{ score }}</span>
-              <span class="final-score-total">/ {{ totalMaxScore }} pts</span>
-            </div>
+        <div class="game-play-layout">
+          <div class="game-sidebar">
+            <LiveLeaderboard
+              :game-session-id="gameSessionId"
+              :current-player-name="studentName || undefined"
+            />
+          </div>
+          <div class="game-main">
+            <div class="results-state">
+              <div class="results-card">
+                <div class="results-icon">
+                  <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6 9H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2" />
+                    <rect x="6" y="14" width="12" height="6" rx="1" />
+                    <circle cx="12" cy="20" r="1" />
+                  </svg>
+                </div>
+                <h2 class="results-title">Game Over!</h2>
+                <div class="final-score">
+                  <span class="final-score-value">{{ score }}</span>
+                  <span class="final-score-total">/ {{ totalMaxScore }} pts</span>
+                </div>
 
-            <div class="results-breakdown">
-              <h3 class="breakdown-title">Question Breakdown</h3>
-              <div class="breakdown-list">
-                <div
-                  v-for="(item, idx) in gameResults"
-                  :key="idx"
-                  class="breakdown-item"
-                  :class="item.isCorrect ? 'breakdown-item--correct' : 'breakdown-item--wrong'"
-                >
-                  <span class="breakdown-num">Q{{ idx + 1 }}</span>
-                  <span class="breakdown-status">{{ item.isCorrect ? '✓' : '✗' }}</span>
-                  <span class="breakdown-points">+{{ item.pointsEarned }} pts</span>
+                <div class="results-breakdown">
+                  <h3 class="breakdown-title">Question Breakdown</h3>
+                  <div class="breakdown-list">
+                    <div
+                      v-for="(item, idx) in gameResults"
+                      :key="idx"
+                      class="breakdown-item"
+                      :class="item.isCorrect ? 'breakdown-item--correct' : 'breakdown-item--wrong'"
+                    >
+                      <span class="breakdown-num">Q{{ idx + 1 }}</span>
+                      <span class="breakdown-status">{{ item.isCorrect ? '✓' : '✗' }}</span>
+                      <span class="breakdown-points">+{{ item.pointsEarned }} pts</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="results-actions">
+                  <button class="btn-play-again" @click="playAgain">Play Again</button>
+                  <button class="btn-leave" @click="leaveGame">Back to Home</button>
                 </div>
               </div>
-            </div>
-
-            <div class="results-actions">
-              <button class="btn-play-again" @click="playAgain">Play Again</button>
-              <button class="btn-leave" @click="leaveGame">Back to Home</button>
             </div>
           </div>
         </div>

@@ -15,11 +15,11 @@ export interface QuestionsResponse {
 }
 
 export interface SubmitAnswerResponse {
+  is_correct: boolean
+  points_awarded: number
+  total_score: number
   score: number
-  totalScore: number
-  isCorrect: boolean
-  correctAnswer?: string
-  message?: string
+  game_answer: Record<string, unknown>
 }
 
 export interface GameResultResponse {
@@ -31,6 +31,11 @@ export interface GameResultResponse {
     isCorrect: boolean
     pointsEarned: number
   }>
+}
+
+export interface LeaderboardEntry {
+  participantName: string
+  score: number
 }
 
 function getApiUrl(path: string): string {
@@ -140,6 +145,29 @@ export async function fetchGameResults(
   if (!response.ok) {
     const data = await response.json().catch(() => ({}))
     throw new Error(data.message || `Failed to load results: ${response.status}`)
+  }
+
+  return response.json()
+}
+
+export interface LeaderboardResponse {
+  leaderboard: LeaderboardEntry[]
+}
+
+export async function fetchLeaderboard(
+  gameSessionId: number,
+): Promise<LeaderboardResponse> {
+  const response = await fetch(getApiUrl(`/api/game-sessions/${encodeURIComponent(String(gameSessionId))}/leaderboard`), {
+    method: 'GET',
+    headers: {
+      Accept: 'application/json',
+    },
+    credentials: 'include',
+  })
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}))
+    throw new Error(data.message || `Failed to load leaderboard: ${response.status}`)
   }
 
   return response.json()
