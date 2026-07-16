@@ -9,6 +9,9 @@ import HomepageView from '@/views/Homepage.vue'
 import ToolsPage from '@/pages/ToolsPage.vue'
 import ToolDetailPage from '@/pages/ToolDetailPage.vue'
 import GroupGeneratorView from '@/views/GroupGeneratorView.vue'
+import CreateGamePage from '@/pages/CreateGamePage.vue'
+import JoinGamePage from '@/pages/JoinGamePage.vue'
+import GamePlayPage from '@/pages/GamePlayPage.vue'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -246,6 +249,21 @@ const routes: RouteRecordRaw[] = [
     path: '/settings',
     name: 'settings',
     component: () => import('@/pages/ProfilePage.vue'),
+  },
+  {
+    path: '/games/create',
+    name: 'create-game',
+    component: CreateGamePage,
+  },
+  {
+    path: '/join/:joinCode',
+    name: 'join-game',
+    component: JoinGamePage,
+  },
+  {
+    path: '/game/:joinCode',
+    name: 'game-play',
+    component: GamePlayPage,
   },
   {
     path: '/:pathMatch(.*)*',

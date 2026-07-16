@@ -51,10 +51,10 @@ export const categories: Category[] = [
     icon: '🎮',
     slug: 'games',
     tools: [
-      { title: 'Math Challenge', slug: 'math-challenge', icon: '🔢', description: 'Add friendly competition with math challenges.', category: 'Games' },
-      { title: 'Vocabulary Race', slug: 'vocabulary-race', icon: '📚', description: 'Fun vocabulary building races for the classroom.', category: 'Games' },
-      { title: 'Quiz Battle', slug: 'quiz-battle', icon: '⚔️', description: 'Competitive quiz battles to engage students.', category: 'Games' },
-      { title: 'Memory Game', slug: 'memory-game', icon: '🧠', description: 'Memory matching games for learning reinforcement.', category: 'Games' },
+      { title: 'Math Challenge', slug: 'math-challenge', icon: '🔢', description: 'Add friendly competition with math challenges.', category: 'Games', route: '/games/create' },
+      { title: 'Vocabulary Race', slug: 'vocabulary-race', icon: '📚', description: 'Fun vocabulary building races for the classroom.', category: 'Games', route: '/games/create' },
+      { title: 'Quiz Battle', slug: 'quiz-battle', icon: '⚔️', description: 'Competitive quiz battles to engage students.', category: 'Games', route: '/games/create' },
+      { title: 'Memory Game', slug: 'memory-game', icon: '🧠', description: 'Memory matching games for learning reinforcement.', category: 'Games', route: '/games/create' },
     ]
   },
   {
