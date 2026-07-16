@@ -811,6 +811,7 @@ function processFile(file: File) {
 }
 
 .right-panel {
+  margin-top: 100px;
   min-height: 100%;
   overflow-y: visible;
   padding-right: 0.5rem;
@@ -1267,6 +1268,7 @@ function processFile(file: File) {
 }
 
 .results-header {
+  margin-top: -50px;
   display: flex;
   align-items: center;
   justify-content: space-between;
