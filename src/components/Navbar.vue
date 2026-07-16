@@ -101,7 +101,7 @@ onUnmounted(() => {
           </div>
         </li>
         <li><RouterLink to="/contact" class="nav-link" :class="{ active: route.path === '/contact' }" @click="closeMobileMenu">Contact</RouterLink></li>
-      
+
 
         <!-- Mobile auth links (visible only in mobile menu) -->
         <li v-if="auth.initialized" class="mobile-auth-links">
@@ -110,16 +110,17 @@ onUnmounted(() => {
             <RouterLink to="/settings" class="nav-link" @click="closeMobileMenu">Settings</RouterLink>
             <button class="nav-link mobile-logout-btn" type="button" @click="handleLogout">Logout</button>
           </template>
-          <template v-else>
-            <RouterLink to="/login" class="nav-link mobile-login-btn" @click="closeMobileMenu">Login</RouterLink>
-            <RouterLink to="/register" class="nav-link mobile-register-btn" @click="closeMobileMenu">Register</RouterLink>
-          </template>
+            <template v-else>
+              <RouterLink to="/login" class="nav-link mobile-login-btn" @click="closeMobileMenu">Login</RouterLink>
+              <RouterLink to="/register" class="nav-link mobile-register-btn" @click="closeMobileMenu">Register</RouterLink>
+            </template>
         </li>
       </ul>
 
       <div class="nav-buttons">
         <template v-if="auth.initialized && auth.isAuthenticated">
           <ProfileDropdown />
+          <button class="btn btn-logout" type="button" @click="handleLogout">Logout</button>
         </template>
         <template v-else-if="auth.initialized && !auth.isAuthenticated">
           <RouterLink to="/login" class="btn btn-login">Login</RouterLink>

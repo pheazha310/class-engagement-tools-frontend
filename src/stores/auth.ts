@@ -51,8 +51,9 @@ export const useAuthStore = defineStore('auth', () => {
 
     const candidateRecord = candidate as Record<string, unknown>
 
+    const rawId = candidateRecord.id
     if (
-      typeof candidateRecord.id !== 'number' ||
+      rawId === null || rawId === undefined ||
       typeof candidateRecord.name !== 'string' ||
       typeof candidateRecord.email !== 'string'
     ) {
@@ -60,7 +61,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     return {
-      id: candidateRecord.id,
+      id: Number(rawId),
       name: candidateRecord.name,
       email: candidateRecord.email,
       role: typeof candidateRecord.role === 'string' ? candidateRecord.role : 'student',
@@ -106,6 +107,7 @@ export const useAuthStore = defineStore('auth', () => {
       const authenticatedUser = normalizeUser(data)
       if (authenticatedUser) {
         setUser(authenticatedUser)
+        initialized.value = true
       } else {
         await fetchUser()
       }
@@ -134,6 +136,7 @@ export const useAuthStore = defineStore('auth', () => {
       const authenticatedUser = normalizeUser(data)
       if (authenticatedUser) {
         setUser(authenticatedUser)
+        initialized.value = true
       } else {
         await fetchUser()
       }
