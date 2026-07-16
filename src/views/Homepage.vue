@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { categories } from '@/data/toolsData'
 import SiteFooter from '@/components/SiteFooter.vue'
+
+defineOptions({
+  name: 'HomePage',
+})
 </script>
 
 <template>
   <div class="homepage">
-    <!-- Hero Section -->
     <section class="hero">
       <div class="hero-content">
         <h1 class="hero-title">Transform Your Classroom Engagement</h1>
@@ -21,8 +23,6 @@ import SiteFooter from '@/components/SiteFooter.vue'
       </div>
     </section>
 
-
-    <!-- Featured Tools Section -->
     <section class="featured-tools">
       <div class="container">
         <h2 class="section-title">Featured Tools</h2>
@@ -52,7 +52,6 @@ import SiteFooter from '@/components/SiteFooter.vue'
       </div>
     </section>
 
-    <!-- About Section -->
     <section class="about">
       <div class="container">
         <h2 class="section-title">About ClassTools</h2>
@@ -77,36 +76,15 @@ import SiteFooter from '@/components/SiteFooter.vue'
             </p>
           </div>
           <div class="about-stats">
-            <div class="stat-item">
-              <div class="stat-number">10K+</div>
-              <div class="stat-label">Active Teachers</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-number">50K+</div>
-              <div class="stat-label">Students Engaged</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-number">15+</div>
-              <div class="stat-label">Interactive Tools</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-number">98%</div>
-              <div class="stat-label">Satisfaction Rate</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-number">24/7</div>
-              <div class="stat-label">Support Available</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-number">100%</div>
-              <div class="stat-label">Free to Use</div>
+            <div class="stat-item" v-for="stat in stats" :key="stat.label">
+              <div class="stat-number">{{ stat.value }}</div>
+              <div class="stat-label">{{ stat.label }}</div>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Features Section -->
     <section class="features">
       <div class="container">
         <h2 class="section-title">Why Choose ClassTools?</h2>
@@ -114,41 +92,15 @@ import SiteFooter from '@/components/SiteFooter.vue'
           We provide everything you need to create engaging and interactive classroom experiences.
         </p>
         <div class="features-grid">
-          <div class="feature-card">
-            <div class="feature-icon">🎯</div>
-            <h3>Easy to Use</h3>
-            <p>Intuitive interface designed for educators. No technical skills required - start using tools in seconds.</p>
-          </div>
-          <div class="feature-card">
-            <div class="feature-icon">📱</div>
-            <h3>Works Everywhere</h3>
-            <p>Access tools on any device - desktop, tablet, or mobile. Perfect for modern classrooms.</p>
-          </div>
-          <div class="feature-card">
-            <div class="feature-icon">🔒</div>
-            <h3>Safe & Secure</h3>
-            <p>Your data is protected with enterprise-grade security. We prioritize student privacy.</p>
-          </div>
-          <div class="feature-card">
-            <div class="feature-icon">💡</div>
-            <h3>Constantly Updated</h3>
-            <p>Regular new features and improvements based on educator feedback. Always evolving.</p>
-          </div>
-          <div class="feature-card">
-            <div class="feature-icon">🌍</div>
-            <h3>Global Community</h3>
-            <p>Join thousands of educators worldwide sharing best practices and success stories.</p>
-          </div>
-          <div class="feature-card">
-            <div class="feature-icon">🎓</div>
-            <h3>Education-Focused</h3>
-            <p>Built by educators who understand classroom needs. Every feature serves a purpose.</p>
+          <div class="feature-card" v-for="feature in features" :key="feature.title">
+            <div class="feature-icon">{{ feature.icon }}</div>
+            <h3>{{ feature.title }}</h3>
+            <p>{{ feature.desc }}</p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Testimonials Section -->
     <section class="testimonials">
       <div class="container">
         <h2 class="section-title">What Educators Say</h2>
@@ -156,39 +108,15 @@ import SiteFooter from '@/components/SiteFooter.vue'
           Join thousands of teachers who are transforming their classrooms with ClassTools.
         </p>
         <div class="testimonials-grid">
-          <div class="testimonial-card">
+          <div class="testimonial-card" v-for="t in testimonials" :key="t.author">
             <div class="testimonial-content">
-              <p>"ClassTools has completely transformed how I engage my students. The Random Wheel and Student Picker are game-changers!"</p>
+              <p>"{{ t.quote }}"</p>
             </div>
             <div class="testimonial-author">
-              <div class="testimonial-avatar">👩‍🏫</div>
+              <div class="testimonial-avatar">{{ t.avatar }}</div>
               <div class="testimonial-info">
-                <h4>Sarah Johnson</h4>
-                <p>Elementary School Teacher</p>
-              </div>
-            </div>
-          </div>
-          <div class="testimonial-card">
-            <div class="testimonial-content">
-              <p>"The Group Generator saves me so much time. I can create balanced groups in seconds and focus on teaching."</p>
-            </div>
-            <div class="testimonial-author">
-              <div class="testimonial-avatar">👨‍🏫</div>
-              <div class="testimonial-info">
-                <h4>Michael Chen</h4>
-                <p>High School Teacher</p>
-              </div>
-            </div>
-          </div>
-          <div class="testimonial-card">
-            <div class="testimonial-content">
-              <p>"My students love the educational games! They're learning while having fun. Best tool I've ever used."</p>
-            </div>
-            <div class="testimonial-author">
-              <div class="testimonial-avatar">👩‍🏫</div>
-              <div class="testimonial-info">
-                <h4>Emily Rodriguez</h4>
-                <p>Middle School Teacher</p>
+                <h4>{{ t.author }}</h4>
+                <p>{{ t.role }}</p>
               </div>
             </div>
           </div>
@@ -196,7 +124,6 @@ import SiteFooter from '@/components/SiteFooter.vue'
       </div>
     </section>
 
-    <!-- Team Section -->
     <section class="team-section">
       <div class="container">
         <h2 class="section-title">Meet Our Team</h2>
@@ -204,67 +131,18 @@ import SiteFooter from '@/components/SiteFooter.vue'
           We're a passionate group of educators, developers, and designers dedicated to transforming education.
         </p>
         <div class="team-grid">
-          <div class="team-card">
+          <div class="team-card" v-for="member in team" :key="member.name">
             <div class="team-avatar">
-              <img src="@/assets/images/Sophea.jpg" alt="Sophea Phal" class="avatar-image" />
+              <img :src="member.image" :alt="member.name" class="avatar-image" />
             </div>
-            <h3 class="team-name">Sophea Phal</h3>
-            <p class="team-role">Scrum Master</p>
-            <p class="team-bio">Database Management</p>
-          </div>
-          <div class="team-card">
-            <div class="team-avatar">
-              <img src="@/assets/images/oun.jpg" alt="Sophea Sophorn" class="avatar-image" />
-            </div>
-            <h3 class="team-name">Sophea Sophorn</h3>
-            <p class="team-role">Backend Developer</p>
-            <p class="team-bio">Responsible for Backend Development</p>
-          </div>
-          <div class="team-card">
-            <div class="team-avatar">
-              <img src="@/assets/images/Me.jpg" alt="Sreykeo Keun" class="avatar-image" />
-            </div>
-            <h3 class="team-name">Sreykeo Keun</h3>
-            <p class="team-role">Frontend Developer & QA</p>
-            <p class="team-bio">Responsible for Frontend Development and Quality Assurance</p>
-          </div>
-          <div class="team-card">
-            <div class="team-avatar">
-              <img src="@/assets/images/San.jpg" alt="San Svit" class="avatar-image" />
-            </div>
-            <h3 class="team-name">San Svit</h3>
-            <p class="team-role">Frontend Developer</p>
-            <p class="team-bio">Responsible for Frontend Development</p>
-          </div>
-          <div class="team-card">
-            <div class="team-avatar">
-              <img src="@/assets/images/Mary.jpg" alt="Mary Sao" class="avatar-image" />
-            </div>
-            <h3 class="team-name">Mary Sao</h3>
-            <p class="team-role">Frontend Developer</p>
-            <p class="team-bio">Responsible for Frontend Development</p>
-          </div>
-          <div class="team-card">
-            <div class="team-avatar">
-              <img src="@/assets/images/Vanna.jpg" alt="Vanna Len" class="avatar-image" />
-            </div>
-            <h3 class="team-name">Vanna Len</h3>
-            <p class="team-role">Backend Developer</p>
-            <p class="team-bio">Responsible for Backend Development</p>
-          </div>
-          <div class="team-card">
-            <div class="team-avatar">
-              <img src="@/assets/images/Nita.jpg" alt="Chroun Nita" class="avatar-image" />
-            </div>
-            <h3 class="team-name">Chroun Nita</h3>
-            <p class="team-role">Frontend Developer & QA</p>
-            <p class="team-bio">Responsible for Frontend Development and Quality Assurance</p>
+            <h3 class="team-name">{{ member.name }}</h3>
+            <p class="team-role">{{ member.role }}</p>
+            <p class="team-bio">{{ member.bio }}</p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Call-to-Action Section -->
     <section class="cta">
       <div class="container">
         <h2 class="cta-title">Ready to Transform Your Classroom?</h2>
@@ -277,24 +155,70 @@ import SiteFooter from '@/components/SiteFooter.vue'
   </div>
 </template>
 
+<script lang="ts">
+import SopheaImage from '@/assets/images/Sophea.jpg'
+import SopheaSophornImage from '@/assets/images/oun.jpg'
+import SreykeoImage from '@/assets/images/Me.jpg'
+import SanImage from '@/assets/images/San.jpg'
+import MaryImage from '@/assets/images/Mary.jpg'
+import VannaImage from '@/assets/images/Vanna.jpg'
+import ChrounImage from '@/assets/images/Nita.jpg'
+
+const stats = [
+  { value: '10K+', label: 'Active Teachers' },
+  { value: '50K+', label: 'Students Engaged' },
+  { value: '15+', label: 'Interactive Tools' },
+  { value: '98%', label: 'Satisfaction Rate' },
+  { value: '24/7', label: 'Support Available' },
+  { value: '100%', label: 'Free to Use' },
+]
+
+const features = [
+  { icon: '🎯', title: 'Easy to Use', desc: 'Intuitive interface designed for educators. No technical skills required - start using tools in seconds.' },
+  { icon: '📱', title: 'Works Everywhere', desc: 'Access tools on any device - desktop, tablet, or mobile. Perfect for modern classrooms.' },
+  { icon: '🔒', title: 'Safe & Secure', desc: 'Your data is protected with enterprise-grade security. We prioritize student privacy.' },
+  { icon: '💡', title: 'Constantly Updated', desc: 'Regular new features and improvements based on educator feedback. Always evolving.' },
+  { icon: '🌍', title: 'Global Community', desc: 'Join thousands of educators worldwide sharing best practices and success stories.' },
+  { icon: '🎓', title: 'Education-Focused', desc: 'Built by educators who understand classroom needs. Every feature serves a purpose.' },
+]
+
+const testimonials = [
+  { quote: 'ClassTools has completely transformed how I engage my students. The Random Wheel and Student Picker are game-changers!', author: 'Sarah Johnson', role: 'Elementary School Teacher', avatar: '👩‍🏫' },
+  { quote: 'The Group Generator saves me so much time. I can create balanced groups in seconds and focus on teaching.', author: 'Michael Chen', role: 'High School Teacher', avatar: '👨‍🏫' },
+  { quote: 'My students love the educational games! They\'re learning while having fun. Best tool I\'ve ever used.', author: 'Emily Rodriguez', role: 'Middle School Teacher', avatar: '👩‍🏫' },
+]
+
+const team = [
+  { name: 'Sophea Phal', role: 'Scrum Master', bio: 'Database Management', image: SopheaImage },
+  { name: 'Sophea Sophorn', role: 'Backend Developer', bio: 'Responsible for Backend Development', image: SopheaSophornImage },
+  { name: 'Sreykeo Keun', role: 'Frontend Developer & QA', bio: 'Responsible for Frontend Development and Quality Assurance', image: SreykeoImage },
+  { name: 'San Svit', role: 'Frontend Developer', bio: 'Responsible for Frontend Development', image: SanImage },
+  { name: 'Mary Sao', role: 'Frontend Developer', bio: 'Responsible for Frontend Development', image: MaryImage },
+  { name: 'Vanna Len', role: 'Backend Developer', bio: 'Responsible for Backend Development', image: VannaImage },
+  { name: 'Chroun Nita', role: 'Frontend Developer & QA', bio: 'Responsible for Frontend Development and Quality Assurance', image: ChrounImage },
+]
+</script>
+
 <style scoped>
-/* Reset and Base Styles */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
+
 .image {
   width: 180px;
   height: auto;
   display: block;
   margin: 0 auto;
 }
+
 .homepage {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   line-height: 1.6;
   color: #1f2937;
   background: #ffffff;
+  padding-top: 64px;
 }
 
 .container {
@@ -303,46 +227,45 @@ import SiteFooter from '@/components/SiteFooter.vue'
   padding: 0 20px;
 }
 
-/* Typography */
 h1, h2, h3 {
   line-height: 1.2;
 }
 
-/* Buttons */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 12px 24px;
-  border-radius: 8px;
+  border-radius: 10px;
   text-decoration: none;
   font-weight: 600;
   font-size: 16px;
   border: none;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .btn-primary {
   background: white;
-  color: #2563eb;
+  color: #6366f1;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
 }
 
 .btn-primary:hover {
-  background: #f0f9ff;
+  background: #f5f3ff;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
 }
 
 .btn-secondary {
   background: transparent;
   color: white;
-  border: 2px solid white;
+  border: 2px solid rgba(255, 255, 255, 0.8);
 }
 
 .btn-secondary:hover {
-  background: white;
-  color: #2563eb;
+  background: rgba(255, 255, 255, 0.15);
+  border-color: white;
 }
 
 .btn-large {
@@ -355,7 +278,7 @@ h1, h2, h3 {
   color: #475569;
   border: 1px solid #e2e8f0;
   backdrop-filter: blur(10px);
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 8px 18px;
   font-size: 14px;
   font-weight: 500;
@@ -363,44 +286,43 @@ h1, h2, h3 {
 
 .btn-login:hover {
   background: #f8fafc;
-  color: #2563eb;
-  border-color: #cbd5e1;
+  color: #6366f1;
+  border-color: #6366f1;
 }
 
 .btn-register {
-  background: #2563eb;
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
   color: white;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 8px 18px;
   font-size: 14px;
   font-weight: 600;
-  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.2);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
 }
 
 .btn-register:hover {
-  background: #1d4ed8;
+  background: linear-gradient(135deg, #818cf8, #6366f1);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 6px 18px rgba(99, 102, 241, 0.35);
 }
 
-/* Navigation Bar */
 .navbar {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 1000;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
   border-bottom: 1px solid transparent;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   height: 64px;
 }
 
 .navbar.scrolled {
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-  background: rgba(255, 255, 255, 0.98);
+  background: rgba(255, 255, 255, 0.95);
   border-bottom-color: #f1f5f9;
 }
 
@@ -431,34 +353,6 @@ h1, h2, h3 {
   object-fit: contain;
 }
 
-.nav-logo-text {
-  display: flex;
-  align-items: baseline;
-  gap: 0;
-  flex-wrap: nowrap;
-  line-height: 1.1;
-}
-
-.nav-logo-name {
-  font-size: 20px;
-  font-weight: 800;
-  color: #1e293b;
-  letter-spacing: -0.5px;
-}
-
-.nav-logo-kh {
-  color: #f59e0b;
-}
-
-.nav-logo-tagline {
-  font-size: 11px;
-  color: #94a3b8;
-  font-weight: 500;
-  margin-left: 8px;
-  letter-spacing: 0.3px;
-  white-space: nowrap;
-}
-
 .nav-menu {
   display: flex;
   list-style: none;
@@ -476,7 +370,7 @@ h1, h2, h3 {
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
-  border-radius: 6px;
+  border-radius: 8px;
   transition: all 0.2s ease;
   border: none;
   background: transparent;
@@ -486,13 +380,13 @@ h1, h2, h3 {
 }
 
 .nav-link:hover {
-  color: #2563eb;
-  background: rgba(248, 250, 252, 0.8);
+  color: #6366f1;
+  background: rgba(99, 102, 241, 0.06);
 }
 
 .nav-link.active {
-  color: #2563eb;
-  background: rgba(248, 250, 252, 0.8);
+  color: #6366f1;
+  background: rgba(99, 102, 241, 0.08);
 }
 
 .nav-link::after {
@@ -502,7 +396,7 @@ h1, h2, h3 {
   left: 14px;
   right: 14px;
   height: 2px;
-  background: #2563eb;
+  background: #6366f1;
   border-radius: 1px;
   transform: scaleX(0);
   transition: transform 0.2s ease;
@@ -524,7 +418,7 @@ h1, h2, h3 {
 }
 
 .dropdown-icon {
-  transition: transform 0.2s ease;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .nav-dropdown-trigger:hover .dropdown-icon {
@@ -533,18 +427,18 @@ h1, h2, h3 {
 
 .dropdown-menu {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + 10px);
   left: 50%;
   transform: translateX(-50%) translateY(8px) scale(0.96);
   background: white;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 6px;
+  border-radius: 14px;
+  padding: 8px;
   min-width: 220px;
   opacity: 0;
   visibility: hidden;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
   z-index: 1002;
 }
 
@@ -564,46 +458,18 @@ h1, h2, h3 {
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
-  border-radius: 8px;
+  border-radius: 10px;
   transition: all 0.15s ease;
   border: none;
   background: none;
   cursor: pointer;
-  gap: 8px;
+  gap: 10px;
 }
 
 .dropdown-item:hover {
-  background: #f8fafc;
-  color: #2563eb;
+  background: rgba(99, 102, 241, 0.06);
+  color: #6366f1;
   padding-left: 18px;
-}
-
-.mobile-menu-toggle {
-  display: none;
-  flex-direction: column;
-  gap: 5px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 8px;
-  z-index: 1001;
-}
-
-.mobile-menu-toggle span {
-  display: block;
-  width: 24px;
-  height: 2px;
-  background: #64748b;
-  transition: all 0.3s ease;
-  border-radius: 2px;
-}
-
-.mobile-menu-toggle.active span:nth-child(1) {
-  transform: rotate(45deg) translate(5px, 5px);
-}
-
-.mobile-menu-toggle.active span:nth-child(2) {
-  opacity: 0;
 }
 
 .nav-buttons {
@@ -629,7 +495,7 @@ h1, h2, h3 {
     overflow: hidden;
     opacity: 0;
     transform: translateY(-8px);
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 999;
   }
 
@@ -643,6 +509,10 @@ h1, h2, h3 {
     width: 100%;
     padding: 12px 16px;
     justify-content: space-between;
+  }
+
+  .nav-link::after {
+    display: none;
   }
 
   .dropdown-menu {
@@ -675,72 +545,44 @@ h1, h2, h3 {
     display: none;
   }
 
-.btn-login {
-  background: transparent;
-  color: #475569;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 999px;
-  padding: 10px 20px;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.25s ease;
-}
+  .btn-login {
+    background: transparent;
+    color: #475569;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 999px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.25s ease;
+  }
 
-.btn-login:hover {
-  background: rgba(248, 250, 252, 0.9);
-  color: #2563eb;
-  border-color: #2563eb;
-}
+  .btn-login:hover {
+    background: rgba(248, 250, 252, 0.9);
+    color: #6366f1;
+    border-color: #6366f1;
+  }
 
-.btn-register {
-  background: #2563eb;
-  color: white;
-  border: none;
-  border-radius: 999px;
-  padding: 10px 24px;
-  font-size: 14px;
-  font-weight: 600;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
-  transition: all 0.25s ease;
-}
+  .btn-register {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    color: white;
+    border: none;
+    border-radius: 999px;
+    padding: 10px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
+    transition: all 0.25s ease;
+  }
 
-.btn-register:hover {
-  background: #1d4ed8;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35);
-}
+  .btn-register:hover {
+    background: linear-gradient(135deg, #818cf8, #6366f1);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(99, 102, 241, 0.35);
+  }
 
-.mobile-menu-toggle {
-  display: none;
-  flex-direction: column;
-  gap: 5px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 8px;
-  z-index: 1001;
-}
-
-.mobile-menu-toggle span {
-  display: block;
-  width: 24px;
-  height: 2px;
-  background: #64748b;
-  transition: all 0.3s ease;
-  border-radius: 2px;
-}
-
-.mobile-menu-toggle.active span:nth-child(1) {
-  transform: rotate(45deg) translate(5px, 5px);
-}
-
-.mobile-menu-toggle.active span:nth-child(2) {
-  opacity: 0;
-}
-
-.mobile-menu-toggle.active span:nth-child(3) {
-  transform: rotate(-45deg) translate(6px, -6px);
-}
+  .mobile-menu-toggle {
+    display: flex;
+  }
 
   .nav-buttons .btn {
     display: inline-flex;
@@ -755,7 +597,7 @@ h1, h2, h3 {
 
 /* Hero Section */
 .hero {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
   color: white;
   padding: 180px 20px 120px;
   text-align: center;
@@ -771,7 +613,7 @@ h1, h2, h3 {
   right: 0;
   bottom: 0;
   background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd"><g fill="%23ffffff" fill-opacity="0.05"><path d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/></g></g></svg>');
-  opacity: 0.3;
+  opacity: 0.4;
 }
 
 .hero-content {
@@ -779,6 +621,12 @@ h1, h2, h3 {
   margin: 0 auto;
   position: relative;
   z-index: 1;
+  animation: fade-in-up 0.8s ease-out;
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .hero-title {
@@ -786,7 +634,7 @@ h1, h2, h3 {
   font-weight: 800;
   margin-bottom: 24px;
   line-height: 1.1;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
 }
 
 .hero-subtitle {
@@ -804,63 +652,6 @@ h1, h2, h3 {
   flex-wrap: wrap;
 }
 
-/* About Me Section */
-.about-me {
-  padding: 80px 20px;
-  background: white;
-}
-
-.about-me-content {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 48px;
-  align-items: center;
-  margin-top: 48px;
-}
-
-.about-me-image {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.about-me-text h3 {
-  font-size: 24px;
-  font-weight: 700;
-  margin-bottom: 8px;
-  color: #1f2937;
-}
-
-.about-me-role {
-  font-size: 16px;
-  font-weight: 600;
-  color: #2563eb;
-  margin-bottom: 16px;
-}
-
-.about-me-text p {
-  color: #4b5563;
-  font-size: 16px;
-  margin-bottom: 16px;
-  line-height: 1.8;
-}
-
-.image-placeholder {
-  width: 100%;
-  max-width: 300px;
-  aspect-ratio: 1;
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-  border-radius: 20px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: white;
-}
-
-.placeholder-icon {
-  font-size: 80px;
-}
-
 /* Featured Tools Section */
 .featured-tools {
   padding: 80px 20px;
@@ -873,7 +664,7 @@ h1, h2, h3 {
   text-align: center;
   margin-bottom: 16px;
   color: #0f172a;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
 }
 
 .section-subtitle {
@@ -895,14 +686,14 @@ h1, h2, h3 {
   background: white;
   border-radius: 16px;
   padding: 28px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   border: 1px solid #e2e8f0;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .category-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
   border-color: #cbd5e1;
 }
 
@@ -929,7 +720,7 @@ h1, h2, h3 {
   align-items: flex-start;
   gap: 12px;
   padding: 14px;
-  border-radius: 10px;
+  border-radius: 12px;
   text-decoration: none;
   color: #1e293b;
   transition: all 0.2s ease;
@@ -952,6 +743,11 @@ h1, h2, h3 {
   background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
   border-radius: 10px;
   flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.category-tool-link:hover .category-tool-icon {
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
 }
 
 .category-tool-content {
@@ -974,22 +770,8 @@ h1, h2, h3 {
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  -webkit-orient: vertical;
   overflow: hidden;
-}
-
-.tool-link {
-  display: inline-block;
-  margin-top: 12px;
-  color: #2563eb;
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 14px;
-  transition: color 0.3s ease;
-}
-
-.tool-link:hover {
-  color: #1d4ed8;
 }
 
 /* About Section */
@@ -1016,24 +798,30 @@ h1, h2, h3 {
 .about-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
+  gap: 20px;
 }
 
 .stat-item {
   text-align: center;
   padding: 28px 20px;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-radius: 12px;
+  border-radius: 16px;
   border: 1px solid #e2e8f0;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stat-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+  border-color: #6366f1;
 }
 
 .stat-number {
   font-size: 36px;
   font-weight: 800;
-  color: #2563eb;
+  color: #6366f1;
   margin-bottom: 8px;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
 }
 
 .stat-label {
@@ -1057,15 +845,17 @@ h1, h2, h3 {
 
 .feature-card {
   background: white;
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 32px;
   text-align: center;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid #e2e8f0;
 }
 
 .feature-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+  border-color: #cbd5e1;
 }
 
 .feature-icon {
@@ -1101,15 +891,17 @@ h1, h2, h3 {
 
 .testimonial-card {
   background: #f9fafb;
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 32px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid #e2e8f0;
 }
 
 .testimonial-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
+  border-color: #cbd5e1;
 }
 
 .testimonial-content {
@@ -1133,11 +925,12 @@ h1, h2, h3 {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 28px;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
 }
 
 .testimonial-info h4 {
@@ -1168,16 +961,18 @@ h1, h2, h3 {
 
 .team-card {
   background: white;
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 32px;
   text-align: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid #e2e8f0;
 }
 
 .team-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
+  border-color: #cbd5e1;
 }
 
 .team-avatar {
@@ -1189,7 +984,8 @@ h1, h2, h3 {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.25);
 }
 
 .avatar-image {
@@ -1208,7 +1004,7 @@ h1, h2, h3 {
 .team-role {
   font-size: 14px;
   font-weight: 600;
-  color: #2563eb;
+  color: #6366f1;
   margin-bottom: 12px;
 }
 
@@ -1220,7 +1016,7 @@ h1, h2, h3 {
 
 /* Call-to-Action Section */
 .cta {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
   color: white;
   padding: 100px 20px;
   text-align: center;
@@ -1244,7 +1040,7 @@ h1, h2, h3 {
   font-weight: 800;
   margin-bottom: 20px;
   position: relative;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
 }
 
 .cta-subtitle {
@@ -1284,10 +1080,6 @@ h1, h2, h3 {
     grid-template-columns: 1fr;
   }
 
-  .about-me-content {
-    grid-template-columns: 1fr;
-  }
-
   .about-stats {
     grid-template-columns: 1fr;
   }
@@ -1302,11 +1094,6 @@ h1, h2, h3 {
 
   .team-grid {
     grid-template-columns: 1fr;
-  }
-
-  .footer-content {
-    grid-template-columns: 1fr;
-    gap: 32px;
   }
 
   .cta-title {
@@ -1336,10 +1123,6 @@ h1, h2, h3 {
   }
 
   .team-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .footer-content {
     grid-template-columns: repeat(2, 1fr);
   }
 }

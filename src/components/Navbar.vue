@@ -100,18 +100,16 @@ onUnmounted(() => {
         </li>
         <li><RouterLink to="/contact" class="nav-link" :class="{ active: route.path === '/contact' }" @click="closeMobileMenu">Contact</RouterLink></li>
 
-
-        <!-- Mobile auth links (visible only in mobile menu) -->
         <li v-if="auth.initialized" class="mobile-auth-links">
           <template v-if="auth.isAuthenticated">
             <RouterLink to="/profile" class="nav-link" @click="closeMobileMenu">Profile</RouterLink>
             <RouterLink to="/settings" class="nav-link" @click="closeMobileMenu">Settings</RouterLink>
             <button class="nav-link mobile-logout-btn" type="button" @click="handleLogout">Logout</button>
           </template>
-            <template v-else>
-              <RouterLink to="/login" class="nav-link mobile-login-btn" @click="closeMobileMenu">Login</RouterLink>
-              <RouterLink to="/register" class="nav-link mobile-register-btn" @click="closeMobileMenu">Register</RouterLink>
-            </template>
+          <template v-else>
+            <RouterLink to="/login" class="nav-link mobile-login-btn" @click="closeMobileMenu">Login</RouterLink>
+            <RouterLink to="/register" class="nav-link mobile-register-btn" @click="closeMobileMenu">Register</RouterLink>
+          </template>
         </li>
       </ul>
 
@@ -141,17 +139,17 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   z-index: 1000;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
   border-bottom: 1px solid transparent;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   height: 64px;
 }
 
 .navbar.scrolled {
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-  background: rgba(255, 255, 255, 0.98);
+  background: rgba(255, 255, 255, 0.95);
   border-bottom-color: #f1f5f9;
 }
 
@@ -205,7 +203,7 @@ onUnmounted(() => {
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
-  border-radius: 6px;
+  border-radius: 8px;
   transition: all 0.2s ease;
   border: none;
   background: transparent;
@@ -215,13 +213,14 @@ onUnmounted(() => {
 }
 
 .nav-link:hover {
-  color: #2563eb;
-  background: rgba(248, 250, 252, 0.8);
+  color: #6366f1;
+  background: rgba(99, 102, 241, 0.06);
 }
 
 .nav-link.active {
-  color: #2563eb;
-  background: rgba(248, 250, 252, 0.8);
+  color: #6366f1;
+  background: rgba(99, 102, 241, 0.08);
+  font-weight: 600;
 }
 
 .nav-link--vote {
@@ -241,7 +240,7 @@ onUnmounted(() => {
   left: 14px;
   right: 14px;
   height: 2px;
-  background: #2563eb;
+  background: #6366f1;
   border-radius: 1px;
   transform: scaleX(0);
   transition: transform 0.2s ease;
@@ -263,27 +262,28 @@ onUnmounted(() => {
 }
 
 .dropdown-icon {
-  transition: transform 0.2s ease;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.nav-dropdown-trigger:hover .dropdown-icon {
+.nav-dropdown-trigger:hover .dropdown-icon,
+.nav-dropdown-trigger.active .dropdown-icon {
   transform: rotate(180deg);
 }
 
 .dropdown-menu {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + 10px);
   left: 50%;
   transform: translateX(-50%) translateY(8px) scale(0.96);
   background: white;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 6px;
+  border-radius: 14px;
+  padding: 8px;
   min-width: 220px;
   opacity: 0;
   visibility: hidden;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
   z-index: 1002;
 }
 
@@ -303,26 +303,25 @@ onUnmounted(() => {
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
-  border-radius: 8px;
+  border-radius: 10px;
   transition: all 0.15s ease;
   border: none;
   background: none;
   cursor: pointer;
-  gap: 8px;
+  gap: 10px;
 }
 
 .dropdown-item:hover {
-  background: #f8fafc;
-  color: #2563eb;
+  background: rgba(99, 102, 241, 0.06);
+  color: #6366f1;
   padding-left: 18px;
 }
 
 .dropdown-divider {
   height: 1px;
   background: #f1f5f9;
-  margin: 4px 0;
+  margin: 6px 0;
 }
-
 
 .nav-buttons {
   display: flex;
@@ -335,7 +334,7 @@ onUnmounted(() => {
   color: #475569;
   border: 1px solid #e2e8f0;
   backdrop-filter: blur(10px);
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 8px 18px;
   font-size: 14px;
   font-weight: 500;
@@ -344,34 +343,34 @@ onUnmounted(() => {
 }
 
 .btn-login:hover {
-  background: #f8fafc;
-  color: #2563eb;
-  border-color: #cbd5e1;
+  background: rgba(248, 250, 252, 0.9);
+  color: #6366f1;
+  border-color: #6366f1;
 }
 
 .btn-register {
-  background: #2563eb;
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
   color: white;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 8px 18px;
   font-size: 14px;
   font-weight: 600;
-  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.2);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
   text-decoration: none;
   transition: all 0.2s ease;
 }
 
 .btn-register:hover {
-  background: #1d4ed8;
+  background: linear-gradient(135deg, #818cf8, #6366f1);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
 }
 
 .btn-logout {
   background: transparent;
   color: #ef4444;
   border: 1px solid #fecaca;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 8px 18px;
   font-size: 14px;
   font-weight: 600;
@@ -417,7 +416,6 @@ onUnmounted(() => {
   transform: rotate(-45deg) translate(6px, -6px);
 }
 
-/* Mobile auth links inside the nav menu */
 .mobile-auth-links {
   display: none;
   padding: 8px 4px 4px;
@@ -429,24 +427,24 @@ onUnmounted(() => {
 .mobile-login-btn,
 .mobile-register-btn {
   justify-content: center;
-  border-radius: 8px;
+  border-radius: 10px;
   font-weight: 600;
 }
 
 .mobile-register-btn {
-  background: #2563eb;
+  background: #6366f1;
   color: white !important;
 }
 
 .mobile-register-btn:hover {
-  background: #1d4ed8;
+  background: #4f46e5;
 }
 
 .mobile-logout-btn {
   justify-content: center;
   color: #ef4444 !important;
   border: 1px solid #fecaca;
-  border-radius: 8px;
+  border-radius: 10px;
   background: #fff;
   font-weight: 600;
 }
@@ -472,7 +470,7 @@ onUnmounted(() => {
     overflow: hidden;
     opacity: 0;
     transform: translateY(-8px);
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 999;
   }
 

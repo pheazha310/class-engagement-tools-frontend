@@ -24,7 +24,7 @@
   min-height: 100vh;
   display: grid;
   place-items: center;
-  padding: 28px 16px;
+  padding: 64px 16px 28px;
   background: var(--auth-bg);
   font-family: var(--auth-font);
   position: relative;

@@ -223,7 +223,6 @@ const routes: RouteRecordRaw[] = [
     path: '/group-generator',
     name: 'group-generator',
     component: GroupGeneratorView,
-    meta: { hideNavbar: true },
   },
   {
     path: '/teacher/polls',

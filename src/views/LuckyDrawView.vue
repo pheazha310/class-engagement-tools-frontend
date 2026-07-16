@@ -86,7 +86,6 @@ async function startDraw() {
   winners.value = []
   spinningName.value = ''
 
-  // Spin animation: rapidly cycle through student names
   const spinDuration = 2000
   const spinIntervalMs = 60
   const start = Date.now()
@@ -107,7 +106,6 @@ async function startDraw() {
     }, spinIntervalMs)
   })
 
-  // Pick 1 winner
   const shuffled = [...pool].sort(() => Math.random() - 0.5)
   const finalWinners = shuffled.slice(0, 1)
 
@@ -131,10 +129,9 @@ function formatTime(date: Date) {
 <template>
   <div class="page">
     <div class="container">
-      <!-- Page Header -->
       <header class="header">
         <div class="header-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10" />
             <path d="M12 2v4" />
             <path d="M12 18v4" />
@@ -153,11 +150,13 @@ function formatTime(date: Date) {
         </div>
       </header>
 
-      <!-- Step 1: Add Participants -->
       <section class="card">
         <div class="card-heading">
-          <span class="step-badge">Step 1</span>
-          <h2 class="card-title">Add Participants</h2>
+          <span class="step-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;vertical-align:middle;"><path d="M12 5v14M5 12h14"/></svg>
+            Add Participants
+          </span>
+          <h2 class="card-title">Build Your List</h2>
           <span v-if="students.length > 0" class="chip-count">{{ students.length }} participant{{ students.length !== 1 ? 's' : '' }}</span>
         </div>
 
@@ -196,7 +195,6 @@ function formatTime(date: Date) {
           </div>
         </div>
 
-        <!-- Student Chips -->
         <div v-if="!isEmpty" class="chips">
           <TransitionGroup name="chip">
             <div
@@ -222,27 +220,29 @@ function formatTime(date: Date) {
         </div>
 
         <div v-else class="empty">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-            <circle cx="9" cy="7" r="4" />
-            <line x1="19" y1="8" x2="19" y2="14" />
-            <line x1="22" y1="11" x2="16" y2="11" />
-          </svg>
+          <div class="empty__icon-wrap">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <line x1="19" y1="8" x2="19" y2="14" />
+              <line x1="22" y1="11" x2="16" y2="11" />
+            </svg>
+          </div>
           <p class="empty__text">No participants added yet</p>
           <p class="empty__hint">Add names above, then click the Lucky Draw button</p>
         </div>
       </section>
 
-      <!-- Step 2: Lucky Draw -->
       <section class="card draw-card" :class="{ 'card--disabled': isEmpty }">
         <div class="card-heading">
-          <span class="step-badge step-badge--gold">Step 2</span>
-          <h2 class="card-title">Spin the Wheel</h2>
+          <span class="step-badge step-badge--gold">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;vertical-align:middle;"><circle cx="12" cy="12" r="10"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+            Spin the Wheel
+          </span>
+          <h2 class="card-title">Draw a Winner</h2>
         </div>
 
-        <!-- Draw Result Area -->
         <div class="draw-area">
-          <!-- Spinning state -->
           <div v-if="isSpinning" class="wheel-circle wheel-circle--spinning">
             <div class="wheel-circle__ring"></div>
             <div class="wheel-circle__ring wheel-circle__ring--2"></div>
@@ -253,7 +253,6 @@ function formatTime(date: Date) {
             </div>
           </div>
 
-          <!-- Results state: winner inside circle -->
           <div v-else-if="showResult && winners.length > 0" class="wheel-circle wheel-circle--result">
             <div class="wheel-circle__ring wheel-circle__ring--pulse"></div>
             <div class="wheel-circle__inner">
@@ -267,7 +266,6 @@ function formatTime(date: Date) {
             </div>
           </div>
 
-          <!-- Placeholder state -->
           <div v-else class="wheel-circle">
             <div class="wheel-circle__ring"></div>
             <div class="wheel-circle__inner">
@@ -290,7 +288,6 @@ function formatTime(date: Date) {
           </div>
         </div>
 
-        <!-- Draw Button -->
         <button
           class="draw-btn"
           :class="{ 'draw-btn--spinning': isSpinning }"
@@ -318,11 +315,13 @@ function formatTime(date: Date) {
         </button>
       </section>
 
-      <!-- History -->
-      <section v-if="pickLog.length > 0" class="card">
+      <section v-if="pickLog.length > 0" class="card card--history">
         <div class="card-heading">
           <div class="card-heading__left">
-            <span class="step-badge step-badge--history">History</span>
+            <span class="step-badge step-badge--history">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;vertical-align:middle;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              History
+            </span>
             <h2 class="card-title">Previous Draws</h2>
           </div>
           <span class="history-total">{{ pickLog.length }} draw{{ pickLog.length !== 1 ? 's' : '' }}</span>
@@ -355,11 +354,11 @@ function formatTime(date: Date) {
 </template>
 
 <style scoped>
-/* ── Page ── */
 .page {
   min-height: 100vh;
   background: linear-gradient(135deg, #1e3a5f, #2563eb);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  padding-top: 64px;
 }
 
 .container {
@@ -371,7 +370,6 @@ function formatTime(date: Date) {
   gap: 1.25rem;
 }
 
-/* ── Header ── */
 .header {
   display: flex;
   align-items: flex-start;
@@ -385,17 +383,17 @@ function formatTime(date: Date) {
   justify-content: center;
   width: 3rem;
   height: 3rem;
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
   color: white;
-  border-radius: 0.75rem;
+  border-radius: 0.875rem;
   flex-shrink: 0;
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.35);
   animation: pulse-glow 2s ease-in-out infinite;
 }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3); }
-  50% { box-shadow: 0 4px 24px rgba(59, 130, 246, 0.5); }
+  0%, 100% { box-shadow: 0 8px 24px rgba(99, 102, 241, 0.35); }
+  50% { box-shadow: 0 8px 32px rgba(99, 102, 241, 0.55); }
 }
 
 .header-title {
@@ -404,24 +402,27 @@ function formatTime(date: Date) {
   color: white;
   margin: 0;
   line-height: 1.3;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
 }
 
 .header-subtitle {
-  font-size: 0.85rem;
+  font-size: 0.875rem;
   color: #bfdbfe;
   margin: 0.25rem 0 0;
   line-height: 1.6;
 }
 
-/* ── Card ── */
 .card {
   background: white;
-  border-radius: 1rem;
+  border-radius: 1.25rem;
   padding: 1.25rem 1.5rem;
   border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-  transition: opacity 0.2s, border-color 0.2s;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  transition: opacity 0.25s, border-color 0.25s, box-shadow 0.25s;
+}
+
+.card:hover {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.04);
 }
 
 .card--disabled {
@@ -431,7 +432,11 @@ function formatTime(date: Date) {
 
 .draw-card {
   background: #f8fbff;
-  border-color: rgba(59, 130, 246, 0.2);
+  border-color: rgba(99, 102, 241, 0.18);
+}
+
+.card--history {
+  background: white;
 }
 
 .card-heading {
@@ -451,58 +456,59 @@ function formatTime(date: Date) {
 }
 
 .card-title {
-  font-size: 0.95rem;
+  font-size: 0.9375rem;
   font-weight: 600;
   color: #0f172a;
   margin: 0;
 }
 
 .step-badge {
-  font-size: 0.6rem;
+  font-size: 0.65rem;
   font-weight: 700;
-  color: #60a5fa;
-  background: rgba(59, 130, 246, 0.15);
-  padding: 0.2rem 0.55rem;
-  border-radius: 0.375rem;
+  color: #6366f1;
+  background: #eef2ff;
+  padding: 0.25rem 0.65rem;
+  border-radius: 0.5rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   white-space: nowrap;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
 }
 
 .step-badge--gold {
-  color: #60a5fa;
-  background: rgba(59, 130, 246, 0.15);
+  color: #6366f1;
+  background: #eef2ff;
 }
 
 .step-badge--history {
-  color: #94a3b8;
-  background: rgba(148, 163, 184, 0.15);
+  color: #64748b;
+  background: #f1f5f9;
 }
 
 .chip-count {
   margin-left: auto;
   font-size: 0.75rem;
   font-weight: 600;
-  color: #60a5fa;
-  background: rgba(59, 130, 246, 0.15);
-  padding: 0.2rem 0.6rem;
+  color: #6366f1;
+  background: #eef2ff;
+  padding: 0.2rem 0.65rem;
   border-radius: 999px;
   white-space: nowrap;
 }
 
-/* ── Input Area ── */
 .input-area {
   border: 1.5px solid #e2e8f0;
-  border-radius: 0.75rem;
+  border-radius: 0.875rem;
   padding: 0.5rem;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
   background: #fafafa;
 }
 
 .input-area--focused {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+  border-color: #6366f1;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.08);
   background: white;
 }
 
@@ -510,14 +516,14 @@ function formatTime(date: Date) {
   width: 100%;
   border: none;
   outline: none;
-  padding: 0.4rem 0.5rem;
+  padding: 0.5rem 0.6rem;
   font-size: 0.875rem;
   font-family: inherit;
   color: #0f172a;
   background: transparent;
   resize: vertical;
   min-height: 3rem;
-  line-height: 1.6;
+  line-height: 1.7;
 }
 
 .input-area__textarea::placeholder {
@@ -528,17 +534,16 @@ function formatTime(date: Date) {
 .input-area__actions {
   display: flex;
   gap: 0.5rem;
-  padding: 0.3rem 0.4rem 0.1rem;
+  padding: 0.35rem 0.5rem 0.15rem;
 }
 
-/* ── Buttons ── */
 .btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.4rem;
   border: none;
-  border-radius: 0.5rem;
-  padding: 0.45rem 0.85rem;
+  border-radius: 0.625rem;
+  padding: 0.5rem 1rem;
   font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
@@ -548,13 +553,15 @@ function formatTime(date: Date) {
 }
 
 .btn--primary {
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
   color: white;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
 }
 
 .btn--primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, #60a5fa, #3b82f6);
+  background: linear-gradient(135deg, #818cf8, #6366f1);
   transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
 }
 
 .btn--primary:disabled {
@@ -574,29 +581,30 @@ function formatTime(date: Date) {
   border-color: #fca5a5;
 }
 
-/* ── Student Chips ── */
 .chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: 0.5rem;
   margin-top: 1rem;
 }
 
 .chip {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.4rem;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 999px;
-  padding: 0.25rem 0.5rem 0.25rem 0.25rem;
-  transition: all 0.2s ease;
+  padding: 0.3rem 0.55rem 0.3rem 0.3rem;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
   position: relative;
 }
 
 .chip:hover {
   background: #f1f5f9;
   border-color: #cbd5e1;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 
 .chip--winner {
@@ -608,7 +616,7 @@ function formatTime(date: Date) {
 
 .chip__crown {
   position: absolute;
-  right: 0.25rem;
+  right: 0.3rem;
   font-size: 0.75rem;
   animation: bounce-crown 1s ease-in-out infinite;
 }
@@ -629,6 +637,7 @@ function formatTime(date: Date) {
   font-size: 0.55rem;
   font-weight: 700;
   flex-shrink: 0;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
 }
 
 .chip__name {
@@ -663,20 +672,30 @@ function formatTime(date: Date) {
   color: #ef4444;
 }
 
-/* ── Empty State ── */
 .empty {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 1.5rem 1rem 0.5rem;
-  gap: 0.25rem;
+  padding: 1.75rem 1rem 0.75rem;
+  gap: 0.35rem;
+}
+
+.empty__icon-wrap {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+  border-radius: 50%;
+  border: 1px dashed #e2e8f0;
 }
 
 .empty__text {
   font-size: 0.875rem;
   font-weight: 600;
   color: #94a3b8;
-  margin: 0.5rem 0 0;
+  margin: 0.75rem 0 0;
 }
 
 .empty__hint {
@@ -685,19 +704,17 @@ function formatTime(date: Date) {
   margin: 0;
 }
 
-/* ── Draw Area ── */
 .draw-area {
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
   padding: 0.75rem 0;
   min-height: 8rem;
 }
 
-/* ── Wheel Circle ── */
 .wheel-circle {
   width: 14rem;
   height: 14rem;
@@ -707,41 +724,42 @@ function formatTime(date: Date) {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  transition: transform 0.3s ease;
 }
 
 .wheel-circle__ring {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  border: 2px solid rgba(59, 130, 246, 0.12);
+  border: 2px solid rgba(99, 102, 241, 0.12);
   transition: all 0.4s ease;
 }
 
 .wheel-circle--spinning .wheel-circle__ring {
-  border-color: rgba(59, 130, 246, 0.25);
-  border-top-color: #3b82f6;
+  border-color: rgba(99, 102, 241, 0.25);
+  border-top-color: #6366f1;
   animation: spin-ring 1s linear infinite;
 }
 
 .wheel-circle--spinning .wheel-circle__ring--2 {
   inset: 0.65rem;
-  border-color: rgba(59, 130, 246, 0.15);
-  border-right-color: #60a5fa;
+  border-color: rgba(99, 102, 241, 0.15);
+  border-right-color: #818cf8;
   animation: spin-ring 1.5s linear infinite reverse;
 }
 
 .wheel-circle--spinning .wheel-circle__ring--3 {
   inset: 1.3rem;
-  border-color: rgba(59, 130, 246, 0.1);
-  border-bottom-color: #93c5fd;
+  border-color: rgba(99, 102, 241, 0.1);
+  border-bottom-color: #a5b4fc;
   animation: spin-ring 2s linear infinite;
 }
 
 .wheel-circle__ring--pulse {
-  border-color: rgba(59, 130, 246, 0.3);
+  border-color: rgba(99, 102, 241, 0.3);
   box-shadow:
-    0 0 24px rgba(59, 130, 246, 0.18),
-    inset 0 0 24px rgba(59, 130, 246, 0.06);
+    0 0 28px rgba(99, 102, 241, 0.2),
+    inset 0 0 28px rgba(99, 102, 241, 0.06);
   animation: pulse-ring 1.5s ease-in-out infinite;
 }
 
@@ -756,24 +774,24 @@ function formatTime(date: Date) {
   align-items: center;
   justify-content: center;
   gap: 0.25rem;
-  background: radial-gradient(circle at 35% 35%, rgba(59, 130, 246, 0.06), rgba(0, 0, 0, 0.02));
+  background: radial-gradient(circle at 35% 35%, rgba(99, 102, 241, 0.06), rgba(0, 0, 0, 0.02));
   backdrop-filter: blur(4px);
   transition: all 0.3s ease;
 }
 
 .wheel-circle--spinning .wheel-circle__inner {
-  background: radial-gradient(circle at 35% 35%, rgba(59, 130, 246, 0.1), rgba(0, 0, 0, 0.04));
+  background: radial-gradient(circle at 35% 35%, rgba(99, 102, 241, 0.1), rgba(0, 0, 0, 0.04));
   animation: inner-glow 0.8s ease-in-out infinite alternate;
 }
 
 .wheel-circle--result .wheel-circle__inner {
-  background: radial-gradient(circle at 35% 35%, rgba(59, 130, 246, 0.14), rgba(0, 0, 0, 0.05));
+  background: radial-gradient(circle at 35% 35%, rgba(99, 102, 241, 0.14), rgba(0, 0, 0, 0.05));
 }
 
 .wheel-circle__label {
   font-size: 0.6rem;
   font-weight: 700;
-  color: #3b82f6;
+  color: #6366f1;
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
@@ -800,28 +818,28 @@ function formatTime(date: Date) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.3rem;
-  animation: winner-appear 0.4s ease-out;
+  gap: 0.35rem;
+  animation: winner-appear 0.5s ease-out;
 }
 
 @keyframes winner-appear {
-  from { opacity: 0; transform: scale(0.8); }
+  from { opacity: 0; transform: scale(0.75); }
   to { opacity: 1; transform: scale(1); }
 }
 
 .wheel-circle__prize {
-  font-size: 1.5rem;
+  font-size: 1.75rem;
   animation: bounce 1.5s ease-in-out infinite;
 }
 
 @keyframes bounce {
   0%, 100% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(-4px) scale(1.1); }
+  50% { transform: translateY(-5px) scale(1.1); }
 }
 
 .wheel-circle__winner-avatar {
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2.75rem;
+  height: 2.75rem;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -829,11 +847,11 @@ function formatTime(date: Date) {
   color: white;
   font-size: 0.75rem;
   font-weight: 700;
-  box-shadow: 0 3px 14px color-mix(in srgb, var(--w-color) 40%, transparent);
+  box-shadow: 0 4px 18px color-mix(in srgb, var(--w-color) 40%, transparent);
 }
 
 .wheel-circle__winner-name {
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: #0f172a;
   text-align: center;
@@ -863,12 +881,12 @@ function formatTime(date: Date) {
 
 @keyframes pulse-ring {
   0%, 100% { transform: scale(1); opacity: 0.6; }
-  50% { transform: scale(1.06); opacity: 1; }
+  50% { transform: scale(1.07); opacity: 1; }
 }
 
 @keyframes inner-glow {
-  from { box-shadow: 0 0 8px rgba(59, 130, 246, 0.06); }
-  to { box-shadow: 0 0 30px rgba(59, 130, 246, 0.18); }
+  from { box-shadow: 0 0 10px rgba(99, 102, 241, 0.06); }
+  to { box-shadow: 0 0 36px rgba(99, 102, 241, 0.2); }
 }
 
 @keyframes bounce-crown {
@@ -876,15 +894,14 @@ function formatTime(date: Date) {
   50% { transform: translateY(-3px); }
 }
 
-/* ── Draw Button ── */
 .draw-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
   color: white;
   border: none;
-  border-radius: 0.75rem;
+  border-radius: 0.875rem;
   padding: 1rem 2rem;
   font-size: 1.125rem;
   font-weight: 700;
@@ -894,13 +911,15 @@ function formatTime(date: Date) {
   max-width: 22rem;
   margin: 0 auto;
   font-family: inherit;
-  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+  position: relative;
+  overflow: hidden;
 }
 
 .draw-btn:not(:disabled):hover {
-  background: linear-gradient(135deg, #60a5fa, #3b82f6);
+  background: linear-gradient(135deg, #818cf8, #6366f1);
   transform: translateY(-2px);
-  box-shadow: 0 6px 28px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 8px 32px rgba(99, 102, 241, 0.4);
 }
 
 .draw-btn:not(:disabled):active {
@@ -914,8 +933,8 @@ function formatTime(date: Date) {
 }
 
 .draw-btn--spinning {
-  background: linear-gradient(135deg, #1e40af, #1e3a5f);
-  color: #93c5fd;
+  background: linear-gradient(135deg, #4338ca, #3730a3);
+  color: #c7d2fe;
 }
 
 .draw-btn__inner {
@@ -927,8 +946,8 @@ function formatTime(date: Date) {
 .spinner {
   width: 1.1rem;
   height: 1.1rem;
-  border: 2px solid rgba(147, 197, 253, 0.25);
-  border-top-color: #93c5fd;
+  border: 2px solid rgba(199, 210, 254, 0.25);
+  border-top-color: #c7d2fe;
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
 }
@@ -937,14 +956,13 @@ function formatTime(date: Date) {
   to { transform: rotate(360deg); }
 }
 
-/* ── History ── */
 .history-total {
   margin-left: auto;
   font-size: 0.75rem;
   font-weight: 600;
   color: #64748b;
   background: #f1f5f9;
-  padding: 0.2rem 0.6rem;
+  padding: 0.2rem 0.65rem;
   border-radius: 999px;
   white-space: nowrap;
 }
@@ -952,15 +970,15 @@ function formatTime(date: Date) {
 .history-list {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.3rem;
 }
 
 .history-row {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.5rem 0.7rem;
-  border-radius: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.625rem;
   transition: background 0.15s;
 }
 
@@ -1003,10 +1021,10 @@ function formatTime(date: Date) {
 .history-row__count {
   font-size: 0.65rem;
   font-weight: 700;
-  color: #60a5fa;
-  background: rgba(59, 130, 246, 0.12);
-  padding: 0.1rem 0.45rem;
-  border-radius: 0.25rem;
+  color: #6366f1;
+  background: #eef2ff;
+  padding: 0.15rem 0.5rem;
+  border-radius: 0.375rem;
 }
 
 .history-row__time {
@@ -1015,45 +1033,43 @@ function formatTime(date: Date) {
   font-weight: 500;
 }
 
-/* ── Transitions ── */
 .chip-enter-active,
 .chip-leave-active {
-  transition: all 0.25s ease;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .chip-enter-from {
   opacity: 0;
-  transform: scale(0.75);
+  transform: scale(0.7);
 }
 
 .chip-leave-to {
   opacity: 0;
-  transform: scale(0.75);
+  transform: scale(0.7);
 }
 
 .chip-move {
-  transition: transform 0.25s ease;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .history-item-enter-active {
-  transition: all 0.3s ease;
+  transition: all 0.35s ease;
 }
 
 .history-item-leave-active {
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
 }
 
 .history-item-enter-from {
   opacity: 0;
-  transform: translateX(-8px);
+  transform: translateX(-10px);
 }
 
 .history-item-leave-to {
   opacity: 0;
-  transform: translateX(8px);
+  transform: translateX(10px);
 }
 
-/* ── Responsive ── */
 @media (max-width: 640px) {
   .container {
     padding: 1.5rem 1rem 2rem;
@@ -1061,7 +1077,7 @@ function formatTime(date: Date) {
   }
 
   .card {
-    padding: 1rem 1.25rem;
+    padding: 1.1rem 1.25rem;
   }
 
   .header-title {
@@ -1078,7 +1094,7 @@ function formatTime(date: Date) {
   }
 
   .wheel-circle__winner-name {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     max-width: 6rem;
   }
 
@@ -1089,10 +1105,8 @@ function formatTime(date: Date) {
   }
 
   .draw-btn {
-    padding: 0.85rem 1.5rem;
+    padding: 0.9rem 1.5rem;
     font-size: 1rem;
   }
-
-
 }
 </style>
