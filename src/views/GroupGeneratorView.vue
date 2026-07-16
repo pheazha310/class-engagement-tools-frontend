@@ -799,6 +799,8 @@ function processFile(file: File) {
   max-width: 80rem;
   margin: 0 auto;
   padding: 2rem;
+  height: calc(100vh - 64px - 80px);
+  overflow-y: auto;
 }
 
 .layout {
@@ -809,11 +811,8 @@ function processFile(file: File) {
 }
 
 .right-panel {
-  min-height: calc(100vh - 64px - 80px);
-  max-height: calc(100vh - 64px - 80px);
-  overflow-y: auto;
-  position: sticky;
-  top: calc(64px + 80px + 1rem);
+  min-height: 100%;
+  overflow-y: visible;
   padding-right: 0.5rem;
 }
 
@@ -1275,9 +1274,6 @@ function processFile(file: File) {
   background: white;
   border-radius: 1rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  position: sticky;
-  top: 0;
-  z-index: 10;
   border: 1px solid #e2e8f0;
   flex-wrap: wrap;
   gap: 1rem;
