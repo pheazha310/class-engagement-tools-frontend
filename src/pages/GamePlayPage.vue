@@ -24,7 +24,7 @@ const currentIndex = ref(0)
 const answers = ref<AnswerSubmission[]>([])
 const score = ref(0)
 const isAnswerSubmitted = ref(false)
-const lastResult = ref<SubmitAnswerResponse | null>(null)
+const lastResult = ref<{ score: number; total_score: number; is_correct: boolean } | null>(null)
 const gameResults = ref<GameResultResponse['answers']>([])
 const totalGameScore = ref(0)
 const totalMaxScore = ref(0)
@@ -243,9 +243,8 @@ function handleAnswerSubmit(answerText: string) {
 
   lastResult.value = {
     score: score.value,
-    totalScore: totalMaxScore.value,
-    isCorrect,
-    correctAnswer: q.correctAnswer,
+    total_score: totalMaxScore.value,
+    is_correct: isCorrect,
   }
 
   isAnswerSubmitted.value = true
@@ -411,8 +410,8 @@ onUnmounted(() => {
           <div class="game-main">
             <div class="result-state">
               <div class="result-card">
-                <div class="result-icon" :class="lastResult?.isCorrect ? 'result-icon--correct' : 'result-icon--wrong'">
-                  <svg v-if="lastResult?.isCorrect" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <div class="result-icon" :class="lastResult?.is_correct ? 'result-icon--correct' : 'result-icon--wrong'">
+                  <svg v-if="lastResult?.is_correct" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="20 6 9 17 4 12" />
                   </svg>
                   <svg v-else width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -420,9 +419,9 @@ onUnmounted(() => {
                     <line x1="6" y1="6" x2="18" y2="18" />
                   </svg>
                 </div>
-                <h2 class="result-title">{{ lastResult?.isCorrect ? 'Correct!' : 'Not quite right' }}</h2>
+                <h2 class="result-title">{{ lastResult?.is_correct ? 'Correct!' : 'Not quite right' }}</h2>
                 <p class="result-score">+{{ currentQuestion.points }} points for this question</p>
-                <div v-if="!lastResult?.isCorrect && currentQuestion.correctAnswer && currentQuestion.options" class="correct-answer">
+                <div v-if="!lastResult?.is_correct && currentQuestion.correctAnswer && currentQuestion.options" class="correct-answer">
                   <span class="correct-label">Correct answer:</span>
                   <span class="correct-value">{{ correctAnswerLabel }}</span>
                 </div>

@@ -2,7 +2,7 @@ import type Echo from 'laravel-echo'
 
 declare global {
   interface Window {
-    Echo?: Echo
+    Echo?: Echo<any>
   }
 }
 
@@ -12,7 +12,7 @@ const getBroadcaster = (): 'reverb' | 'pusher' => {
   return normalized === 'pusher' ? 'pusher' : 'reverb'
 }
 
-async function createEchoInstance(): Promise<Echo> {
+async function createEchoInstance(): Promise<Echo<any>> {
   const broadcaster = getBroadcaster()
   const { default: EchoClass } = await import('laravel-echo')
 
@@ -25,7 +25,7 @@ async function createEchoInstance(): Promise<Echo> {
       forceTLS: (import.meta.env.VITE_PUSHER_SCHEME ?? 'http') === 'https',
       enabledTransports: ['ws', 'wss'],
       authEndpoint: '/broadcasting/auth',
-    }) as Echo
+    }) as Echo<any>
   }
 
   return new EchoClass({
@@ -35,12 +35,12 @@ async function createEchoInstance(): Promise<Echo> {
     wsPort: Number(import.meta.env.VITE_REVERB_PORT ?? 8080),
     forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? 'http') === 'https',
     enabledTransports: ['ws', 'wss'],
-  }) as Echo
+  }) as Echo<any>
 }
 
-let echoInstance: Promise<Echo> | null = null
+let echoInstance: Promise<Echo<any>> | null = null
 
-function getEcho(): Promise<Echo> {
+function getEcho(): Promise<Echo<any>> {
   if (!echoInstance) {
     echoInstance = createEchoInstance().then((instance) => {
       if (typeof window !== 'undefined') {

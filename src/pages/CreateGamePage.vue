@@ -40,6 +40,16 @@ const operationOptions = ['+', '-', '×', '÷']
 const categoryOptions = ['Science', 'History', 'Math', 'English', 'Geography', 'Art']
 const memoryThemeOptions = ['animals', 'space', 'nature', 'sports', 'music']
 
+function getOperationLabel(op: string): string {
+  const labels: Record<string, string> = {
+    '+': 'Addition',
+    '-': 'Subtraction',
+    '×': 'Multiplication',
+    '÷': 'Division',
+  }
+  return labels[op] || op
+}
+
 function selectGameType(game: GameTypeOption) {
   selectedGameType.value = game
   errorMessage.value = ''
@@ -185,236 +195,279 @@ async function handleSubmit() {
       </div>
     </section>
 
-    <section class="create-game-content">
-      <div class="container">
-        <div v-if="!isConfigureStep" class="game-selection">
-          <h2 class="section-title">Select a Game Type</h2>
-          <div class="game-types-grid">
-            <div
-              v-for="game in gameTypes"
-              :key="game.id"
-              class="game-type-card"
-              @click="selectGameType(game)"
-            >
-              <div class="game-type-icon">{{ game.icon }}</div>
-              <div class="game-type-title">{{ game.title }}</div>
-              <div class="game-type-description">{{ game.description }}</div>
-              <div class="game-type-action">Configure →</div>
-            </div>
-          </div>
-        </div>
+     <section class="create-game-content">
+       <div class="container">
+         <Transition name="view-fade" mode="out-in">
+           <div v-if="!isConfigureStep" key="selection" class="game-selection">
+             <h2 class="section-title">Select a Game Type</h2>
+             <div class="game-types-grid">
+               <div
+                 v-for="game in gameTypes"
+                 :key="game.id"
+                 class="game-type-card"
+                 @click="selectGameType(game)"
+               >
+                 <div class="game-type-icon">{{ game.icon }}</div>
+                 <div class="game-type-title">{{ game.title }}</div>
+                 <div class="game-type-description">{{ game.description }}</div>
+                 <div class="game-type-action">Configure →</div>
+               </div>
+             </div>
+           </div>
 
-        <div v-else class="game-configuration">
-          <div class="config-header">
-            <button class="btn-back" @click="goBack">← Back to games</button>
-            <div class="selected-game-badge">
-              <span class="selected-game-icon">{{ selectedGameType!.icon }}</span>
-              <span class="selected-game-title">{{ selectedGameType!.title }}</span>
-            </div>
-          </div>
+           <div v-else key="configuration" class="game-configuration">
+             <div class="config-header">
+               <button class="btn-back" @click="goBack">← Back to games</button>
+               <div class="selected-game-badge">
+                 <span class="selected-game-icon">{{ selectedGameType!.icon }}</span>
+                 <span class="selected-game-title">{{ selectedGameType!.title }}</span>
+               </div>
+             </div>
 
-          <div class="config-card">
-            <h2 class="section-title">Game Settings</h2>
+             <div class="config-card">
+               <h2 class="section-title">Game Settings</h2>
 
-            <div v-if="selectedGameType!.id === 'math-challenge'" class="config-form">
-              <div class="form-group">
-                <label class="form-label">Difficulty</label>
-                <div class="radio-group">
-                  <label v-for="level in ['easy', 'medium', 'hard']" :key="level" class="radio-label">
-                    <input
-                      v-model="settings.math.difficulty"
-                      type="radio"
-                      :value="level"
-                      name="difficulty"
-                    />
-                    <span class="radio-text">{{ level.charAt(0).toUpperCase() + level.slice(1) }}</span>
-                  </label>
-                </div>
-              </div>
+               <Transition name="form-slide" mode="out-in">
+                 <div v-if="selectedGameType!.id === 'math-challenge'" key="math" class="config-form">
+                   <div class="form-group">
+                     <label class="form-label">Difficulty</label>
+                     <div class="radio-group radio-pills">
+                       <label v-for="level in ['easy', 'medium', 'hard']" :key="level" class="radio-label radio-pill" :class="{ 'radio-pill-active': settings.math.difficulty === level }">
+                         <input
+                           v-model="settings.math.difficulty"
+                           type="radio"
+                           :value="level"
+                           name="difficulty"
+                           class="sr-only"
+                         />
+                         <span class="radio-pill-text">{{ level.charAt(0).toUpperCase() + level.slice(1) }}</span>
+                       </label>
+                     </div>
+                   </div>
 
-              <div class="form-group">
-                <label class="form-label" for="numQuestions">Number of Questions</label>
-                <input
-                  id="numQuestions"
-                  v-model.number="settings.math.numQuestions"
-                  type="number"
-                  min="1"
-                  max="100"
-                  class="form-input"
-                />
-              </div>
+                   <div class="form-row">
+                     <div class="form-group">
+                       <label class="form-label" for="numQuestions">Number of Questions</label>
+                       <div class="input-wrapper">
+                         <button type="button" class="input-btn" @click="settings.math.numQuestions = Math.max(1, settings.math.numQuestions - 1)">−</button>
+                         <input
+                           id="numQuestions"
+                           v-model.number="settings.math.numQuestions"
+                           type="number"
+                           min="1"
+                           max="100"
+                           class="form-input input-centered"
+                         />
+                         <button type="button" class="input-btn" @click="settings.math.numQuestions = Math.min(100, settings.math.numQuestions + 1)">+</button>
+                       </div>
+                     </div>
 
-              <div class="form-group">
-                <label class="form-label" for="timePerQuestion">Time per Question (seconds)</label>
-                <input
-                  id="timePerQuestion"
-                  v-model.number="settings.math.timePerQuestion"
-                  type="number"
-                  min="5"
-                  max="300"
-                  class="form-input"
-                />
-              </div>
+                     <div class="form-group">
+                       <label class="form-label" for="timePerQuestion">Time per Question (seconds)</label>
+                       <div class="input-wrapper">
+                         <button type="button" class="input-btn" @click="settings.math.timePerQuestion = Math.max(5, settings.math.timePerQuestion - 5)">−</button>
+                         <input
+                           id="timePerQuestion"
+                           v-model.number="settings.math.timePerQuestion"
+                           type="number"
+                           min="5"
+                           max="300"
+                           class="form-input input-centered"
+                         />
+                         <button type="button" class="input-btn" @click="settings.math.timePerQuestion = Math.min(300, settings.math.timePerQuestion + 5)">+</button>
+                       </div>
+                     </div>
+                   </div>
 
-              <div class="form-group">
-                <label class="form-label">Operations</label>
-                <div class="checkbox-group">
-                  <label v-for="op in operationOptions" :key="op" class="checkbox-label">
-                    <input
-                      v-model="settings.math.operations"
-                      type="checkbox"
-                      :value="op"
-                    />
-                    <span class="checkbox-text">{{ op }}</span>
-                  </label>
-                </div>
-              </div>
-            </div>
+                   <div class="form-group">
+                     <label class="form-label">Operations</label>
+                     <div class="checkbox-group checkbox-grid">
+                       <label v-for="op in operationOptions" :key="op" class="checkbox-label checkbox-card" :class="{ 'checkbox-card-active': settings.math.operations.includes(op) }">
+                         <input
+                           v-model="settings.math.operations"
+                           type="checkbox"
+                           :value="op"
+                           class="sr-only"
+                         />
+                         <span class="checkbox-card-icon">{{ op }}</span>
+                         <span class="checkbox-card-text">{{ getOperationLabel(op) }}</span>
+                       </label>
+                     </div>
+                   </div>
+                 </div>
 
-            <div v-if="selectedGameType!.id === 'vocabulary-race'" class="config-form">
-              <div class="form-group">
-                <label class="form-label" for="wordList">Vocabulary Words (one per line)</label>
-                <textarea
-                  id="wordList"
-                  v-model="settings.vocabulary.wordList"
-                  rows="8"
-                  placeholder="apple&#10;banana&#10;cherry&#10;date"
-                  class="form-textarea"
-                ></textarea>
-                <span class="form-hint">Enter at least 4 words, one per line.</span>
-              </div>
+                 <div v-else-if="selectedGameType!.id === 'vocabulary-race'" key="vocabulary" class="config-form">
+                   <div class="form-group">
+                     <label class="form-label" for="wordList">Vocabulary Words (one per line)</label>
+                     <textarea
+                       id="wordList"
+                       v-model="settings.vocabulary.wordList"
+                       rows="8"
+                       placeholder="apple&#10;banana&#10;cherry&#10;date"
+                       class="form-textarea"
+                     ></textarea>
+                     <span class="form-hint">Enter at least 4 words, one per line.</span>
+                   </div>
 
-              <div class="form-group">
-                <label class="form-label" for="timeLimit">Time Limit (seconds)</label>
-                <input
-                  id="timeLimit"
-                  v-model.number="settings.vocabulary.timeLimit"
-                  type="number"
-                  min="10"
-                  max="600"
-                  class="form-input"
-                />
-              </div>
+                   <div class="form-row">
+                     <div class="form-group">
+                       <label class="form-label" for="timeLimit">Time Limit (seconds)</label>
+                       <div class="input-wrapper">
+                         <button type="button" class="input-btn" @click="settings.vocabulary.timeLimit = Math.max(10, settings.vocabulary.timeLimit - 5)">−</button>
+                         <input
+                           id="timeLimit"
+                           v-model.number="settings.vocabulary.timeLimit"
+                           type="number"
+                           min="10"
+                           max="600"
+                           class="form-input input-centered"
+                         />
+                         <button type="button" class="input-btn" @click="settings.vocabulary.timeLimit = Math.min(600, settings.vocabulary.timeLimit + 5)">+</button>
+                       </div>
+                     </div>
 
-              <div class="form-group">
-                <label class="form-label" for="rounds">Number of Rounds</label>
-                <input
-                  id="rounds"
-                  v-model.number="settings.vocabulary.rounds"
-                  type="number"
-                  min="1"
-                  max="20"
-                  class="form-input"
-                />
-              </div>
+                     <div class="form-group">
+                       <label class="form-label" for="rounds">Number of Rounds</label>
+                       <div class="input-wrapper">
+                         <button type="button" class="input-btn" @click="settings.vocabulary.rounds = Math.max(1, settings.vocabulary.rounds - 1)">−</button>
+                         <input
+                           id="rounds"
+                           v-model.number="settings.vocabulary.rounds"
+                           type="number"
+                           min="1"
+                           max="20"
+                           class="form-input input-centered"
+                         />
+                         <button type="button" class="input-btn" @click="settings.vocabulary.rounds = Math.min(20, settings.vocabulary.rounds + 1)">+</button>
+                       </div>
+                     </div>
+                   </div>
 
-              <div class="form-group">
-                <label class="checkbox-label">
-                  <input v-model="settings.vocabulary.teamMode" type="checkbox" />
-                  <span class="checkbox-text">Enable Team Mode</span>
-                </label>
-              </div>
-            </div>
+                   <div class="form-group">
+                     <label class="checkbox-label checkbox-card checkbox-toggle">
+                       <input v-model="settings.vocabulary.teamMode" type="checkbox" />
+                       <span class="checkbox-card-text">Enable Team Mode</span>
+                     </label>
+                   </div>
+                 </div>
 
-            <div v-if="selectedGameType!.id === 'quiz-battle'" class="config-form">
-              <div class="form-group">
-                <label class="form-label" for="quizNumQuestions">Number of Questions</label>
-                <input
-                  id="quizNumQuestions"
-                  v-model.number="settings.quiz.numQuestions"
-                  type="number"
-                  min="1"
-                  max="100"
-                  class="form-input"
-                />
-              </div>
+                 <div v-else-if="selectedGameType!.id === 'quiz-battle'" key="quiz" class="config-form">
+                   <div class="form-group">
+                     <label class="form-label" for="quizNumQuestions">Number of Questions</label>
+                     <div class="input-wrapper">
+                       <button type="button" class="input-btn" @click="settings.quiz.numQuestions = Math.max(1, settings.quiz.numQuestions - 1)">−</button>
+                       <input
+                         id="quizNumQuestions"
+                         v-model.number="settings.quiz.numQuestions"
+                         type="number"
+                         min="1"
+                         max="100"
+                         class="form-input input-centered"
+                       />
+                       <button type="button" class="input-btn" @click="settings.quiz.numQuestions = Math.min(100, settings.quiz.numQuestions + 1)">+</button>
+                     </div>
+                   </div>
 
-              <div class="form-group">
-                <label class="form-label" for="quizDifficulty">Difficulty</label>
-                <div class="radio-group">
-                  <label v-for="level in ['easy', 'medium', 'hard']" :key="level" class="radio-label">
-                    <input
-                      v-model="settings.quiz.difficulty"
-                      type="radio"
-                      :value="level"
-                      name="quizDifficulty"
-                    />
-                    <span class="radio-text">{{ level.charAt(0).toUpperCase() + level.slice(1) }}</span>
-                  </label>
-                </div>
-              </div>
+                   <div class="form-group">
+                     <label class="form-label">Difficulty</label>
+                     <div class="radio-group radio-pills">
+                       <label v-for="level in ['easy', 'medium', 'hard']" :key="level" class="radio-label radio-pill" :class="{ 'radio-pill-active': settings.quiz.difficulty === level }">
+                         <input
+                           v-model="settings.quiz.difficulty"
+                           type="radio"
+                           :value="level"
+                           name="quizDifficulty"
+                           class="sr-only"
+                         />
+                         <span class="radio-pill-text">{{ level.charAt(0).toUpperCase() + level.slice(1) }}</span>
+                       </label>
+                     </div>
+                   </div>
 
-              <div class="form-group">
-                <label class="form-label">Categories</label>
-                <div class="checkbox-group">
-                  <label v-for="cat in categoryOptions" :key="cat" class="checkbox-label">
-                    <input
-                      v-model="settings.quiz.categories"
-                      type="checkbox"
-                      :value="cat"
-                    />
-                    <span class="checkbox-text">{{ cat }}</span>
-                  </label>
-                </div>
-              </div>
+                   <div class="form-group">
+                     <label class="form-label">Categories</label>
+                     <div class="checkbox-group checkbox-grid">
+                       <label v-for="cat in categoryOptions" :key="cat" class="checkbox-label checkbox-card" :class="{ 'checkbox-card-active': settings.quiz.categories.includes(cat) }">
+                         <input
+                           v-model="settings.quiz.categories"
+                           type="checkbox"
+                           :value="cat"
+                           class="sr-only"
+                         />
+                         <span class="checkbox-card-icon">{{ cat.charAt(0) }}</span>
+                         <span class="checkbox-card-text">{{ cat }}</span>
+                       </label>
+                     </div>
+                   </div>
 
-              <div class="form-group">
-                <label class="checkbox-label">
-                  <input v-model="settings.quiz.teamMode" type="checkbox" />
-                  <span class="checkbox-text">Enable Team Mode</span>
-                </label>
-              </div>
-            </div>
+                   <div class="form-group">
+                     <label class="checkbox-label checkbox-card checkbox-toggle">
+                       <input v-model="settings.quiz.teamMode" type="checkbox" />
+                       <span class="checkbox-card-text">Enable Team Mode</span>
+                     </label>
+                   </div>
+                 </div>
 
-            <div v-if="selectedGameType!.id === 'memory-game'" class="config-form">
-              <div class="form-group">
-                <label class="form-label" for="gridSize">Grid Size</label>
-                <select id="gridSize" v-model.number="settings.memory.gridSize" class="form-select">
-                  <option :value="2">2 x 2</option>
-                  <option :value="4">4 x 4</option>
-                  <option :value="6">6 x 6</option>
-                  <option :value="8">8 x 8</option>
-                </select>
-              </div>
+                 <div v-else-if="selectedGameType!.id === 'memory-game'" key="memory" class="config-form">
+                   <div class="form-row">
+                     <div class="form-group">
+                       <label class="form-label" for="gridSize">Grid Size</label>
+                       <select id="gridSize" v-model.number="settings.memory.gridSize" class="form-select">
+                         <option :value="2">2 x 2</option>
+                         <option :value="4">4 x 4</option>
+                         <option :value="6">6 x 6</option>
+                         <option :value="8">8 x 8</option>
+                       </select>
+                     </div>
 
-              <div class="form-group">
-                <label class="form-label" for="memoryTheme">Theme</label>
-                <select id="memoryTheme" v-model="settings.memory.theme" class="form-select">
-                  <option v-for="theme in memoryThemeOptions" :key="theme" :value="theme">
-                    {{ theme.charAt(0).toUpperCase() + theme.slice(1) }}
-                  </option>
-                </select>
-              </div>
+                     <div class="form-group">
+                       <label class="form-label" for="memoryTheme">Theme</label>
+                       <select id="memoryTheme" v-model="settings.memory.theme" class="form-select">
+                         <option v-for="theme in memoryThemeOptions" :key="theme" :value="theme">
+                           {{ theme.charAt(0).toUpperCase() + theme.slice(1) }}
+                         </option>
+                       </select>
+                     </div>
+                   </div>
 
-              <div class="form-group">
-                <label class="form-label" for="memoryTimeLimit">Time Limit (seconds)</label>
-                <input
-                  id="memoryTimeLimit"
-                  v-model.number="settings.memory.timeLimit"
-                  type="number"
-                  min="10"
-                  max="600"
-                  class="form-input"
-                />
-              </div>
-            </div>
+                   <div class="form-group">
+                     <label class="form-label" for="memoryTimeLimit">Time Limit (seconds)</label>
+                     <div class="input-wrapper">
+                       <button type="button" class="input-btn" @click="settings.memory.timeLimit = Math.max(10, settings.memory.timeLimit - 5)">−</button>
+                       <input
+                         id="memoryTimeLimit"
+                         v-model.number="settings.memory.timeLimit"
+                         type="number"
+                         min="10"
+                         max="600"
+                         class="form-input input-centered"
+                       />
+                       <button type="button" class="input-btn" @click="settings.memory.timeLimit = Math.min(600, settings.memory.timeLimit + 5)">+</button>
+                     </div>
+                   </div>
+                 </div>
+               </Transition>
 
-            <div v-if="errorMessage" class="alert alert-error">{{ errorMessage }}</div>
-            <div v-if="successMessage" class="alert alert-success">{{ successMessage }}</div>
+               <Transition name="alert-fade" mode="out-in">
+                 <div v-if="errorMessage" key="error" class="alert alert-error">{{ errorMessage }}</div>
+                 <div v-else-if="successMessage" key="success" class="alert alert-success">{{ successMessage }}</div>
+               </Transition>
 
-            <div class="config-actions">
-              <button
-                class="btn-submit"
-                :disabled="isSubmitting"
-                @click="handleSubmit"
-              >
-                {{ isSubmitting ? 'Creating...' : 'Start Game' }}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+               <div class="config-actions">
+                 <button
+                   class="btn-submit"
+                   :disabled="isSubmitting"
+                   @click="handleSubmit"
+                 >
+                   <span v-if="isSubmitting" class="spinner"></span>
+                   <span :class="{ 'btn-submit-text': isSubmitting }">{{ isSubmitting ? 'Creating...' : 'Start Game' }}</span>
+                 </button>
+               </div>
+             </div>
+           </div>
+         </Transition>
+       </div>
+     </section>
 
     <GameJoinModal
       v-model="showJoinModal"
@@ -558,19 +611,26 @@ async function handleSubmit() {
 .config-form {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 28px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .form-label {
   font-size: 14px;
   font-weight: 600;
   color: #0f172a;
+  letter-spacing: -0.01em;
 }
 
 .form-input,
@@ -609,6 +669,63 @@ async function handleSubmit() {
   color: #64748b;
 }
 
+.input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #f8fafc;
+  transition: all 0.2s ease;
+}
+
+.input-wrapper:focus-within {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  background: white;
+}
+
+.input-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: transparent;
+  color: #475569;
+  font-size: 20px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.input-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.input-btn:active {
+  background: #cbd5e1;
+}
+
+.input-centered {
+  text-align: center;
+  border: none;
+  background: transparent;
+  flex: 1;
+  min-width: 0;
+  -moz-appearance: textfield;
+}
+
+.input-centered::-webkit-outer-spin-button,
+.input-centered::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 .radio-group,
 .checkbox-group {
   display: flex;
@@ -616,7 +733,69 @@ async function handleSubmit() {
   gap: 12px;
 }
 
-.radio-label,
+.radio-pills {
+  gap: 10px;
+}
+
+.radio-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  color: #334155;
+}
+
+.radio-pill {
+  border-radius: 999px;
+  padding: 10px 20px;
+  border: 1.5px solid #e2e8f0;
+  background: white;
+  font-weight: 500;
+  font-size: 14px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.radio-pill:hover {
+  border-color: #2563eb;
+  background: #eff6ff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(37, 99, 235, 0.08);
+}
+
+.radio-pill-active {
+  border-color: #2563eb;
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+  font-weight: 600;
+}
+
+.radio-pill-active .radio-pill-text {
+  color: white;
+}
+
+.radio-pill-text {
+  color: inherit;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
 .checkbox-label {
   display: flex;
   align-items: center;
@@ -631,18 +810,86 @@ async function handleSubmit() {
   color: #334155;
 }
 
+.checkbox-card {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 20px;
+  border-radius: 12px;
+  border: 1.5px solid #e2e8f0;
+  background: white;
+  min-width: 100px;
+  gap: 6px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.checkbox-card:hover {
+  border-color: #2563eb;
+  background: #f8faff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
+}
+
+.checkbox-card-active {
+  border-color: #2563eb;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.12);
+}
+
+.checkbox-card-icon {
+  font-size: 28px;
+  font-weight: 700;
+  color: #64748b;
+  line-height: 1;
+  transition: all 0.2s ease;
+}
+
+.checkbox-card-active .checkbox-card-icon {
+  color: #2563eb;
+  transform: scale(1.1);
+}
+
+.checkbox-card-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all 0.2s ease;
+}
+
+.checkbox-card-active .checkbox-card-text {
+  color: #2563eb;
+}
+
+.checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.checkbox-toggle {
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 14px 18px;
+  min-width: auto;
+  gap: 10px;
+}
+
+.checkbox-toggle .checkbox-card-icon {
+  display: none;
+}
+
+.checkbox-toggle .checkbox-card-text {
+  font-size: 14px;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
 .radio-label:hover,
 .checkbox-label:hover {
   border-color: #cbd5e1;
   background: #f1f5f9;
-}
-
-.radio-label:has(input:checked),
-.checkbox-label:has(input:checked) {
-  border-color: #2563eb;
-  background: #eff6ff;
-  color: #2563eb;
-  font-weight: 600;
 }
 
 .radio-label input,
@@ -696,7 +943,7 @@ async function handleSubmit() {
 }
 
 .btn-submit {
-  padding: 14px 28px;
+  padding: 14px 32px;
   border-radius: 10px;
   border: none;
   background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
@@ -705,17 +952,122 @@ async function handleSubmit() {
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+  letter-spacing: -0.01em;
 }
 
 .btn-submit:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
 }
 
-.btn-submit:disabled {
-  opacity: 0.6;
+ .btn-submit:disabled {
+  opacity: 0.7;
   cursor: not-allowed;
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin-right: 10px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.btn-submit-text {
+  vertical-align: middle;
+}
+
+.view-fade-enter-active,
+.view-fade-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.view-fade-enter-from {
+  opacity: 0;
+  transform: translateY(14px);
+}
+
+.view-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-14px);
+}
+
+.form-slide-enter-active,
+.form-slide-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.form-slide-enter-from {
+  opacity: 0;
+  transform: translateX(18px);
+}
+
+.form-slide-leave-to {
+  opacity: 0;
+  transform: translateX(-18px);
+}
+
+.alert-fade-enter-active,
+.alert-fade-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.alert-fade-enter-from {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+.alert-fade-leave-to {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.game-type-card {
+  animation: cardIn 0.45s ease backwards;
+}
+
+.game-type-card:nth-child(1) { animation-delay: 0.05s; }
+.game-type-card:nth-child(2) { animation-delay: 0.12s; }
+.game-type-card:nth-child(3) { animation-delay: 0.19s; }
+.game-type-card:nth-child(4) { animation-delay: 0.26s; }
+
+@keyframes subtlePulse {
+  0%, 100% {
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+  }
+  50% {
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
+  }
+}
+
+.btn-submit:not(:disabled) {
+  animation: subtlePulse 2.2s ease-in-out infinite;
+}
+
+.btn-submit:hover:not(:disabled) {
+  animation: none;
 }
 
 @media (max-width: 768px) {
@@ -737,6 +1089,14 @@ async function handleSubmit() {
 
   .config-card {
     padding: 24px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .checkbox-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .radio-group,
