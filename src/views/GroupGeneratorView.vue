@@ -28,6 +28,7 @@ const quantity = ref(3)
 const generateTeamNames = ref(true)
 const generatedGroups = ref<Group[]>([])
 const isGenerating = ref(false)
+const showConfigModal = ref(false)
 
 // Team name adjectives and nouns
 const adjectives = [
@@ -40,17 +41,6 @@ const nouns = [
   'Quokkas', 'Pioneers', 'Knights', 'Lions', 'Tigers', 'Eagles', 'Wolves', 'Bears',
   'Hawks', 'Dragons', 'Falcons', 'Sharks', 'Panthers', 'Rangers', 'Warriors', 'Heroes',
   'Mavericks', 'Legends', 'Champions', 'Stars', 'Comets', 'Rockets', 'Blazers', 'Strikers'
-]
-
-const colorPalette = [
-  { bg: 'bg-blue-600', text: 'text-white', ring: 'ring-blue-600' },
-  { bg: 'bg-fuchsia-600', text: 'text-white', ring: 'ring-fuchsia-600' },
-  { bg: 'bg-amber-700', text: 'text-white', ring: 'ring-amber-700' },
-  { bg: 'bg-violet-600', text: 'text-white', ring: 'ring-violet-600' },
-  { bg: 'bg-emerald-600', text: 'text-white', ring: 'ring-emerald-600' },
-  { bg: 'bg-rose-600', text: 'text-white', ring: 'ring-rose-600' },
-  { bg: 'bg-cyan-700', text: 'text-white', ring: 'ring-cyan-700' },
-  { bg: 'bg-indigo-600', text: 'text-white', ring: 'ring-indigo-600' },
 ]
 
 const groupCardColors = [
@@ -72,14 +62,41 @@ const totalGroups = computed(() => generatedGroups.value.length)
 const showDropdown = ref(false)
 
 const studentText = computed({
-  get: () => students.value.map(s => s.name).join('\n'),
+  get: () => {
+    return students.value.map(s => {
+      // If gender is defined, show it with the name
+      if (s.gender) {
+        return `${s.name} (${s.gender})`
+      }
+      return s.name
+    }).join('\n')
+  },
   set: (val) => {
-    const names = val.split('\n').filter(n => n.trim())
-    students.value = names.map((name, idx) => ({
-      id: `student-${idx}`,
-      name: name.trim(),
-      gender: undefined,
-    }))
+    const lines = val.split('\n').filter(n => n.trim())
+    students.value = lines.map((line, idx) => {
+      // Check if line contains gender in parentheses
+      const genderMatch = line.match(/\(([^)]+)\)$/)
+      let name = line.trim()
+      let gender: 'male' | 'female' | 'other' | undefined = undefined
+      
+      if (genderMatch) {
+        name = line.substring(0, genderMatch.index).trim()
+        const genderValue = genderMatch[1].toLowerCase().trim()
+        if (genderValue === 'male' || genderValue === 'm') {
+          gender = 'male'
+        } else if (genderValue === 'female' || genderValue === 'f') {
+          gender = 'female'
+        } else {
+          gender = 'other'
+        }
+      }
+      
+      return {
+        id: `student-${idx}`,
+        name: name,
+        gender: gender,
+      }
+    })
   }
 })
 
@@ -91,6 +108,10 @@ function getInitials(name: string): string {
     .join('')
     .toUpperCase()
     .slice(0, 2)
+}
+
+function getStudentNumber(student: any, index: number): number {
+  return index + 1
 }
 
 function generateGroupName(index: number): string {
@@ -122,7 +143,6 @@ function generateRandomGroups(): Group[] {
         id: `group-${i}`,
         name: generateTeamNames.value ? generateGroupName(i) : `Group ${i + 1}`,
         students: groupStudents,
-        color: colorPalette[i % colorPalette.length].bg,
       })
     }
   }
@@ -143,7 +163,6 @@ function generateBalancedGroups(): Group[] {
         id: `group-${groupIndex}`,
         name: generateTeamNames.value ? generateGroupName(groupIndex) : `Group ${groupIndex + 1}`,
         students: [],
-        color: colorPalette[groupIndex % colorPalette.length].bg,
       }
     }
     groups[groupIndex].students.push(shuffled[i])
@@ -173,7 +192,6 @@ function generateGenderBalancedGroups(): Group[] {
           id: `group-${groupIndex}`,
           name: generateTeamNames.value ? generateGroupName(groupIndex) : `Group ${groupIndex + 1}`,
           students: [],
-          color: colorPalette[groupIndex % colorPalette.length].bg,
         }
       }
       groups[groupIndex].students.push(student)
@@ -206,11 +224,16 @@ function generateGroups() {
         break
     }
     isGenerating.value = false
+    showConfigModal.value = false
   }, 300)
 }
 
 function regenerate() {
   generateGroups()
+}
+
+function clearGroups() {
+  generatedGroups.value = []
 }
 
 function toggleDropdown() {
@@ -226,7 +249,7 @@ function exportXLSX() {
 
   // Prepare data for Excel
   const data: any[] = []
-  
+
   generatedGroups.value.forEach((group, idx) => {
     // Group header row
     data.push({
@@ -234,7 +257,7 @@ function exportXLSX() {
       'Student Name': `(${group.students.length} Students)`,
       'Row': ''
     })
-    
+
     // Student rows
     group.students.forEach((student, sIdx) => {
       data.push({
@@ -243,7 +266,7 @@ function exportXLSX() {
         'Row': sIdx + 1
       })
     })
-    
+
     // Add blank row between groups
     if (idx < generatedGroups.value.length - 1) {
       data.push({ 'Group': '', 'Student Name': '', 'Row': '' })
@@ -252,7 +275,7 @@ function exportXLSX() {
 
   // Create workbook
   const ws = XLSX.utils.json_to_sheet(data)
-  
+
   // Set column widths
   ws['!cols'] = [
     { wch: 20 },  // Group column
@@ -262,34 +285,9 @@ function exportXLSX() {
 
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, 'Groups')
-  
+
   // Generate Excel file
   XLSX.writeFile(wb, 'groups-export.xlsx')
-}
-
-function exportCSV() {
-  exportXLSX()
-}
-
-function exportJSON() {
-  if (generatedGroups.value.length === 0) return
-
-  const exportData = {
-    generatedAt: new Date().toISOString(),
-    method: method.value,
-    groups: generatedGroups.value.map(g => ({
-      name: g.name,
-      students: g.students.map(s => s.name),
-    }))
-  }
-
-  const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = 'groups-export.json'
-  a.click()
-  URL.revokeObjectURL(url)
 }
 
 function exportPDF() {
@@ -304,9 +302,9 @@ function exportPDF() {
   doc.setFont('helvetica', 'bold')
   doc.setTextColor(30, 64, 175) // #1e40af
   doc.text('Group Generator Export', pageWidth / 2, yPosition, { align: 'center' })
-  
+
   yPosition += 10
-  
+
   // Metadata
   doc.setFontSize(10)
   doc.setFont('helvetica', 'normal')
@@ -318,7 +316,7 @@ function exportPDF() {
   doc.text(`Total Groups: ${generatedGroups.value.length}`, 20, yPosition)
   yPosition += 6
   doc.text(`Total Students: ${totalStudents.value}`, 20, yPosition)
-  
+
   yPosition += 15
 
   // Groups
@@ -332,28 +330,28 @@ function exportPDF() {
     // Group header with color
     const color = groupCardColors[idx % groupCardColors.length]
     const rgb = hexToRgb(color)
-    
+
     doc.setFillColor(rgb.r, rgb.g, rgb.b)
     doc.rect(15, yPosition, pageWidth - 30, 10, 'F')
-    
+
     doc.setFontSize(14)
     doc.setFont('helvetica', 'bold')
     doc.setTextColor(255, 255, 255)
     doc.text(`${group.name} (${group.students.length} Students)`, 20, yPosition + 6.5)
-    
+
     yPosition += 15
 
     // Students
     doc.setTextColor(0, 0, 0)
     doc.setFontSize(11)
     doc.setFont('helvetica', 'normal')
-    
+
     group.students.forEach((student, sIdx) => {
       if (yPosition > 280) {
         doc.addPage()
         yPosition = 20
       }
-      
+
       // Student number circle
       doc.setFillColor(30, 64, 175)
       doc.circle(22, yPosition - 1, 3, 'F')
@@ -361,13 +359,13 @@ function exportPDF() {
       doc.setFontSize(9)
       doc.setFont('helvetica', 'bold')
       doc.text(`${sIdx + 1}`, 22, yPosition, { align: 'center' })
-      
+
       // Student name
       doc.setFontSize(11)
       doc.setTextColor(0, 0, 0)
       doc.setFont('helvetica', 'normal')
       doc.text(student.name, 28, yPosition)
-      
+
       yPosition += 7
     })
 
@@ -392,17 +390,7 @@ function handleFileUpload(event: Event) {
   const file = input.files?.[0]
   if (!file) return
 
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    const content = e.target?.result as string
-    const names = content.split(/[\n,]/).filter(n => n.trim())
-    students.value = names.map((name, idx) => ({
-      id: `student-${idx}`,
-      name: name.trim(),
-      gender: undefined,
-    }))
-  }
-  reader.readAsText(file)
+  processFile(file)
 }
 
 function handleDragOver(e: DragEvent) {
@@ -414,17 +402,87 @@ function handleDrop(e: DragEvent) {
   const file = e.dataTransfer?.files[0]
   if (!file) return
 
-  const reader = new FileReader()
-  reader.onload = (ev) => {
-    const content = ev.target?.result as string
-    const names = content.split(/[\n,]/).filter(n => n.trim())
-    students.value = names.map((name, idx) => ({
-      id: `student-${idx}`,
-      name: name.trim(),
-      gender: undefined,
-    }))
+  processFile(file)
+}
+
+function processFile(file: File) {
+  const fileExtension = file.name.split('.').pop()?.toLowerCase()
+  
+  if (fileExtension === 'xlsx' || fileExtension === 'xls') {
+    // Handle Excel files
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target?.result as ArrayBuffer)
+        const workbook = XLSX.read(data, { type: 'array' })
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]]
+        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 }) as any[][]
+        
+        // Process each row - look for Name and Gender columns
+        const processedStudents: Student[] = []
+        
+        jsonData.forEach((row, idx) => {
+          // Skip empty rows
+          if (!row || row.length === 0) return
+          
+          // Try to find name and gender from the row
+          // Common column order: No., Name, Gender or ID, Name, Gender
+          let name = ''
+          let gender: 'male' | 'female' | 'other' | undefined = undefined
+          
+          // Look for non-empty values
+          const values = row.filter(cell => cell !== undefined && cell !== null && String(cell).trim() !== '')
+          
+          if (values.length >= 2) {
+            // If we have at least 2 columns, assume second is name, third might be gender
+            name = String(values[1] || values[0]).trim()
+            
+            // Check if there's a gender value (usually "Male" or "Female")
+            if (values.length >= 3) {
+              const genderValue = String(values[2]).toLowerCase().trim()
+              if (genderValue === 'male' || genderValue === 'm') {
+                gender = 'male'
+              } else if (genderValue === 'female' || genderValue === 'f') {
+                gender = 'female'
+              } else if (genderValue && genderValue !== '') {
+                gender = 'other'
+              }
+            }
+          } else if (values.length === 1) {
+            // Only one column, assume it's the name
+            name = String(values[0]).trim()
+          }
+          
+          if (name) {
+            processedStudents.push({
+              id: `student-${idx}`,
+              name: name,
+              gender: gender,
+            })
+          }
+        })
+        
+        students.value = processedStudents
+      } catch (error) {
+        console.error('Error reading Excel file:', error)
+        alert('Error reading Excel file. Please make sure it\'s a valid Excel file.')
+      }
+    }
+    reader.readAsArrayBuffer(file)
+  } else {
+    // Handle text files (CSV, TXT)
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const content = e.target?.result as string
+      const names = content.split(/[\n,]/).filter(n => n.trim())
+      students.value = names.map((name, idx) => ({
+        id: `student-${idx}`,
+        name: name.trim(),
+        gender: undefined,
+      }))
+    }
+    reader.readAsText(file)
   }
-  reader.readAsText(file)
 }
 </script>
 
@@ -433,177 +491,189 @@ function handleDrop(e: DragEvent) {
     <!-- Header -->
     <header class="header">
       <div class="header__inner">
-        <h1 class="header__title">Group Generator</h1>
-        <p class="header__subtitle">Automatically organize students into balanced classroom groups.</p>
-        <div class="header__actions">
-          <button class="icon-btn" title="Help">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-              <line x1="12" y1="17" x2="12.01" y2="17" />
-            </svg>
-          </button>
-          <button class="icon-btn" title="Settings">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M12 1v6m0 6v6m4.22-10.22l4.24-4.24M6.34 6.34L2.1 2.1m17.8 17.8l-4.24-4.24M6.34 17.66l-4.24 4.24M23 12h-6m-6 0H1m20.07-4.93l-4.24 4.24M6.34 6.34l-4.24-4.24" />
-            </svg>
-          </button>
+        <button class="back-btn" @click="$router.back()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12" />
+            <polyline points="12 19 5 12 12 5" />
+          </svg>
+          <span>Back</span>
+        </button>
+        <div class="header__content">
+          <h1 class="header__title">Group Generator</h1>
+          <p class="header__subtitle">Automatically organize students into balanced classroom groups.</p>
         </div>
       </div>
     </header>
 
     <!-- Main Content -->
     <main class="main">
-      <div class="layout">
-        <!-- Left Panel -->
-        <div class="left-panel">
-          <!-- Step 1: Student List -->
-          <section class="card">
-            <div class="step-header">
-              <div class="step-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1e40af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                </svg>
-              </div>
-              <div>
-                <h2 class="card__title">Student List</h2>
-                <span class="step-badge">STEP 1</span>
-              </div>
-            </div>
 
-            <div class="form">
-              <textarea
-                v-model="studentText"
-                class="textarea"
-                placeholder="Paste student names here, one per line..."
-                rows="8"
-              ></textarea>
-              <span class="hint">Separate names with Enter</span>
+      <!-- Configuration Modal -->
+      <div v-if="showConfigModal" class="modal-overlay" @click.self="showConfigModal = false">
+        <div class="modal">
+          <div class="modal__header">
+            <h2 class="modal__title">Configure Groups</h2>
+            <button class="modal__close" @click="showConfigModal = false">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
 
-              <div
-                class="upload-zone"
-                @dragover="handleDragOver"
-                @drop="handleDrop"
-              >
-                <svg class="upload-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="17 8 12 3 7 8" />
-                  <line x1="12" y1="3" x2="12" y2="15" />
-                </svg>
-                <p class="upload-text">
-                  Drag & drop or <label class="upload-link"><input type="file" accept=".csv,.txt,.xlsx" class="hidden" @change="handleFileUpload">upload file</label>
-                </p>
-                <p class="upload-hint">Supports .csv, .txt, .xlsx</p>
-              </div>
-            </div>
-          </section>
-
-          <!-- Step 2: Configuration -->
-          <section class="card">
-            <div class="step-header">
-              <div class="step-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1e40af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="4" y1="21" x2="4" y2="14" />
-                  <line x1="4" y1="10" x2="4" y2="3" />
-                  <line x1="12" y1="21" x2="12" y2="12" />
-                  <line x1="12" y1="8" x2="12" y2="3" />
-                  <line x1="20" y1="21" x2="20" y2="16" />
-                  <line x1="20" y1="12" x2="20" y2="3" />
-                  <line x1="1" y1="14" x2="7" y2="14" />
-                  <line x1="9" y1="8" x2="15" y2="8" />
-                  <line x1="17" y1="16" x2="23" y2="16" />
-                </svg>
-              </div>
-              <div>
-                <h2 class="card__title">Configuration</h2>
-                <span class="step-badge">STEP 2</span>
-              </div>
-            </div>
-
-            <div class="config">
-              <label class="label">Generation Method</label>
-              <div class="method-grid">
-                <button
-                  v-for="m in ['random', 'balanced', 'gender']"
-                  :key="m"
-                  class="method-btn"
-                  :class="{ 'method-btn--active': method === m }"
-                  @click="method = m as GenerationMethod"
-                >
-                  <svg v-if="m === 'random'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5" />
-                  </svg>
-                  <svg v-else-if="m === 'balanced'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4" />
-                  </svg>
-                  <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <div class="modal__body">
+            <!-- Step 1: Student List -->
+            <section class="card">
+              <div class="step-header">
+                <div class="step-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1e40af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
                     <circle cx="9" cy="7" r="4" />
                     <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
                     <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                   </svg>
-                  <span class="method-label">{{ m.charAt(0).toUpperCase() + m.slice(1) }}</span>
-                </button>
+                </div>
+                <div>
+                  <h3 class="card__title">Student List</h3>
+                  <span class="step-badge">STEP 1</span>
+                </div>
               </div>
 
-              <div class="row">
-                <div class="field field--grow">
-                  <label class="label">Targeting</label>
-                  <select v-model="target" class="select">
-                    <option value="groups">Number of Groups</option>
-                    <option value="size">Group Size</option>
-                  </select>
+              <div class="form">
+                <textarea
+                  v-model="studentText"
+                  class="textarea"
+                  placeholder="Paste student names here, one per line..."
+                  rows="5"
+                ></textarea>
+                <span class="hint">Separate names with Enter</span>
+
+                <div
+                  class="upload-zone"
+                  @dragover="handleDragOver"
+                  @drop="handleDrop"
+                >
+                  <svg class="upload-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
+                  <p class="upload-text">
+                    Drag & drop or <label class="upload-link"><input type="file" accept=".csv,.txt,.xlsx" class="hidden" @change="handleFileUpload">upload file</label>
+                  </p>
+                  <p class="upload-hint">Supports .csv, .txt, .xlsx files (with columns: ID, Name, Gender)</p>
+                </div>
+              </div>
+            </section>
+
+            <!-- Step 2: Configuration -->
+            <section class="card">
+              <div class="step-header">
+                <div class="step-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1e40af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="4" y1="21" x2="4" y2="14" />
+                    <line x1="4" y1="10" x2="4" y2="3" />
+                    <line x1="12" y1="21" x2="12" y2="12" />
+                    <line x1="12" y1="8" x2="12" y2="3" />
+                    <line x1="20" y1="21" x2="20" y2="16" />
+                    <line x1="20" y1="12" x2="20" y2="3" />
+                    <line x1="1" y1="14" x2="7" y2="14" />
+                    <line x1="9" y1="8" x2="15" y2="8" />
+                    <line x1="17" y1="16" x2="23" y2="16" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="card__title">Configuration</h3>
+                  <span class="step-badge">STEP 2</span>
+                </div>
+              </div>
+
+              <div class="config">
+                <label class="label">Generation Method</label>
+                <div class="method-grid">
+                  <button
+                    v-for="m in ['random', 'balanced', 'gender']"
+                    :key="m"
+                    class="method-btn"
+                    :class="{ 'method-btn--active': method === m }"
+                    @click="method = m as GenerationMethod"
+                  >
+                    <svg v-if="m === 'random'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5" />
+                    </svg>
+                    <svg v-else-if="m === 'balanced'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4" />
+                    </svg>
+                    <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                      <circle cx="9" cy="7" r="4" />
+                      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                    </svg>
+                    <span class="method-label">{{ m.charAt(0).toUpperCase() + m.slice(1) }}</span>
+                  </button>
                 </div>
 
-                <div class="field field--quantity">
-                  <label class="label">Quantity</label>
-                  <div class="number-input">
-                    <button class="num-btn" @click="quantity > 2 && quantity--">−</button>
-                    <input type="number" v-model="quantity" class="num-field" min="2" />
-                    <button class="num-btn" @click="quantity++">+</button>
+                <div class="row">
+                  <div class="field field--grow">
+                    <label class="label">Targeting</label>
+                    <select v-model="target" class="select">
+                      <option value="groups">Number of Groups</option>
+                      <option value="size">Group Size</option>
+                    </select>
+                  </div>
+
+                  <div class="field field--quantity">
+                    <label class="label">Quantity</label>
+                    <div class="number-input">
+                      <button class="num-btn" @click="quantity > 2 && quantity--">−</button>
+                      <input type="number" v-model="quantity" class="num-field" min="2" />
+                      <button class="num-btn" @click="quantity++">+</button>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div class="toggle-row">
-                <label class="toggle-label">Generate Team Names</label>
+                <div class="toggle-row">
+                  <label class="toggle-label">Generate Team Names</label>
+                  <button
+                    class="toggle"
+                    :class="{ 'toggle--on': generateTeamNames }"
+                    @click="generateTeamNames = !generateTeamNames"
+                  >
+                    <span class="toggle__thumb"></span>
+                  </button>
+                </div>
+
                 <button
-                  class="toggle"
-                  :class="{ 'toggle--on': generateTeamNames }"
-                  @click="generateTeamNames = !generateTeamNames"
+                  class="generate-btn"
+                  :disabled="!hasStudents || isGenerating"
+                  @click="generateGroups"
                 >
-                  <span class="toggle__thumb"></span>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+                  </svg>
+                  {{ isGenerating ? 'Generating...' : 'Generate Groups' }}
                 </button>
               </div>
-
-              <button
-                class="generate-btn"
-                :disabled="!hasStudents || isGenerating"
-                @click="generateGroups"
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
-                </svg>
-                {{ isGenerating ? 'Generating...' : 'Generate Groups' }}
-              </button>
-            </div>
-          </section>
+            </section>
+          </div>
         </div>
+      </div>
 
+      <div class="layout">
         <!-- Right Panel: Results -->
         <div class="right-panel">
-          <div v-if="isEmpty" class="empty-state">
-            <div class="empty-icon">
-              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
-              </svg>
+          <div v-if="isEmpty" class="welcome-card">
+            <div class="welcome-card__content">
+              <h3 class="welcome-card__title">Welcome to Group Generator</h3>
+              <p class="welcome-card__desc">Automatically organize students into balanced classroom groups. Click the button below to get started.</p>
+              <button class="start-btn" @click="showConfigModal = true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+                Create Group Generator
+              </button>
             </div>
-            <p class="empty-title">No groups generated yet</p>
-            <p class="empty-desc">Configure the settings on the left and click Generate Groups to see the magic happen.</p>
           </div>
 
           <div v-else class="results">
@@ -613,6 +683,27 @@ function handleDrop(e: DragEvent) {
                 <span class="text-sm text-slate-500 ml-3">Created for {{ totalStudents }} students</span>
               </div>
               <div class="actions">
+                <button class="secondary-btn" @click="showConfigModal = true" title="Configure">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                  Configure
+                </button>
+                <button class="secondary-btn" @click="regenerate">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+                    <path d="M21 3v5h-5" />
+                  </svg>
+                  Regenerate
+                </button>
+                <button class="secondary-btn secondary-btn--clear" @click="clearGroups">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                  </svg>
+                  Clear
+                </button>
                 <div class="dropdown">
                   <button class="primary-btn" @click="toggleDropdown">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -645,13 +736,6 @@ function handleDrop(e: DragEvent) {
                     </button>
                   </div>
                 </div>
-                <button class="secondary-btn" @click="regenerate">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
-                    <path d="M21 3v5h-5" />
-                  </svg>
-                  Regenerate
-                </button>
               </div>
             </div>
 
@@ -660,21 +744,27 @@ function handleDrop(e: DragEvent) {
                 v-for="(group, idx) in generatedGroups"
                 :key="group.id"
                 class="group-card"
-                :style="{ background: groupCardColors[idx % groupCardColors.length] }"
+                :style="{ borderColor: groupCardColors[idx % groupCardColors.length] }"
               >
-                <div class="group-card__header">
-                  <h3 class="group-card__name">{{ group.name }}</h3>
-                  <span class="group-card__count">{{ group.students.length }} Students</span>
+                <div class="group-card__header" :style="{ background: groupCardColors[idx % groupCardColors.length] }">
+                  <div class="group-card__title-row">
+                    <span class="group-card__number">{{ idx + 1 }}.</span>
+                    <input
+                      type="text"
+                      v-model="group.name"
+                      class="group-card__input"
+                    />
+                  </div>
                 </div>
 
                 <div class="group-card__list">
                   <div
-                    v-for="student in group.students"
+                    v-for="(student, sIdx) in group.students"
                     :key="student.id"
                     class="student-item"
                   >
                     <div class="student-avatar">
-                      {{ getInitials(student.name) }}
+                      {{ sIdx + 1 }}
                     </div>
                     <span class="student-name">{{ student.name }}</span>
                   </div>
@@ -693,34 +783,72 @@ function handleDrop(e: DragEvent) {
   min-height: 100vh;
   background: #f5f3ff;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  padding-top: 64px;
+  padding-top: 0;
 }
 
 .header {
-  background: white;
-  border-bottom: 1px solid #e2e8f0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-bottom: none;
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  padding: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .header__inner {
   max-width: 80rem;
   margin: 0 auto;
-  padding: 1.5rem 2rem;
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 1.5rem;
+  padding: 1.25rem 2rem;
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.25rem;
+  background: white;
+  color: #1e40af;
+  border: 2px solid #1e40af;
+  border-radius: 0.5rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.back-btn:hover {
+  background: #dbeafe;
+  transform: translateX(-2px);
+}
+
+.back-btn:active {
+  transform: translateX(0);
 }
 
 .header__title {
-  font-size: 1.75rem;
+  font-size: 1.875rem;
   font-weight: 800;
-  color: #1e40af;
+  color: white;
   margin: 0;
+  line-height: 1.2;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .header__subtitle {
-  color: #64748b;
-  font-size: 0.9rem;
-  margin: 0.25rem 0 0;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 0.875rem;
+  margin: 0.375rem 0 0;
+  font-weight: 400;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .header__actions {
@@ -756,21 +884,37 @@ function handleDrop(e: DragEvent) {
 
 .layout {
   display: grid;
-  grid-template-columns: 400px 1fr;
+  grid-template-columns: 1fr;
   gap: 1.5rem;
   align-items: start;
 }
 
 .left-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+  display: none;
+}
+
+.left-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.left-panel::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.left-panel::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.left-panel::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 .card {
   background: white;
-  border-radius: 1rem;
-  padding: 1.5rem;
+  border-radius: 0.75rem;
+  padding: 0.6rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
   border: 1px solid #f1f5f9;
 }
@@ -778,22 +922,22 @@ function handleDrop(e: DragEvent) {
 .step-header {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
 }
 
 .step-icon {
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2rem;
+  height: 2rem;
   display: flex;
   align-items: center;
   justify-content: center;
   background: #dbeafe;
-  border-radius: 0.5rem;
+  border-radius: 0.375rem;
 }
 
 .card__title {
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: 700;
   color: #0f172a;
   margin: 0;
@@ -801,7 +945,7 @@ function handleDrop(e: DragEvent) {
 
 .step-badge {
   display: block;
-  font-size: 0.7rem;
+  font-size: 0.6rem;
   color: #94a3b8;
   font-weight: 600;
   text-transform: uppercase;
@@ -811,17 +955,17 @@ function handleDrop(e: DragEvent) {
 .form {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.3rem;
 }
 
 .textarea {
   width: 100%;
-  padding: 0.75rem;
+  padding: 0.4rem;
   border: 1px solid #e2e8f0;
   border-radius: 0.5rem;
   font-family: inherit;
-  font-size: 0.9rem;
-  resize: vertical;
+  font-size: 0.85rem;
+  resize: none;
   outline: none;
   transition: border-color 0.2s;
 }
@@ -831,14 +975,14 @@ function handleDrop(e: DragEvent) {
 }
 
 .hint {
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   color: #94a3b8;
 }
 
 .upload-zone {
   border: 2px dashed #cbd5e1;
   border-radius: 0.5rem;
-  padding: 2rem 1rem;
+  padding: 0.5rem;
   text-align: center;
   cursor: pointer;
   transition: all 0.2s;
@@ -850,14 +994,15 @@ function handleDrop(e: DragEvent) {
 }
 
 .upload-icon {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.3rem;
   color: #64748b;
 }
 
 .upload-text {
-  font-size: 0.9rem;
+  font-size: 0.75rem;
   color: #334155;
   margin: 0;
+  line-height: 1.4;
 }
 
 .upload-link {
@@ -872,23 +1017,23 @@ function handleDrop(e: DragEvent) {
 }
 
 .upload-hint {
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   color: #94a3b8;
-  margin: 0.25rem 0 0;
+  margin: 0.1rem 0 0;
 }
 
 .label {
   display: block;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: #0f172a;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
 }
 
 .config {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 0.6rem;
 }
 
 .method-grid {
@@ -901,8 +1046,8 @@ function handleDrop(e: DragEvent) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
-  padding: 1rem 0.5rem;
+  gap: 0.3rem;
+  padding: 0.6rem 0.4rem;
   border: 2px solid #e2e8f0;
   border-radius: 0.5rem;
   background: white;
@@ -923,14 +1068,14 @@ function handleDrop(e: DragEvent) {
 }
 
 .method-label {
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   font-weight: 600;
 }
 
 .row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .field {
@@ -943,7 +1088,7 @@ function handleDrop(e: DragEvent) {
 }
 
 .field--quantity {
-  width: 160px;
+  width: 140px;
   flex-shrink: 0;
 }
 
@@ -1028,6 +1173,7 @@ function handleDrop(e: DragEvent) {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 0.3rem 0;
 }
 
 .toggle-label {
@@ -1073,18 +1219,18 @@ function handleDrop(e: DragEvent) {
   justify-content: center;
   gap: 0.5rem;
   width: 100%;
-  padding: 0.9rem;
+  padding: 0.65rem;
   background: #1e40af;
   color: white;
   border: none;
   border-radius: 0.75rem;
   font-family: inherit;
-  font-size: 1rem;
+  font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
   box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
-  margin-top: 0.5rem;
+  margin-top: 0.4rem;
 }
 
 .generate-btn:hover:not(:disabled) {
@@ -1104,7 +1250,30 @@ function handleDrop(e: DragEvent) {
 
 /* Right Panel */
 .right-panel {
-  min-height: 500px;
+  min-height: calc(100vh - 106px);
+  max-height: calc(100vh - 106px);
+  overflow-y: auto;
+  position: sticky;
+  top: 86px;
+  padding-right: 0.5rem;
+}
+
+.right-panel::-webkit-scrollbar {
+  width: 8px;
+}
+
+.right-panel::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.right-panel::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.right-panel::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 .empty-state {
@@ -1114,25 +1283,52 @@ function handleDrop(e: DragEvent) {
   justify-content: center;
   padding: 4rem 2rem;
   text-align: center;
+  min-height: 400px;
 }
 
 .empty-icon {
   color: #cbd5e1;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
 }
 
 .empty-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #334155;
-  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 0.75rem;
 }
 
 .empty-desc {
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   color: #64748b;
-  margin: 0;
+  margin: 0 0 1.5rem;
   max-width: 32rem;
+}
+
+.start-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 0.75rem;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.start-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.5);
+}
+
+.start-btn:active {
+  transform: translateY(0);
 }
 
 .results {
@@ -1145,10 +1341,14 @@ function handleDrop(e: DragEvent) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 1.25rem;
+  padding: 1.5rem;
   background: white;
-  border-radius: 0.75rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border-radius: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  border: 2px solid #e2e8f0;
 }
 
 .badge {
@@ -1184,6 +1384,12 @@ function handleDrop(e: DragEvent) {
 
 .secondary-btn:hover {
   background: #dbeafe;
+}
+
+.secondary-btn--clear:hover {
+  background: #fef2f2;
+  border-color: #dc2626;
+  color: #dc2626;
 }
 
 .primary-btn {
@@ -1255,26 +1461,168 @@ function handleDrop(e: DragEvent) {
   gap: 1.25rem;
 }
 
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.modal {
+  background: #f5f3ff;
+  border-radius: 1rem;
+  max-width: 700px;
+  width: 100%;
+  max-height: 95vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: white;
+  border-radius: 1rem 1rem 0 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.modal__title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.modal__close {
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 0.375rem;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.modal__close:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.modal__body {
+  padding: 0.75rem;
+}
+
+/* Welcome Card */
+.welcome-card {
+  background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+  border: 2px dashed #cbd5e1;
+  border-radius: 1rem;
+  padding: 3rem 2rem;
+  text-align: center;
+  min-height: calc(100vh - 106px - 4rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.welcome-card__content {
+  max-width: 32rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.welcome-card__title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.welcome-card__desc {
+  font-size: 0.95rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.5;
+}
+
 .group-card {
   border-radius: 1rem;
-  padding: 1.25rem;
-  color: white;
+  border: 3px solid;
+  background: white;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
 }
 
 .group-card__header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 1rem 1.25rem;
+  color: white;
 }
 
-.group-card__name {
+.group-card__title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.group-card__title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.group-card__number {
   font-size: 1.1rem;
   font-weight: 700;
-  margin: 0;
+  color: white;
+  opacity: 0.9;
+  flex-shrink: 0;
+}
+
+.group-card__input {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: white;
+  border: none;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+  background: transparent;
+  padding: 0.25rem 0;
+  flex: 1;
+  outline: none;
+  transition: border-color 0.2s;
+  min-width: 0;
+}
+
+.group-card__input:focus {
+  border-bottom-color: white;
+}
+
+.group-card__input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .group-card__count {

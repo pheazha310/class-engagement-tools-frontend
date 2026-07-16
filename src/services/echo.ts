@@ -1,6 +1,13 @@
 import Echo from 'laravel-echo'
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// @ts-expect-error Pusher JS types
 import Pusher from 'pusher-js'
+import type { VoteUpdatedPayload } from '@/types/poll'
+
+declare global {
+  interface Window {
+    Pusher: typeof Pusher
+  }
+}
 
 window.Pusher = Pusher
 
@@ -14,8 +21,8 @@ export function getEcho(): Echo {
     key: import.meta.env.VITE_PUSHER_APP_KEY ?? 'app-key',
     cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER ?? 'mt1',
     wsHost: import.meta.env.VITE_REVERB_HOST ?? window.location.hostname,
-    wsPort: import.meta.env.VITE_REVERB_PORT ?? 8080,
-    wssPort: import.meta.env.VITE_REVERB_PORT ?? 443,
+    wsPort: Number(import.meta.env.VITE_REVERB_PORT ?? 8080),
+    wssPort: Number(import.meta.env.VITE_REVERB_PORT ?? 443),
     wsPath: '',
     forceTLS: false,
     disableStats: true,
