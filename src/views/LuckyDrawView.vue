@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onUnmounted } from 'vue'
+import * as XLSX from 'xlsx'
 
 interface Student {
   id: number
@@ -35,8 +36,19 @@ const isSpinning = ref(false)
 const spinningName = ref('')
 const inputFocused = ref(false)
 const pickLog = ref<{ students: string[]; time: Date }[]>([])
+const showConfetti = ref(false)
+const fileInputRef = ref<HTMLInputElement | null>(null)
+const importError = ref('')
 
 let spinInterval: ReturnType<typeof setInterval> | null = null
+
+function playSound(soundFile: string) {
+  const audio = new Audio(`/sounds/${soundFile}`)
+  audio.volume = 0.5
+  audio.play().catch(() => {
+    // Ignore autoplay errors
+  })
+}
 
 onUnmounted(() => {
   if (spinInterval) {
@@ -61,6 +73,99 @@ function addAllStudents() {
   const newStudents = names.map((name, i) => createStudent(name, startIndex + i))
   students.value.push(...newStudents)
   namesInput.value = ''
+  importError.value = ''
+}
+
+function triggerFileImport() {
+  fileInputRef.value?.click()
+}
+
+async function handleFileImport(event: Event) {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+
+  importError.value = ''
+
+  try {
+    const isExcel = file.name.match(/\.xlsx?$/i)
+
+    if (isExcel) {
+      // Parse Excel file
+      const buffer = await file.arrayBuffer()
+      const workbook = XLSX.read(buffer, { type: 'array' })
+      const sheetName = workbook.SheetNames[0]
+      if (!sheetName) {
+        importError.value = 'No sheets found in the Excel file'
+        return
+      }
+      const firstSheet = workbook.Sheets[sheetName]
+      if (!firstSheet) {
+        importError.value = 'No sheets found in the Excel file'
+        return
+      }
+
+      // Convert sheet to JSON (array of arrays)
+      const data: string[][] = XLSX.utils.sheet_to_json(firstSheet, { header: 1 })
+
+      // Flatten all cells, filter out empty/non-string values, trim
+      const names: string[] = []
+      for (const row of data) {
+        for (const cell of row) {
+          if (cell && typeof cell === 'string' && cell.trim()) {
+            names.push(cell.trim())
+          }
+        }
+      }
+
+      if (names.length === 0) {
+        importError.value = 'No valid names found in the Excel file'
+        return
+      }
+
+      const startIndex = students.value.length
+      const newStudents = names.map((name, i) => createStudent(name, startIndex + i))
+      students.value.push(...newStudents)
+    } else {
+      // Parse text/csv file
+      const text = await file.text()
+      const names = text
+        .split(/[\n,;]+/)
+        .map(n => n.trim())
+        .filter(n => n.length > 0)
+
+      if (names.length === 0) {
+        importError.value = 'No valid names found in the file'
+        return
+      }
+
+      const startIndex = students.value.length
+      const newStudents = names.map((name, i) => createStudent(name, startIndex + i))
+      students.value.push(...newStudents)
+    }
+  } catch (error) {
+    importError.value = 'Failed to read file. Please try again.'
+  }
+
+  // Reset file input
+  if (target) {
+    target.value = ''
+  }
+}
+
+function exportStudentList() {
+  if (students.value.length === 0) return
+
+  const names = students.value.map(s => s.name).join('\n')
+  const blob = new Blob([names], { type: 'text/plain' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'student-list.txt'
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
 }
 
 function clearAllStudents() {
@@ -85,6 +190,9 @@ async function startDraw() {
   showResult.value = false
   winners.value = []
   spinningName.value = ''
+
+  // Play spin sound
+  playSound('school-bell.wav')
 
   // Spin animation: rapidly cycle through student names
   const spinDuration = 2000
@@ -114,6 +222,10 @@ async function startDraw() {
   winners.value = finalWinners
   showResult.value = true
   spinningName.value = ''
+  showConfetti.value = true
+
+  // Play winner sound
+  playSound('alarm.wav')
 
   pickLog.value.unshift({
     students: finalWinners.map(s => s.name),
@@ -121,10 +233,29 @@ async function startDraw() {
   })
 
   isSpinning.value = false
+
+  // Hide confetti after 3 seconds
+  setTimeout(() => {
+    showConfetti.value = false
+  }, 3000)
 }
 
 function formatTime(date: Date) {
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+}
+
+function getConfettiStyle(index: number) {
+  const colors = ['#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#22c55e', '#f97316', '#ec4899', '#14b8a6']
+  const color = colors[index % colors.length]
+  const left = Math.random() * 100
+  const animationDelay = Math.random() * 2
+  const duration = 2 + Math.random() * 2
+  return {
+    '--confetti-color': color,
+    left: `${left}%`,
+    animationDelay: `${animationDelay}s`,
+    animationDuration: `${duration}s`,
+  }
 }
 </script>
 
@@ -183,8 +314,40 @@ function formatTime(date: Date) {
               Add to list
             </button>
             <button
+              class="btn btn--secondary"
+              @click="triggerFileImport"
+              title="Import from file"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+              Import
+            </button>
+            <input
+              ref="fileInputRef"
+              type="file"
+              accept=".txt,.csv,.xlsx,.xls"
+              style="display: none"
+              @change="handleFileImport"
+            />
+            <button
               v-if="students.length > 0"
               class="btn btn--ghost"
+              @click="exportStudentList"
+              title="Export list"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              Export
+            </button>
+            <button
+              v-if="students.length > 0"
+              class="btn btn--ghost btn--danger"
               @click="clearAllStudents"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -193,6 +356,14 @@ function formatTime(date: Date) {
               </svg>
               Clear all
             </button>
+          </div>
+          <div v-if="importError" class="import-error">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            {{ importError }}
           </div>
         </div>
 
@@ -259,10 +430,10 @@ function formatTime(date: Date) {
             <div class="wheel-circle__inner">
               <div class="wheel-circle__winner">
                 <div class="wheel-circle__prize">🎉</div>
-                <div class="wheel-circle__winner-avatar" :style="{ background: winners[0].color }">
-                  {{ winners[0].initials }}
+                <div class="wheel-circle__winner-avatar" :style="{ background: winners[0]?.color }">
+                  {{ winners[0]?.initials }}
                 </div>
-                <div class="wheel-circle__winner-name">{{ winners[0].name }}</div>
+                <div class="wheel-circle__winner-name">{{ winners[0]?.name }}</div>
               </div>
             </div>
           </div>
@@ -318,6 +489,11 @@ function formatTime(date: Date) {
         </button>
       </section>
 
+      <!-- Confetti -->
+      <div v-if="showConfetti" class="confetti-container">
+        <div v-for="i in 50" :key="i" class="confetti" :style="getConfettiStyle(i)"></div>
+      </div>
+
       <!-- History -->
       <section v-if="pickLog.length > 0" class="card">
         <div class="card-heading">
@@ -358,8 +534,23 @@ function formatTime(date: Date) {
 /* ── Page ── */
 .page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #1e3a5f, #2563eb);
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #2563eb 100%);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 50%);
+  pointer-events: none;
 }
 
 .container {
@@ -383,13 +574,28 @@ function formatTime(date: Date) {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 3rem;
-  height: 3rem;
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  width: 3.5rem;
+  height: 3.5rem;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
   color: white;
-  border-radius: 0.75rem;
+  border-radius: 1rem;
   flex-shrink: 0;
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+  box-shadow: 
+    0 4px 16px rgba(59, 130, 246, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  animation: pulse-glow 2s ease-in-out infinite;
+  position: relative;
+}
+
+.header-icon::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 1.25rem;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  opacity: 0.3;
+  filter: blur(12px);
+  z-index: -1;
   animation: pulse-glow 2s ease-in-out infinite;
 }
 
@@ -430,8 +636,30 @@ function formatTime(date: Date) {
 }
 
 .draw-card {
-  background: #f8fbff;
-  border-color: rgba(59, 130, 246, 0.2);
+  background: linear-gradient(135deg, #f8fbff 0%, #f0f7ff 100%);
+  border-color: rgba(59, 130, 246, 0.3);
+  box-shadow: 
+    0 1px 3px rgba(0,0,0,0.04),
+    0 0 0 1px rgba(59, 130, 246, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+.draw-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6, #3b82f6);
+  background-size: 200% 100%;
+  animation: gradient-shift 3s ease-in-out infinite;
+}
+
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
 .card-heading {
@@ -568,10 +796,28 @@ function formatTime(date: Date) {
   border: 1px solid #e2e8f0;
 }
 
+.btn--secondary {
+  background: #f8fafc;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.btn--secondary:hover:not(:disabled) {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
 .btn--ghost:hover:not(:disabled) {
   background: #f8fafc;
   color: #ef4444;
   border-color: #fca5a5;
+}
+
+.btn--danger:hover:not(:disabled) {
+  background: #fef2f2;
+  color: #dc2626;
+  border-color: #fecaca;
 }
 
 /* ── Student Chips ── */
@@ -685,6 +931,26 @@ function formatTime(date: Date) {
   margin: 0;
 }
 
+/* ── Import Error ── */
+.import-error {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  color: #dc2626;
+  font-weight: 500;
+}
+
+.import-error svg {
+  flex-shrink: 0;
+  color: #dc2626;
+}
+
 /* ── Draw Area ── */
 .draw-area {
   width: 100%;
@@ -699,75 +965,87 @@ function formatTime(date: Date) {
 
 /* ── Wheel Circle ── */
 .wheel-circle {
-  width: 14rem;
-  height: 14rem;
+  width: 15rem;
+  height: 15rem;
   border-radius: 50%;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  transition: all 0.3s ease;
 }
 
 .wheel-circle__ring {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  border: 2px solid rgba(59, 130, 246, 0.12);
+  border: 2px solid rgba(59, 130, 246, 0.15);
   transition: all 0.4s ease;
+  box-shadow: 
+    0 0 0 1px rgba(59, 130, 246, 0.05),
+    inset 0 0 20px rgba(59, 130, 246, 0.02);
 }
 
 .wheel-circle--spinning .wheel-circle__ring {
-  border-color: rgba(59, 130, 246, 0.25);
+  border-color: rgba(59, 130, 246, 0.3);
   border-top-color: #3b82f6;
+  border-right-color: #8b5cf6;
   animation: spin-ring 1s linear infinite;
+  box-shadow: 
+    0 0 30px rgba(59, 130, 246, 0.2),
+    inset 0 0 30px rgba(59, 130, 246, 0.05);
 }
 
 .wheel-circle--spinning .wheel-circle__ring--2 {
-  inset: 0.65rem;
-  border-color: rgba(59, 130, 246, 0.15);
-  border-right-color: #60a5fa;
+  inset: 0.75rem;
+  border-color: rgba(139, 92, 246, 0.2);
+  border-left-color: #8b5cf6;
+  border-bottom-color: #a78bfa;
   animation: spin-ring 1.5s linear infinite reverse;
 }
 
 .wheel-circle--spinning .wheel-circle__ring--3 {
-  inset: 1.3rem;
-  border-color: rgba(59, 130, 246, 0.1);
-  border-bottom-color: #93c5fd;
+  inset: 1.5rem;
+  border-color: rgba(59, 130, 246, 0.15);
+  border-top-color: #60a5fa;
   animation: spin-ring 2s linear infinite;
 }
 
 .wheel-circle__ring--pulse {
-  border-color: rgba(59, 130, 246, 0.3);
+  border-color: rgba(59, 130, 246, 0.4);
   box-shadow:
-    0 0 24px rgba(59, 130, 246, 0.18),
-    inset 0 0 24px rgba(59, 130, 246, 0.06);
+    0 0 30px rgba(59, 130, 246, 0.25),
+    0 0 60px rgba(139, 92, 246, 0.15),
+    inset 0 0 30px rgba(59, 130, 246, 0.08);
   animation: pulse-ring 1.5s ease-in-out infinite;
 }
 
 .wheel-circle__inner {
   position: relative;
   z-index: 1;
-  width: calc(100% - 3rem);
-  height: calc(100% - 3rem);
+  width: calc(100% - 3.5rem);
+  height: calc(100% - 3.5rem);
   border-radius: 50%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 0.25rem;
-  background: radial-gradient(circle at 35% 35%, rgba(59, 130, 246, 0.06), rgba(0, 0, 0, 0.02));
-  backdrop-filter: blur(4px);
+  background: radial-gradient(circle at 35% 35%, rgba(59, 130, 246, 0.08), rgba(139, 92, 246, 0.04), rgba(0, 0, 0, 0.02));
+  backdrop-filter: blur(8px);
   transition: all 0.3s ease;
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
 .wheel-circle--spinning .wheel-circle__inner {
-  background: radial-gradient(circle at 35% 35%, rgba(59, 130, 246, 0.1), rgba(0, 0, 0, 0.04));
-  animation: inner-glow 0.8s ease-in-out infinite alternate;
+  background: radial-gradient(circle at 35% 35%, rgba(59, 130, 246, 0.12), rgba(139, 92, 246, 0.08), rgba(0, 0, 0, 0.04));
+  animation: inner-glow 0.6s ease-in-out infinite alternate;
 }
 
 .wheel-circle--result .wheel-circle__inner {
-  background: radial-gradient(circle at 35% 35%, rgba(59, 130, 246, 0.14), rgba(0, 0, 0, 0.05));
+  background: radial-gradient(circle at 35% 35%, rgba(59, 130, 246, 0.16), rgba(139, 92, 246, 0.1), rgba(0, 0, 0, 0.05));
+  box-shadow: inset 0 2px 20px rgba(59, 130, 246, 0.15);
 }
 
 .wheel-circle__label {
@@ -881,30 +1159,51 @@ function formatTime(date: Date) {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
   color: white;
   border: none;
-  border-radius: 0.75rem;
-  padding: 1rem 2rem;
+  border-radius: 1rem;
+  padding: 1.1rem 2.5rem;
   font-size: 1.125rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   width: 100%;
-  max-width: 22rem;
+  max-width: 24rem;
   margin: 0 auto;
   font-family: inherit;
-  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+  box-shadow: 
+    0 4px 20px rgba(59, 130, 246, 0.35),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.draw-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #60a5fa, #a78bfa);
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .draw-btn:not(:disabled):hover {
-  background: linear-gradient(135deg, #60a5fa, #3b82f6);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 28px rgba(59, 130, 246, 0.4);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 
+    0 8px 32px rgba(59, 130, 246, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.draw-btn:not(:disabled):hover::before {
+  opacity: 1;
 }
 
 .draw-btn:not(:disabled):active {
-  transform: translateY(0);
+  transform: translateY(-1px) scale(1.01);
+  box-shadow: 
+    0 4px 20px rgba(59, 130, 246, 0.35),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
 .draw-btn:disabled {
@@ -914,8 +1213,13 @@ function formatTime(date: Date) {
 }
 
 .draw-btn--spinning {
-  background: linear-gradient(135deg, #1e40af, #1e3a5f);
+  background: linear-gradient(135deg, #1e40af, #5b21b6);
   color: #93c5fd;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 
+    0 4px 20px rgba(30, 64, 175, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
 .draw-btn__inner {
@@ -1069,8 +1373,8 @@ function formatTime(date: Date) {
   }
 
   .wheel-circle {
-    width: 11rem;
-    height: 11rem;
+    width: 12rem;
+    height: 12rem;
   }
 
   .wheel-circle__name {
@@ -1093,6 +1397,38 @@ function formatTime(date: Date) {
     font-size: 1rem;
   }
 
+  .input-area__actions {
+    flex-wrap: wrap;
+  }
+}
 
+/* ── Confetti ── */
+.confetti-container {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.confetti {
+  position: absolute;
+  top: -10px;
+  width: 8px;
+  height: 8px;
+  background: var(--confetti-color);
+  border-radius: 2px;
+  animation: confetti-fall var(--animation-duration, 3s) ease-in-out var(--animation-delay, 0s) forwards;
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
 }
 </style>
