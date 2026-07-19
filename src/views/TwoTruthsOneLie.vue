@@ -291,7 +291,7 @@ const toggleLie = (id: number) => {
             </div>
 
             <div class="image-card">
-              <img src="@/assets/images/two.webp" alt="Students collaborating" class="sidebar-image" />
+              <img src="@/assets/images/Me.jpg" alt="Students collaborating" class="sidebar-image" />
               <div class="image-overlay">
                 <p class="image-text">Build classroom community through sharing!</p>
               </div>

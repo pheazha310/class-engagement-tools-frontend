@@ -70,7 +70,7 @@ export const categories: Category[] = [
     icon: '🎉',
     slug: 'fun',
     tools: [
-      { title: 'Icebreakers', slug: 'icebreakers', icon: '✨', description: 'Warm up your class with energizing prompts and team-building games.', category: 'Fun Activities' },
+      { title: 'Icebreakers', slug: 'icebreakers', icon: '✨', description: 'Warm up your class with energizing prompts and team-building games.', category: 'Fun Activities', route: '/icebreakers' },
       { title: 'Bingo Generator', slug: 'bingo-generator', icon: '🎱', description: 'Create custom bingo games for any subject.', category: 'Fun Activities' },
       { title: 'Flashcards', slug: 'flashcards', icon: '📖', description: 'Interactive flashcards for vocabulary and concept review.', category: 'Fun Activities' },
     ]

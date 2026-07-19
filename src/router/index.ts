@@ -10,6 +10,7 @@ import GroupGeneratorView from '@/views/GroupGeneratorView.vue'
 import Icebreakers from '@/views/Icebreakers.vue'
 import TwoTruthsOneLie from '@/views/TwoTruthsOneLie.vue'
 import WouldYouRather from '@/views/WouldYouRather.vue'
+import SpinTheQuestion from '@/views/SpinTheQuestion.vue'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -224,6 +225,11 @@ const routes: RouteRecordRaw[] = [
     path: '/tools/icebreakers/would-you-rather',
     name: 'would-you-rather',
     component: WouldYouRather,
+  },
+  {
+    path: '/tools/icebreakers/spin-the-question',
+    name: 'spin-the-question',
+    component: SpinTheQuestion,
   },
 ]
 
