@@ -17,8 +17,11 @@ interface FormData {
   passwordConfirmation: string
   role: Role
   countryCode: string
+  countryId: number | null
   countryName: string
+  provinceId: number | null
   province: string
+  schoolId: number | null
   schoolName: string
 }
 
@@ -29,8 +32,11 @@ const form = ref<FormData>({
   passwordConfirmation: '',
   role: '',
   countryCode: '',
+  countryId: null,
   countryName: '',
+  provinceId: null,
   province: '',
+  schoolId: null,
   schoolName: '',
 })
 
@@ -109,8 +115,8 @@ const step2Valid = computed(() => form.value.role !== '')
 const step3Valid = computed(
   () =>
     form.value.countryCode !== '' &&
-    form.value.province !== '' &&
-    form.value.schoolName !== ''
+    form.value.provinceId !== null &&
+    form.value.schoolId !== null
 )
 
 const steps = [
@@ -136,8 +142,11 @@ async function fetchCountries() {
 async function fetchProvinces() {
   const country = countries.value.find(c => c.code === form.value.countryCode)
   if (!country) return
+  form.value.countryId = country.id
   form.value.province = ''
+  form.value.provinceId = null
   form.value.schoolName = ''
+  form.value.schoolId = null
   provinces.value = []
   schools.value = []
   loadingProvinces.value = true
@@ -153,11 +162,13 @@ async function fetchProvinces() {
 }
 
 async function fetchSchools() {
+  if (!form.value.provinceId) return
   form.value.schoolName = ''
+  form.value.schoolId = null
   schools.value = []
   loadingSchools.value = true
   try {
-    const res = await fetch(`/api/location-schools?province=${encodeURIComponent(form.value.province)}`)
+    const res = await fetch(`/api/location-schools?province_id=${form.value.provinceId}`)
     const data = await res.json()
     schools.value = data ?? []
   } catch {
@@ -167,7 +178,16 @@ async function fetchSchools() {
   }
 }
 
-onMounted(fetchCountries)
+onMounted(async () => {
+  await fetchCountries()
+  const cambodia = countries.value.find(c => c.code === 'KH')
+  if (cambodia) {
+    form.value.countryCode = cambodia.code
+    form.value.countryName = cambodia.name
+    form.value.countryId = cambodia.id
+    await fetchProvinces()
+  }
+})
 
 function nextStep() {
   if (step.value === 1 && step1Valid.value) step.value = 2
@@ -194,8 +214,11 @@ async function submit() {
     password: form.value.password,
     password_confirmation: form.value.passwordConfirmation,
     role: form.value.role,
-    country: form.value.countryName,
-    province: form.value.province,
+    country_id: form.value.countryId,
+    province_id: form.value.provinceId,
+    school_id: form.value.schoolId,
+    country_name: form.value.countryName,
+    province_name: form.value.province,
     school_name: form.value.schoolName,
   })
 
@@ -524,7 +547,7 @@ const stepErrors = computed(() => {
                   v-model="form.countryCode"
                   class="input input--select"
                   :disabled="loadingCountries"
-                  @change="form.countryName = countries.find(c => c.code === form.countryCode)?.name ?? ''; fetchProvinces()"
+                  @change="const _c = countries.find(c => c.code === form.countryCode); if (_c) { form.countryName = _c.name; form.countryId = _c.id }; fetchProvinces()"
                 >
                   <option value="" disabled>{{ loadingCountries ? 'Loading...' : 'Select a country' }}</option>
                   <option v-for="c in countries" :key="c.code" :value="c.code">{{ c.name }}</option>
@@ -543,15 +566,15 @@ const stepErrors = computed(() => {
                   <circle cx="12" cy="10" r="3" />
                 </svg>
                 <select
-                  v-model="form.province"
+                  v-model="form.provinceId"
                   class="input input--select"
                   :disabled="!form.countryCode || loadingProvinces"
-                  @change="fetchSchools()"
+                  @change="form.province = provinces.find(p => p.id === form.provinceId)?.name ?? ''; fetchSchools()"
                 >
-                  <option value="" disabled>
+                  <option :value="null" disabled>
                     {{ loadingProvinces ? 'Loading...' : form.countryCode ? 'Select a province' : 'Select a country first' }}
                   </option>
-                  <option v-for="p in provinces" :key="p.id" :value="p.name">{{ p.name }}</option>
+                  <option v-for="p in provinces" :key="p.id" :value="p.id">{{ p.name }}</option>
                 </select>
                 <svg v-if="loadingProvinces" class="input-spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" stroke-linecap="round" />
@@ -567,14 +590,15 @@ const stepErrors = computed(() => {
                   <path d="M6 12v5c3 3 9 3 12 0v-5" />
                 </svg>
                 <select
-                  v-model="form.schoolName"
+                  v-model="form.schoolId"
                   class="input input--select"
-                  :disabled="!form.province || loadingSchools"
+                  :disabled="!form.provinceId || loadingSchools"
+                  @change="form.schoolName = schools.find(s => s.id === form.schoolId)?.name ?? ''"
                 >
-                  <option value="" disabled>
-                    {{ loadingSchools ? 'Loading...' : form.province ? 'Select a school' : 'Select a province first' }}
+                  <option :value="null" disabled>
+                    {{ loadingSchools ? 'Loading...' : form.provinceId ? 'Select a school' : 'Select a province first' }}
                   </option>
-                  <option v-for="s in schools" :key="s.id" :value="s.name">{{ s.name }}</option>
+                  <option v-for="s in schools" :key="s.id" :value="s.id">{{ s.name }}</option>
                 </select>
                 <svg v-if="loadingSchools" class="input-spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" stroke-linecap="round" />

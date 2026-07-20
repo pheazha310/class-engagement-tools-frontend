@@ -278,26 +278,6 @@ onUnmounted(() => {
       </div>
 
       <div class="saved-preset-manager">
-        <div class="save-preset-row">
-          <input
-            v-model.trim="presetName"
-            type="text"
-            maxlength="40"
-            placeholder="Preset name"
-            :disabled="isRunning"
-            aria-label="Preset name"
-            @keydown.enter.prevent="saveCurrentPreset"
-          />
-          <button
-            type="button"
-            class="save-preset-button"
-            :disabled="isRunning || !hasDuration || !presetName"
-            @click="saveCurrentPreset"
-          >
-            Save preset
-          </button>
-        </div>
-
         <div v-if="savedPresets.length" class="saved-presets" aria-label="Saved timer presets">
           <p class="saved-presets-label">Saved presets</p>
           <div class="saved-preset-list">
@@ -323,8 +303,6 @@ onUnmounted(() => {
           </div>
         </div>
       </div>
-
-      <p class="timer-note">Enter a custom duration, then press Start. The countdown updates every second and stops at 00:00.</p>
     </div>
   </section>
 </template>
@@ -363,6 +341,14 @@ onUnmounted(() => {
   background: #0f172a;
   padding: 0;
   margin: 0;
+  position: relative;
+}
+
+.timer-section:fullscreen .fullscreen-btn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 100;
 }
 
 .timer-section:fullscreen .timer-card {
@@ -376,6 +362,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: relative;
 }
 
 .timer-section:fullscreen .timer-circle {
@@ -384,18 +371,26 @@ onUnmounted(() => {
   margin: 0 0 60px 0;
   background: radial-gradient(circle at top, rgba(99, 102, 241, 0.2), transparent 45%), rgba(79, 70, 229, 0.1);
   box-shadow: inset 0 0 0 20px rgba(99, 102, 241, 0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .timer-section:fullscreen .timer-display {
-  font-size: 10rem;
+  font-size: 7rem;
   color: #ffffff;
   font-weight: 900;
+  margin: 0;
+  line-height: 0.9;
+  text-align: center;
 }
 
 .timer-section:fullscreen .timer-label {
-  font-size: 1.8rem;
+  font-size: 1.2rem;
   color: #cbd5e1;
-  margin-top: 20px;
+  margin: 12px 0 0 0;
+  text-align: center;
 }
 
 .timer-section:fullscreen .timer-controls {
@@ -423,7 +418,7 @@ onUnmounted(() => {
 
 .timer-card {
   position: relative;
-  max-width: 420px;
+  max-width: 500px;
   margin: 24px auto 0;
   background: white;
   border-radius: 28px;
@@ -462,7 +457,7 @@ onUnmounted(() => {
 
 .timer-controls {
   display: grid;
-  grid-template-columns: repeat(2, minmax(140px, 1fr));
+  grid-template-columns: repeat(2, minmax(70px, 1fr));
   gap: 16px;
   margin-bottom: 24px;
 }
@@ -470,11 +465,11 @@ onUnmounted(() => {
 .timer-field {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .field-label {
-  font-size: 0.78rem;
+  font-size: 0.7rem;
   letter-spacing: 0.18em;
   color: #94a3b8;
   text-transform: uppercase;
@@ -487,20 +482,20 @@ onUnmounted(() => {
   border: 1px solid #e2e8f0;
   border-radius: 999px;
   background: #f8fafc;
-  padding: 6px;
+  padding: 4px;
 }
 
 .field-control button {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border: none;
   border-radius: 999px;
   background: white;
   color: #334155;
-  font-size: 1.4rem;
+  font-size: 1.1rem;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 3px 8px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
 }
 
 .field-control button:disabled {
@@ -509,11 +504,11 @@ onUnmounted(() => {
 }
 
 .field-control input {
-  width: 56px;
+  width: 48px;
   border: none;
   background: transparent;
   text-align: center;
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: #0f172a;
 }
@@ -524,20 +519,21 @@ onUnmounted(() => {
 
 .timer-action-row {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+  flex-wrap: nowrap;
+  gap: 8px;
   justify-content: center;
   margin-bottom: 22px;
 }
 
 .btn {
   border: none;
-  border-radius: 14px;
-  padding: 14px 24px;
+  border-radius: 12px;
+  padding: 10px 16px;
   cursor: pointer;
-  font-weight: 700;
-  font-size: 0.98rem;
-  min-width: 140px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  min-width: auto;
+  white-space: nowrap;
 }
 
 .btn-primary {
@@ -576,10 +572,11 @@ onUnmounted(() => {
   background: #fff;
   color: #0f172a;
   border-radius: 999px;
-  padding: 10px 18px;
+  padding: 8px 14px;
   cursor: pointer;
-  font-weight: 700;
-  min-width: 58px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  min-width: 48px;
 }
 
 .preset-pill:hover {

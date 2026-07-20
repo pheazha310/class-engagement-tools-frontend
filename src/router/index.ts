@@ -225,6 +225,22 @@ const routes: RouteRecordRaw[] = [
     component: GroupGeneratorView,
   },
   {
+    path: '/vote',
+    name: 'vote',
+    component: () => import('@/pages/VotePage.vue'),
+  },
+  {
+    path: '/results',
+    name: 'results',
+    component: () => import('@/pages/ResultsPage.vue'),
+  },
+  {
+    path: '/create-voting-poll',
+    name: 'create-voting-poll',
+    component: () => import('@/pages/CreateVotingPoll.vue'),
+    meta: { requiresAuth: true, role: 'teacher' },
+  },
+  {
     path: '/teacher/polls',
     name: 'teacher-polls',
     component: () => import('@/pages/teacher/PollDashboard.vue'),
