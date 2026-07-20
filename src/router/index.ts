@@ -5,6 +5,7 @@ import StudentPickerView from '@/views/StudentPickerView.vue'
 import SingleStudentPickerView from '@/views/SingleStudentPickerView.vue'
 import MultipleStudentPickerView from '@/views/MultipleStudentPickerView.vue'
 import LuckyDrawView from '@/views/LuckyDrawView.vue'
+import ImagePickerView from '@/views/ImagePickerView.vue'
 import HomepageView from '@/views/Homepage.vue'
 import ToolsPage from '@/pages/ToolsPage.vue'
 import ToolDetailPage from '@/pages/ToolDetailPage.vue'
@@ -191,6 +192,11 @@ const routes: RouteRecordRaw[] = [
     path: '/lucky-draw',
     name: 'lucky-draw',
     component: LuckyDrawView,
+  },
+  {
+    path: '/image-picker',
+    name: 'image-picker',
+    component: ImagePickerView,
   },
   {
     path: '/tools',

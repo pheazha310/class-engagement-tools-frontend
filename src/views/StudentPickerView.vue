@@ -56,6 +56,8 @@ const features: FeatureCard[] = [
     gradient: 'linear-gradient(135deg, #22c55e, #10b981)',
     icon: 'image',
     actionLabel: 'Pick Image',
+    route: '/image-picker',
+    isLive: true,
   },
 ]
 
