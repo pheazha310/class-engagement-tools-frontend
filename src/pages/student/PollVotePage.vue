@@ -77,7 +77,7 @@ onMounted(async () => {
   try {
     const data = await pollStore.apiCall<{ data: Poll }>(`/api/polls/${pollId.value}`)
     pollStore.currentPoll = data.data
-  } catch (err) {
+  } catch (error) {
     localError.value = 'Failed to load poll.'
   }
 })

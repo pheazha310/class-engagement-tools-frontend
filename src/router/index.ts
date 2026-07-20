@@ -223,17 +223,34 @@ const routes: RouteRecordRaw[] = [
     path: '/group-generator',
     name: 'group-generator',
     component: GroupGeneratorView,
-    meta: { hideNavbar: true },
+  },
+  {
+    path: '/vote',
+    name: 'vote',
+    component: () => import('@/pages/VotePage.vue'),
+  },
+  {
+    path: '/results',
+    name: 'results',
+    component: () => import('@/pages/ResultsPage.vue'),
+  },
+  {
+    path: '/create-voting-poll',
+    name: 'create-voting-poll',
+    component: () => import('@/pages/CreateVotingPoll.vue'),
+    meta: { requiresAuth: true, role: 'teacher' },
   },
   {
     path: '/teacher/polls',
     name: 'teacher-polls',
     component: () => import('@/pages/teacher/PollDashboard.vue'),
+    meta: { requiresAuth: true, role: 'teacher' },
   },
   {
     path: '/teacher/polls/create',
     name: 'teacher-polls-create',
     component: () => import('@/pages/teacher/PollCreatePage.vue'),
+    meta: { requiresAuth: true, role: 'teacher' },
   },
   {
     path: '/student/polls/:id',
@@ -244,11 +261,13 @@ const routes: RouteRecordRaw[] = [
     path: '/profile',
     name: 'profile',
     component: () => import('@/pages/ProfilePage.vue'),
+    meta: { requiresAuth: true },
   },
   {
     path: '/settings',
     name: 'settings',
     component: () => import('@/pages/ProfilePage.vue'),
+    meta: { requiresAuth: true },
   },
   {
     path: '/games/create',
@@ -277,49 +296,40 @@ const router = createRouter({
   routes,
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to) => {
   const authStore = useAuthStore()
 
   if (to.meta.requiresAuth && !authStore.user) {
-    next('/login')
-    return
+    return '/login'
   }
 
   if (to.meta.guest && authStore.user) {
     switch (authStore.user.role) {
       case 'admin':
-        next('/admin/users')
-        break
+        return '/admin/users'
       case 'teacher':
-        next('/teacher/dashboard')
-        break
+        return '/teacher/dashboard'
       case 'student':
-        next('/student/dashboard')
-        break
+        return '/student/dashboard'
       default:
-        next('/polls')
+        return '/polls'
     }
-    return
   }
 
   if (to.meta.role && authStore.user?.role !== to.meta.role) {
     switch (authStore.user?.role) {
       case 'admin':
-        next('/admin/users')
-        break
+        return '/admin/users'
       case 'teacher':
-        next('/teacher/dashboard')
-        break
+        return '/teacher/dashboard'
       case 'student':
-        next('/student/dashboard')
-        break
+        return '/student/dashboard'
       default:
-        next('/polls')
+        return '/polls'
     }
-    return
   }
 
-  next()
+  return true
 })
 
 export default router
