@@ -257,19 +257,19 @@ onUnmounted(() => {
 
 .stopwatch-action-row {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+  flex-wrap: nowrap;
+  gap: 8px;
   justify-content: center;
 }
 
 .btn {
   border: none;
-  border-radius: 14px;
-  padding: 14px 18px;
+  border-radius: 10px;
+  padding: 8px 12px;
   cursor: pointer;
   font-weight: 700;
-  font-size: 0.98rem;
-  min-width: 100px;
+  font-size: 0.82rem;
+  min-width: 70px;
 }
 
 .btn-primary {
@@ -301,8 +301,5 @@ button:disabled {
     font-size: 3rem;
   }
 
-  .stopwatch-action-row {
-    grid-template-columns: 1fr;
-  }
 }
 </style>
