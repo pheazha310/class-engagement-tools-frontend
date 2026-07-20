@@ -9,9 +9,9 @@ import Stopwatch from '@/components/Stopwatch.vue'
 
     <section class="stopwatch-hero">
       <div class="container">
-        <div class="hero-copy">
+        <!-- <div class="hero-copy">
           <h1>Stopwatch</h1>
-        </div>
+        </div> -->
       </div>
     </section>
 
@@ -25,22 +25,40 @@ import Stopwatch from '@/components/Stopwatch.vue'
 </template>
 
 <style scoped>
-.stopwatch-hero {
+.timer-hero {
   background: linear-gradient(135deg, #4f46e5 0%, #64748b 100%);
   color: white;
   padding: 90px 20px 60px;
   text-align: center;
 }
 
-.hero-copy {
-  max-width: 720px;
-  margin: 0 auto;
+.stopwatch-hero {
+  color: white;
+  padding: 90px 20px 60px;
+  text-align: center;
 }
 
+.hero-copy {
+  font-size: 44px;
+  margin-bottom: 16px;
+  font-weight: 800;
+}
+
+.hero-copy h1 {
+  font-size: 44px;
+  margin-bottom: 16px;
+  font-weight: 800;
+}
+.hero-copy p {
+  font-size: 18px;
+  line-height: 1.8;
+  opacity: 0.95;
+}
 .back-link {
   display: flex;
   justify-content: flex-start;
   margin: 32px 0 48px;
+  
 }
 
 .btn-back {
@@ -48,10 +66,10 @@ import Stopwatch from '@/components/Stopwatch.vue'
   align-items: center;
   padding: 12px 22px;
   border-radius: 10px;
-  border: 1.5px solid #cbd5e1;
-  color: #1e293b;
+  border: 1.5px solid #5a5a5a;
+  color: #080808;
   text-decoration: none;
-  background: #f1f5f9;
+  background: rgba(255, 255, 255, 0.12);
   transition: all 0.2s ease;
 }
 
