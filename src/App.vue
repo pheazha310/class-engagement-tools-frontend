@@ -9,7 +9,9 @@ const hideNavbar = computed(() => route.meta?.hideNavbar || false);
 
 <template>
   <Navbar v-if="!hideNavbar" />
-  <RouterView />
+  <div class="main-content">
+    <RouterView />
+  </div>
 </template>
 
 <style>
@@ -35,5 +37,8 @@ html {
 
 body {
   font-family: inherit;
+}
+
+.main-content {
 }
 </style>

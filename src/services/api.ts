@@ -1,5 +1,4 @@
 import axios from 'axios'
-import router from '@/router'
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',
@@ -14,10 +13,6 @@ const api = axios.create({
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      router.push('/login')
-      return Promise.reject(error)
-    }
     const detail = error.response?.data?.message
       || error.response?.data?.error
       || (error.response?.data?.errors ? Object.values(error.response.data.errors).flat().join(', ') : null)

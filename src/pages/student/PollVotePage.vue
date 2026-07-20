@@ -91,8 +91,8 @@ onUnmounted(() => {
   <div class="poll-vote-page">
     <div v-if="localError" class="error-state">
       <p>{{ localError }}</p>
-      <button class="btn btn-primary" @click="router.push({ name: 'live-voting' })">
-        Back to live polls
+      <button class="btn btn-primary" @click="router.push({ name: 'teacher-polls' })">
+        Back to polls
       </button>
     </div>
 

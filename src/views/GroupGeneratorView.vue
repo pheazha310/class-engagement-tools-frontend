@@ -3,8 +3,8 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import type { Student, Group, GenerationMethod } from '@/types/groupGenerator'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
+import Navbar from '@/components/Navbar.vue'
 
-// Close dropdown when clicking outside
 function handleClickOutside(event: MouseEvent) {
   const target = event.target as HTMLElement
   if (!target.closest('.dropdown')) {
@@ -20,7 +20,6 @@ onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
 })
 
-// State
 const students = ref<Student[]>([])
 const method = ref<GenerationMethod>('random')
 const target = ref<'groups' | 'size'>('groups')
@@ -30,7 +29,6 @@ const generatedGroups = ref<Group[]>([])
 const isGenerating = ref(false)
 const showConfigModal = ref(false)
 
-// Team name adjectives and nouns
 const adjectives = [
   'Quantum', 'Pixel', 'Nebula', 'Logic', 'Cosmic', 'Digital', 'Turbo', 'Mega',
   'Super', 'Hyper', 'Ultra', 'Neo', 'Alpha', 'Beta', 'Prime', 'Elite',
@@ -44,17 +42,10 @@ const nouns = [
 ]
 
 const groupCardColors = [
-  '#1e40af',
-  '#9333ea',
-  '#b45309',
-  '#7c3aed',
-  '#047857',
-  '#be123c',
-  '#0e7490',
-  '#3730a3',
+  '#6366f1', '#8b5cf6', '#ec4899', '#f59e0b',
+  '#14b8a6', '#22c55e', '#ef4444', '#06b6d4',
 ]
 
-// Computed
 const isEmpty = computed(() => generatedGroups.value.length === 0)
 const hasStudents = computed(() => students.value.length > 0)
 const totalStudents = computed(() => students.value.length)
@@ -64,7 +55,6 @@ const showDropdown = ref(false)
 const studentText = computed({
   get: () => {
     return students.value.map(s => {
-      // If gender is defined, show it with the name
       if (s.gender) {
         return `${s.name} (${s.gender})`
       }
@@ -74,14 +64,13 @@ const studentText = computed({
   set: (val) => {
     const lines = val.split('\n').filter(n => n.trim())
     students.value = lines.map((line, idx) => {
-      // Check if line contains gender in parentheses
       const genderMatch = line.match(/\(([^)]+)\)$/)
       let name = line.trim()
       let gender: 'male' | 'female' | 'other' | undefined = undefined
       
       if (genderMatch) {
-        name = line.substring(0, genderMatch.index).trim()
-        const genderValue = genderMatch[1].toLowerCase().trim()
+        name = line.substring(0, genderMatch.index!).trim()
+        const genderValue = genderMatch[1]!.toLowerCase().trim()
         if (genderValue === 'male' || genderValue === 'm') {
           gender = 'male'
         } else if (genderValue === 'female' || genderValue === 'f') {
@@ -100,20 +89,6 @@ const studentText = computed({
   }
 })
 
-// Methods
-function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2)
-}
-
-function getStudentNumber(student: any, index: number): number {
-  return index + 1
-}
-
 function generateGroupName(index: number): string {
   const adj = adjectives[index % adjectives.length]
   const noun = nouns[index % nouns.length]
@@ -124,7 +99,7 @@ function shuffle<T>(array: T[]): T[] {
   const arr = [...array]
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]]
+    [arr[i]!, arr[j]!] = [arr[j]!, arr[i]!]
   }
   return arr
 }
@@ -155,7 +130,6 @@ function generateBalancedGroups(): Group[] {
   const groupCount = target.value === 'groups' ? quantity.value : Math.ceil(students.value.length / quantity.value)
   const groups: Group[] = []
 
-  // Distribute students round-robin for balanced distribution
   for (let i = 0; i < shuffled.length; i++) {
     const groupIndex = i % groupCount
     if (!groups[groupIndex]) {
@@ -165,7 +139,7 @@ function generateBalancedGroups(): Group[] {
         students: [],
       }
     }
-    groups[groupIndex].students.push(shuffled[i])
+    groups[groupIndex].students.push(shuffled[i]!)
   }
 
   return groups.filter(g => g.students.length > 0)
@@ -183,7 +157,6 @@ function generateGenderBalancedGroups(): Group[] {
   const groupCount = target.value === 'groups' ? quantity.value : Math.ceil(students.value.length / quantity.value)
   const groups: Group[] = []
 
-  // Distribute each gender category round-robin
   const distribute = (pool: Student[], groupIndexOffset: number) => {
     pool.forEach((student, i) => {
       const groupIndex = (i + groupIndexOffset) % groupCount
@@ -210,7 +183,6 @@ function generateGroups() {
 
   isGenerating.value = true
 
-  // Simulate brief generation delay for UX
   setTimeout(() => {
     switch (method.value) {
       case 'random':
@@ -240,25 +212,18 @@ function toggleDropdown() {
   showDropdown.value = !showDropdown.value
 }
 
-function closeDropdown() {
-  showDropdown.value = false
-}
-
 function exportXLSX() {
   if (generatedGroups.value.length === 0) return
 
-  // Prepare data for Excel
-  const data: any[] = []
+  const data: Record<string, unknown>[] = []
 
   generatedGroups.value.forEach((group, idx) => {
-    // Group header row
     data.push({
       'Group': group.name,
       'Student Name': `(${group.students.length} Students)`,
       'Row': ''
     })
 
-    // Student rows
     group.students.forEach((student, sIdx) => {
       data.push({
         'Group': '',
@@ -267,26 +232,22 @@ function exportXLSX() {
       })
     })
 
-    // Add blank row between groups
     if (idx < generatedGroups.value.length - 1) {
       data.push({ 'Group': '', 'Student Name': '', 'Row': '' })
     }
   })
 
-  // Create workbook
   const ws = XLSX.utils.json_to_sheet(data)
 
-  // Set column widths
   ws['!cols'] = [
-    { wch: 20 },  // Group column
-    { wch: 30 },  // Student Name column
-    { wch: 10 }   // Row column
+    { wch: 20 },
+    { wch: 30 },
+    { wch: 10 }
   ]
 
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, 'Groups')
 
-  // Generate Excel file
   XLSX.writeFile(wb, 'groups-export.xlsx')
 }
 
@@ -297,18 +258,16 @@ function exportPDF() {
   const pageWidth = doc.internal.pageSize.getWidth()
   let yPosition = 20
 
-  // Title
   doc.setFontSize(20)
   doc.setFont('helvetica', 'bold')
-  doc.setTextColor(30, 64, 175) // #1e40af
+  doc.setTextColor(99, 102, 241)
   doc.text('Group Generator Export', pageWidth / 2, yPosition, { align: 'center' })
 
   yPosition += 10
 
-  // Metadata
   doc.setFontSize(10)
   doc.setFont('helvetica', 'normal')
-  doc.setTextColor(100, 116, 139) // #64748b
+  doc.setTextColor(100, 116, 139)
   doc.text(`Generated on: ${new Date().toLocaleString()}`, 20, yPosition)
   yPosition += 6
   doc.text(`Method: ${method.value}`, 20, yPosition)
@@ -319,16 +278,13 @@ function exportPDF() {
 
   yPosition += 15
 
-  // Groups
   generatedGroups.value.forEach((group, idx) => {
-    // Check if we need a new page
     if (yPosition > 250) {
       doc.addPage()
       yPosition = 20
     }
 
-    // Group header with color
-    const color = groupCardColors[idx % groupCardColors.length]
+    const color = groupCardColors[idx % groupCardColors.length]!
     const rgb = hexToRgb(color)
 
     doc.setFillColor(rgb.r, rgb.g, rgb.b)
@@ -341,7 +297,6 @@ function exportPDF() {
 
     yPosition += 15
 
-    // Students
     doc.setTextColor(0, 0, 0)
     doc.setFontSize(11)
     doc.setFont('helvetica', 'normal')
@@ -352,15 +307,13 @@ function exportPDF() {
         yPosition = 20
       }
 
-      // Student number circle
-      doc.setFillColor(30, 64, 175)
+      doc.setFillColor(99, 102, 241)
       doc.circle(22, yPosition - 1, 3, 'F')
       doc.setTextColor(255, 255, 255)
       doc.setFontSize(9)
       doc.setFont('helvetica', 'bold')
       doc.text(`${sIdx + 1}`, 22, yPosition, { align: 'center' })
 
-      // Student name
       doc.setFontSize(11)
       doc.setTextColor(0, 0, 0)
       doc.setFont('helvetica', 'normal')
@@ -369,19 +322,18 @@ function exportPDF() {
       yPosition += 7
     })
 
-    yPosition += 8 // Space between groups
+    yPosition += 8
   })
 
-  // Save the PDF
   doc.save('groups-export.pdf')
 }
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
   return result ? {
-    r: parseInt(result[1], 16),
-    g: parseInt(result[2], 16),
-    b: parseInt(result[3], 16)
+    r: parseInt(result[1]!, 16),
+    g: parseInt(result[2]!, 16),
+    b: parseInt(result[3]!, 16)
   } : { r: 0, g: 0, b: 0 }
 }
 
@@ -409,35 +361,27 @@ function processFile(file: File) {
   const fileExtension = file.name.split('.').pop()?.toLowerCase()
   
   if (fileExtension === 'xlsx' || fileExtension === 'xls') {
-    // Handle Excel files
     const reader = new FileReader()
     reader.onload = (e) => {
       try {
         const data = new Uint8Array(e.target?.result as ArrayBuffer)
         const workbook = XLSX.read(data, { type: 'array' })
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]]
-        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 }) as any[][]
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]!]!
+        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 }) as unknown[][]
         
-        // Process each row - look for Name and Gender columns
         const processedStudents: Student[] = []
         
         jsonData.forEach((row, idx) => {
-          // Skip empty rows
           if (!row || row.length === 0) return
           
-          // Try to find name and gender from the row
-          // Common column order: No., Name, Gender or ID, Name, Gender
           let name = ''
           let gender: 'male' | 'female' | 'other' | undefined = undefined
           
-          // Look for non-empty values
           const values = row.filter(cell => cell !== undefined && cell !== null && String(cell).trim() !== '')
           
           if (values.length >= 2) {
-            // If we have at least 2 columns, assume second is name, third might be gender
             name = String(values[1] || values[0]).trim()
             
-            // Check if there's a gender value (usually "Male" or "Female")
             if (values.length >= 3) {
               const genderValue = String(values[2]).toLowerCase().trim()
               if (genderValue === 'male' || genderValue === 'm') {
@@ -449,7 +393,6 @@ function processFile(file: File) {
               }
             }
           } else if (values.length === 1) {
-            // Only one column, assume it's the name
             name = String(values[0]).trim()
           }
           
@@ -470,7 +413,6 @@ function processFile(file: File) {
     }
     reader.readAsArrayBuffer(file)
   } else {
-    // Handle text files (CSV, TXT)
     const reader = new FileReader()
     reader.onload = (e) => {
       const content = e.target?.result as string
@@ -488,33 +430,31 @@ function processFile(file: File) {
 
 <template>
   <div class="group-generator">
-    <!-- Header -->
-    <header class="header">
-      <div class="header__inner">
+    <Navbar />
+
+    <header class="page-header">
+      <div class="page-header__inner">
         <button class="back-btn" @click="$router.back()">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <line x1="19" y1="12" x2="5" y2="12" />
             <polyline points="12 19 5 12 12 5" />
           </svg>
           <span>Back</span>
         </button>
-        <div class="header__content">
-          <h1 class="header__title">Group Generator</h1>
-          <p class="header__subtitle">Automatically organize students into balanced classroom groups.</p>
+        <div class="page-header__content">
+          <h1 class="page-header__title">Group Generator</h1>
+          <p class="page-header__subtitle">Automatically organize students into balanced classroom groups.</p>
         </div>
       </div>
     </header>
 
-    <!-- Main Content -->
     <main class="main">
-
-      <!-- Configuration Modal -->
       <div v-if="showConfigModal" class="modal-overlay" @click.self="showConfigModal = false">
         <div class="modal">
           <div class="modal__header">
             <h2 class="modal__title">Configure Groups</h2>
             <button class="modal__close" @click="showConfigModal = false">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
@@ -522,11 +462,10 @@ function processFile(file: File) {
           </div>
 
           <div class="modal__body">
-            <!-- Step 1: Student List -->
             <section class="card">
               <div class="step-header">
                 <div class="step-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1e40af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
                     <circle cx="9" cy="7" r="4" />
                     <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
@@ -553,7 +492,7 @@ function processFile(file: File) {
                   @dragover="handleDragOver"
                   @drop="handleDrop"
                 >
-                  <svg class="upload-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <svg class="upload-icon" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                     <polyline points="17 8 12 3 7 8" />
                     <line x1="12" y1="3" x2="12" y2="15" />
@@ -566,11 +505,10 @@ function processFile(file: File) {
               </div>
             </section>
 
-            <!-- Step 2: Configuration -->
             <section class="card">
               <div class="step-header">
                 <div class="step-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1e40af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="4" y1="21" x2="4" y2="14" />
                     <line x1="4" y1="10" x2="4" y2="3" />
                     <line x1="12" y1="21" x2="12" y2="12" />
@@ -598,13 +536,13 @@ function processFile(file: File) {
                     :class="{ 'method-btn--active': method === m }"
                     @click="method = m as GenerationMethod"
                   >
-                    <svg v-if="m === 'random'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg v-if="m === 'random'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5" />
                     </svg>
-                    <svg v-else-if="m === 'balanced'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg v-else-if="m === 'balanced'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4" />
                     </svg>
-                    <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
                       <circle cx="9" cy="7" r="4" />
                       <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
@@ -649,7 +587,7 @@ function processFile(file: File) {
                   :disabled="!hasStudents || isGenerating"
                   @click="generateGroups"
                 >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
                   </svg>
                   {{ isGenerating ? 'Generating...' : 'Generate Groups' }}
@@ -661,10 +599,17 @@ function processFile(file: File) {
       </div>
 
       <div class="layout">
-        <!-- Right Panel: Results -->
         <div class="right-panel">
           <div v-if="isEmpty" class="welcome-card">
             <div class="welcome-card__content">
+              <div class="welcome-card__icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+              </div>
               <h3 class="welcome-card__title">Welcome to Group Generator</h3>
               <p class="welcome-card__desc">Automatically organize students into balanced classroom groups. Click the button below to get started.</p>
               <button class="start-btn" @click="showConfigModal = true">
@@ -678,27 +623,27 @@ function processFile(file: File) {
 
           <div v-else class="results">
             <div class="results-header">
-              <div>
+              <div class="results-header__info">
                 <span class="badge">Total Groups: {{ totalGroups }}</span>
-                <span class="text-sm text-slate-500 ml-3">Created for {{ totalStudents }} students</span>
+                <span class="text-sm text-slate-500">Created for {{ totalStudents }} students</span>
               </div>
               <div class="actions">
                 <button class="secondary-btn" @click="showConfigModal = true" title="Configure">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="12" y1="5" x2="12" y2="19" />
                     <line x1="5" y1="12" x2="19" y2="12" />
                   </svg>
                   Configure
                 </button>
-                <button class="secondary-btn" @click="regenerate">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <button class="secondary-btn" @click="regenerate" title="Regenerate">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
                     <path d="M21 3v5h-5" />
                   </svg>
                   Regenerate
                 </button>
-                <button class="secondary-btn secondary-btn--clear" @click="clearGroups">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <button class="secondary-btn secondary-btn--clear" @click="clearGroups" title="Clear">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="3 6 5 6 21 6" />
                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                   </svg>
@@ -706,13 +651,13 @@ function processFile(file: File) {
                 </button>
                 <div class="dropdown">
                   <button class="primary-btn" @click="toggleDropdown">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                       <polyline points="7 10 12 15 17 10" />
                       <line x1="12" y1="15" x2="12" y2="3" />
                     </svg>
                     Export
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                       <polyline points="6 9 12 15 18 9" />
                     </svg>
                   </button>
@@ -781,24 +726,22 @@ function processFile(file: File) {
 <style scoped>
 .group-generator {
   min-height: 100vh;
-  background: #f5f3ff;
+  background: #f8fafc;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  padding-top: 0;
 }
 
-.header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-bottom: none;
+.page-header {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+  padding: 0;
   position: sticky;
-  top: 0;
+  top: 64px;
   left: 0;
   right: 0;
   z-index: 40;
-  padding: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.25);
 }
 
-.header__inner {
+.page-header__inner {
   max-width: 80rem;
   margin: 0 auto;
   display: flex;
@@ -812,10 +755,10 @@ function processFile(file: File) {
   align-items: center;
   gap: 0.5rem;
   padding: 0.6rem 1.25rem;
-  background: white;
-  color: #1e40af;
-  border: 2px solid #1e40af;
-  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.95);
+  color: #6366f1;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  border-radius: 0.625rem;
   font-family: inherit;
   font-size: 0.9rem;
   font-weight: 600;
@@ -823,57 +766,33 @@ function processFile(file: File) {
   transition: all 0.2s;
   white-space: nowrap;
   flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .back-btn:hover {
-  background: #dbeafe;
+  background: white;
   transform: translateX(-2px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
 }
 
 .back-btn:active {
   transform: translateX(0);
 }
 
-.header__title {
-  font-size: 1.875rem;
+.page-header__title {
+  font-size: 1.75rem;
   font-weight: 800;
   color: white;
   margin: 0;
   line-height: 1.2;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  letter-spacing: -0.02em;
 }
 
-.header__subtitle {
-  color: rgba(255, 255, 255, 0.95);
+.page-header__subtitle {
+  color: rgba(255, 255, 255, 0.9);
   font-size: 0.875rem;
-  margin: 0.375rem 0 0;
+  margin: 0.25rem 0 0;
   font-weight: 400;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.header__actions {
-  margin-left: auto;
-  display: flex;
-  gap: 0.5rem;
-}
-
-.icon-btn {
-  width: 2.5rem;
-  height: 2.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.5rem;
-  background: white;
-  color: #475569;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.icon-btn:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
 }
 
 .main {
@@ -889,41 +808,51 @@ function processFile(file: File) {
   align-items: start;
 }
 
-.left-panel {
-  display: none;
+.right-panel {
+  min-height: calc(100vh - 64px - 80px);
+  max-height: calc(100vh - 64px - 80px);
+  overflow-y: auto;
+  position: sticky;
+  top: calc(64px + 80px + 1rem);
+  padding-right: 0.5rem;
 }
 
-.left-panel::-webkit-scrollbar {
-  width: 6px;
+.right-panel::-webkit-scrollbar {
+  width: 8px;
 }
 
-.left-panel::-webkit-scrollbar-track {
+.right-panel::-webkit-scrollbar-track {
   background: #f1f5f9;
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
-.left-panel::-webkit-scrollbar-thumb {
+.right-panel::-webkit-scrollbar-thumb {
   background: #cbd5e1;
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
-.left-panel::-webkit-scrollbar-thumb:hover {
+.right-panel::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
 
 .card {
   background: white;
-  border-radius: 0.75rem;
-  padding: 0.6rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  border-radius: 0.875rem;
+  padding: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.02);
   border: 1px solid #f1f5f9;
+  transition: box-shadow 0.2s;
+}
+
+.card:hover {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.04);
 }
 
 .step-header {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.5rem;
 }
 
 .step-icon {
@@ -932,8 +861,8 @@ function processFile(file: File) {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #dbeafe;
-  border-radius: 0.375rem;
+  background: #eef2ff;
+  border-radius: 0.5rem;
 }
 
 .card__title {
@@ -945,9 +874,9 @@ function processFile(file: File) {
 
 .step-badge {
   display: block;
-  font-size: 0.6rem;
-  color: #94a3b8;
-  font-weight: 600;
+  font-size: 0.65rem;
+  color: #6366f1;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -955,58 +884,62 @@ function processFile(file: File) {
 .form {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.4rem;
 }
 
 .textarea {
   width: 100%;
-  padding: 0.4rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.5rem;
+  padding: 0.5rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 0.625rem;
   font-family: inherit;
   font-size: 0.85rem;
   resize: none;
   outline: none;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background: #fafafa;
 }
 
 .textarea:focus {
-  border-color: #1e40af;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.08);
+  background: white;
 }
 
 .hint {
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   color: #94a3b8;
 }
 
 .upload-zone {
   border: 2px dashed #cbd5e1;
-  border-radius: 0.5rem;
-  padding: 0.5rem;
+  border-radius: 0.75rem;
+  padding: 0.75rem;
   text-align: center;
   cursor: pointer;
   transition: all 0.2s;
+  background: #fafafa;
 }
 
 .upload-zone:hover {
-  border-color: #1e40af;
-  background: #f8fafc;
+  border-color: #6366f1;
+  background: #eef2ff;
 }
 
 .upload-icon {
   margin-bottom: 0.3rem;
-  color: #64748b;
+  color: #6366f1;
 }
 
 .upload-text {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   color: #334155;
   margin: 0;
   line-height: 1.4;
 }
 
 .upload-link {
-  color: #1e40af;
+  color: #6366f1;
   font-weight: 600;
   cursor: pointer;
   text-decoration: underline;
@@ -1017,9 +950,9 @@ function processFile(file: File) {
 }
 
 .upload-hint {
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   color: #94a3b8;
-  margin: 0.1rem 0 0;
+  margin: 0.2rem 0 0;
 }
 
 .label {
@@ -1033,7 +966,7 @@ function processFile(file: File) {
 .config {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0.75rem;
 }
 
 .method-grid {
@@ -1046,10 +979,10 @@ function processFile(file: File) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0.6rem 0.4rem;
+  gap: 0.35rem;
+  padding: 0.75rem 0.5rem;
   border: 2px solid #e2e8f0;
-  border-radius: 0.5rem;
+  border-radius: 0.75rem;
   background: white;
   color: #64748b;
   cursor: pointer;
@@ -1057,18 +990,20 @@ function processFile(file: File) {
 }
 
 .method-btn:hover {
-  border-color: #1e40af;
-  color: #1e40af;
+  border-color: #6366f1;
+  color: #6366f1;
+  background: #eef2ff;
 }
 
 .method-btn--active {
-  border-color: #1e40af;
-  background: #dbeafe;
-  color: #1e40af;
+  border-color: #6366f1;
+  background: #eef2ff;
+  color: #6366f1;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.15);
 }
 
 .method-label {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 600;
 }
 
@@ -1094,27 +1029,33 @@ function processFile(file: File) {
 
 .select {
   padding: 0.6rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.5rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 0.625rem;
   font-family: inherit;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   outline: none;
   cursor: pointer;
+  background: white;
+  transition: border-color 0.2s;
+}
+
+.select:focus {
+  border-color: #6366f1;
 }
 
 .number-input {
   display: flex;
   align-items: center;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.5rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 0.625rem;
   overflow: hidden;
   background: white;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .number-input:focus-within {
-  border-color: #1e40af;
-  box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.08);
 }
 
 .num-btn {
@@ -1125,21 +1066,21 @@ function processFile(file: File) {
   justify-content: center;
   border: none;
   background: #f8fafc;
-  color: #1e40af;
+  color: #6366f1;
   font-size: 1.5rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s;
   user-select: none;
 }
 
 .num-btn:hover {
-  background: #dbeafe;
-  color: #1e30a8;
+  background: #eef2ff;
+  color: #4f46e5;
 }
 
 .num-btn:active {
-  background: #1e40af;
+  background: #6366f1;
   color: white;
 }
 
@@ -1173,7 +1114,7 @@ function processFile(file: File) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.3rem 0;
+  padding: 0.4rem 0;
 }
 
 .toggle-label {
@@ -1194,7 +1135,7 @@ function processFile(file: File) {
 }
 
 .toggle--on {
-  background: #1e40af;
+  background: #6366f1;
 }
 
 .toggle__thumb {
@@ -1219,24 +1160,24 @@ function processFile(file: File) {
   justify-content: center;
   gap: 0.5rem;
   width: 100%;
-  padding: 0.65rem;
-  background: #1e40af;
+  padding: 0.75rem;
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
   color: white;
   border: none;
   border-radius: 0.75rem;
   font-family: inherit;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
-  margin-top: 0.4rem;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
+  margin-top: 0.5rem;
 }
 
 .generate-btn:hover:not(:disabled) {
-  background: #1e30a8;
+  background: linear-gradient(135deg, #818cf8, #6366f1);
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(30, 64, 175, 0.4);
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
 }
 
 .generate-btn:active:not(:disabled) {
@@ -1248,69 +1189,58 @@ function processFile(file: File) {
   cursor: not-allowed;
 }
 
-/* Right Panel */
-.right-panel {
-  min-height: calc(100vh - 106px);
-  max-height: calc(100vh - 106px);
-  overflow-y: auto;
-  position: sticky;
-  top: 86px;
-  padding-right: 0.5rem;
+.welcome-card {
+  background: linear-gradient(135deg, #eef2ff 0%, #f5f3ff 100%);
+  border: 2px dashed #cbd5e1;
+  border-radius: 1.25rem;
+  padding: 4rem 2rem;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.right-panel::-webkit-scrollbar {
-  width: 8px;
-}
-
-.right-panel::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 4px;
-}
-
-.right-panel::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
-}
-
-.right-panel::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-
-.empty-state {
+.welcome-card__content {
+  max-width: 32rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 4rem 2rem;
-  text-align: center;
-  min-height: 400px;
+  gap: 1rem;
 }
 
-.empty-icon {
-  color: #cbd5e1;
-  margin-bottom: 1.25rem;
+.welcome-card__icon {
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.15);
 }
 
-.empty-title {
-  font-size: 1.25rem;
+.welcome-card__title {
+  font-size: 1.5rem;
   font-weight: 700;
   color: #0f172a;
-  margin: 0 0 0.75rem;
+  margin: 0;
 }
 
-.empty-desc {
+.welcome-card__desc {
   font-size: 0.95rem;
   color: #64748b;
-  margin: 0 0 1.5rem;
-  max-width: 32rem;
+  margin: 0;
+  line-height: 1.6;
+  max-width: 28rem;
 }
 
 .start-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   padding: 1rem 2rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
   color: white;
   border: none;
   border-radius: 0.75rem;
@@ -1318,13 +1248,13 @@ function processFile(file: File) {
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  transition: all 0.2s;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
 }
 
 .start-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.5);
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
 }
 
 .start-btn:active {
@@ -1341,29 +1271,47 @@ function processFile(file: File) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.5rem;
+  padding: 1.25rem 1.5rem;
   background: white;
   border-radius: 1rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   position: sticky;
   top: 0;
   z-index: 10;
-  border: 2px solid #e2e8f0;
+  border: 1px solid #e2e8f0;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.results-header__info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .badge {
   display: inline-flex;
   padding: 0.35rem 0.75rem;
-  background: #1e40af;
+  background: #6366f1;
   color: white;
   border-radius: 999px;
   font-size: 0.85rem;
   font-weight: 600;
 }
 
+.text-sm {
+  font-size: 0.875rem;
+}
+
+.text-slate-500 {
+  color: #64748b;
+}
+
 .actions {
   display: flex;
-  gap: 0.75rem;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .secondary-btn {
@@ -1372,24 +1320,24 @@ function processFile(file: File) {
   gap: 0.4rem;
   padding: 0.6rem 1.25rem;
   background: white;
-  color: #1e40af;
-  border: 2px solid #1e40af;
-  border-radius: 0.5rem;
+  color: #6366f1;
+  border: 2px solid #6366f1;
+  border-radius: 0.625rem;
   font-family: inherit;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .secondary-btn:hover {
-  background: #dbeafe;
+  background: #eef2ff;
 }
 
 .secondary-btn--clear:hover {
   background: #fef2f2;
-  border-color: #dc2626;
-  color: #dc2626;
+  border-color: #ef4444;
+  color: #ef4444;
 }
 
 .primary-btn {
@@ -1397,22 +1345,24 @@ function processFile(file: File) {
   align-items: center;
   gap: 0.4rem;
   padding: 0.6rem 1.25rem;
-  background: #1e40af;
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
   color: white;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: 0.625rem;
   font-family: inherit;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
 }
 
 .primary-btn:hover {
-  background: #1e30a8;
+  background: linear-gradient(135deg, #818cf8, #6366f1);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
 }
 
-/* Dropdown */
 .dropdown {
   position: relative;
 }
@@ -1437,10 +1387,10 @@ function processFile(file: File) {
   width: 100%;
   padding: 0.75rem 1rem;
   background: white;
-  color: #1e40af;
+  color: #6366f1;
   border: none;
   font-family: inherit;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
@@ -1448,7 +1398,7 @@ function processFile(file: File) {
 }
 
 .dropdown-item:hover {
-  background: #dbeafe;
+  background: #eef2ff;
 }
 
 .dropdown-item svg {
@@ -1461,7 +1411,6 @@ function processFile(file: File) {
   gap: 1.25rem;
 }
 
-/* Modal */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -1478,7 +1427,7 @@ function processFile(file: File) {
 }
 
 .modal {
-  background: #f5f3ff;
+  background: #f8fafc;
   border-radius: 1rem;
   max-width: 700px;
   width: 100%;
@@ -1515,7 +1464,7 @@ function processFile(file: File) {
   justify-content: center;
   background: #f1f5f9;
   border: none;
-  border-radius: 0.375rem;
+  border-radius: 0.5rem;
   color: #64748b;
   cursor: pointer;
   transition: all 0.2s;
@@ -1530,48 +1479,18 @@ function processFile(file: File) {
   padding: 0.75rem;
 }
 
-/* Welcome Card */
-.welcome-card {
-  background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
-  border: 2px dashed #cbd5e1;
-  border-radius: 1rem;
-  padding: 3rem 2rem;
-  text-align: center;
-  min-height: calc(100vh - 106px - 4rem);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.welcome-card__content {
-  max-width: 32rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-}
-
-.welcome-card__title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #0f172a;
-  margin: 0;
-}
-
-.welcome-card__desc {
-  font-size: 0.95rem;
-  color: #64748b;
-  margin: 0;
-  line-height: 1.5;
-}
-
 .group-card {
   border-radius: 1rem;
   border: 3px solid;
   background: white;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.group-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
 .group-card__header {
@@ -1579,13 +1498,6 @@ function processFile(file: File) {
   align-items: center;
   padding: 1rem 1.25rem;
   color: white;
-}
-
-.group-card__title-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex: 1;
 }
 
 .group-card__title-row {
@@ -1625,24 +1537,24 @@ function processFile(file: File) {
   color: rgba(255, 255, 255, 0.6);
 }
 
-.group-card__count {
-  font-size: 0.75rem;
-  background: rgba(255, 255, 255, 0.25);
-  padding: 0.2rem 0.6rem;
-  border-radius: 999px;
-  font-weight: 600;
-}
-
 .group-card__list {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
+  padding: 0.75rem 1rem;
 }
 
 .student-item {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  transition: background 0.15s;
+}
+
+.student-item:hover {
+  background: #f8fafc;
 }
 
 .student-avatar {
@@ -1651,37 +1563,23 @@ function processFile(file: File) {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.25);
+  background: #eef2ff;
   border-radius: 50%;
   font-size: 0.75rem;
   font-weight: 700;
+  color: #6366f1;
   flex-shrink: 0;
 }
 
 .student-name {
   font-size: 0.9rem;
   font-weight: 500;
-}
-
-.text-sm {
-  font-size: 0.875rem;
-}
-
-.text-slate-500 {
-  color: #64748b;
-}
-
-.ml-3 {
-  margin-left: 0.75rem;
+  color: #334155;
 }
 
 @media (max-width: 1024px) {
   .layout {
     grid-template-columns: 1fr;
-  }
-
-  .left-panel {
-    order: 2;
   }
 
   .right-panel {
@@ -1690,12 +1588,12 @@ function processFile(file: File) {
 }
 
 @media (max-width: 640px) {
-  .header__inner {
+  .page-header__inner {
     padding: 1rem;
     flex-wrap: wrap;
   }
 
-  .header__title {
+  .page-header__title {
     font-size: 1.25rem;
   }
 
@@ -1715,9 +1613,14 @@ function processFile(file: File) {
 
   .secondary-btn, .primary-btn {
     flex: 1;
+    justify-content: center;
   }
 
   .groups-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .method-grid {
     grid-template-columns: 1fr;
   }
 }
