@@ -10,7 +10,7 @@ import ShareWheelModal from '@/components/ShareWheelModal.vue'
 import Navbar from '@/components/Navbar.vue'
 import type { Participant, WheelTheme, SavedWheel } from '@/types/wheel'
 import { wheelThemes, getThemeById, defaultThemeId } from '@/types/wheel'
-import { createSavedWheel, loadSavedWheel, AuthorizationError } from '@/services/wheel'
+import { createSavedWheel, loadSavedWheel, AuthorizationError, AuthenticationError } from '@/services/wheel'
 import { useAuthStore } from '@/stores/auth'
 import { ensureCsrfCookie } from '@/services/api'
 
