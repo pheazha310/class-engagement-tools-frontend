@@ -332,7 +332,9 @@ async function submit() {
   }
 
   success.value = true
-  setTimeout(() => router.replace('/'), 2000)
+  // Redirect based on user role
+  const targetRoute = auth.user?.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard'
+  setTimeout(() => router.replace(targetRoute), 2000)
 }
 
 const roleOptions: { value: Role; label: string; icon: string; desc: string; features: string[] }[] = [

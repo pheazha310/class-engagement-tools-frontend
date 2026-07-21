@@ -1,10 +1,23 @@
 <script setup lang="ts">
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import { onMounted } from 'vue'
 import { categories } from '@/data/toolsData'
 import SiteFooter from '@/components/SiteFooter.vue'
 
 defineOptions({
   name: 'HomePage',
+})
+
+const router = useRouter()
+const auth = useAuthStore()
+
+onMounted(() => {
+  // Redirect authenticated users to their role-specific dashboard
+  if (auth.isAuthenticated) {
+    const targetRoute = auth.user?.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard'
+    router.replace(targetRoute)
+  }
 })
 </script>
 
@@ -34,10 +47,10 @@ defineOptions({
           <div class="category-card" v-for="category in categories" :key="category.name">
             <h3 class="category-title">{{ category.icon }} {{ category.name }}</h3>
             <div class="category-tools">
-              <RouterLink 
-                v-for="tool in category.tools" 
-                :key="tool.title" 
-                :to="tool.route || '/tools/' + tool.slug" 
+              <RouterLink
+                v-for="tool in category.tools"
+                :key="tool.title"
+                :to="tool.route || '/tools/' + tool.slug"
                 class="category-tool-link"
               >
                 <span class="category-tool-icon">{{ tool.icon }}</span>

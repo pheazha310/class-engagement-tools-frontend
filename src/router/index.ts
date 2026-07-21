@@ -35,7 +35,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/teacher/dashboard',
     name: 'teacher-dashboard',
-    component: () => import('@/pages/TeacherPollList.vue'),
+    component: () => import('@/pages/teacher/TeacherDashboard.vue'),
     meta: { requiresAuth: true, role: 'teacher' },
   },
 
@@ -43,7 +43,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/student/dashboard',
     name: 'student-dashboard',
-    component: () => import('@/pages/ActivePoll.vue'),
+    component: () => import('@/pages/public/ActivePolls.vue'),
     meta: { requiresAuth: true, role: 'student' },
   },
 
@@ -245,6 +245,42 @@ const routes: RouteRecordRaw[] = [
     component: ToolDetailPage,
   },
 
+  // Live Polls (API-backed)
+  {
+    path: '/teacher/live-polls',
+    name: 'live-poll-list',
+    component: () => import('@/pages/teacher/LivePollList.vue'),
+    meta: { requiresAuth: true, role: 'teacher' },
+  },
+  {
+    path: '/teacher/live-polls/create',
+    name: 'live-poll-create',
+    component: () => import('@/pages/teacher/LivePollCreate.vue'),
+    meta: { requiresAuth: true, role: 'teacher' },
+  },
+  {
+    path: '/teacher/live-polls/:id/edit',
+    name: 'live-poll-edit',
+    component: () => import('@/pages/teacher/LivePollCreate.vue'),
+    meta: { requiresAuth: true, role: 'teacher' },
+  },
+  {
+    path: '/teacher/live-polls/:id/results',
+    name: 'live-poll-results',
+    component: () => import('@/pages/teacher/LivePollResults.vue'),
+    meta: { requiresAuth: true, role: 'teacher' },
+  },
+  {
+    path: '/vote/:token',
+    name: 'live-vote-public',
+    component: () => import('@/pages/public/LiveVote.vue'),
+  },
+  {
+    path: '/polls/active',
+    name: 'active-polls-list',
+    component: () => import('@/pages/public/ActivePolls.vue'),
+  },
+
   // 404
   {
     path: '/group-generator',
@@ -260,6 +296,28 @@ const routes: RouteRecordRaw[] = [
     path: '/results',
     name: 'results',
     component: () => import('@/pages/ResultsPage.vue'),
+  },
+  {
+    path: '/live-voting',
+    name: 'live-voting-list',
+    component: () => import('@/pages/VotingList.vue'),
+  },
+  {
+    path: '/live-voting/create',
+    name: 'live-voting-create',
+    component: () => import('@/pages/CreateLiveVoting.vue'),
+    meta: { requiresAuth: true, role: 'teacher' },
+  },
+  {
+    path: '/live-voting/:id/edit',
+    name: 'live-voting-edit',
+    component: () => import('@/pages/CreateLiveVoting.vue'),
+    meta: { requiresAuth: true, role: 'teacher' },
+  },
+  {
+    path: '/vote/live',
+    name: 'student-live-vote',
+    component: () => import('@/pages/StudentLiveVote.vue'),
   },
   {
     path: '/create-voting-poll',
