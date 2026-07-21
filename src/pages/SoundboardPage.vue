@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { fetchSounds, playSound, fetchPlayHistory, type Sound, type SoundPlayHistory } from '@/services/sound'
+import { playSynthSound } from '@/utils/soundSynthesizer'
 import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
@@ -42,35 +43,22 @@ async function handlePlay(sound: Sound) {
   if (playingId.value) return
   playingId.value = sound.id
 
-  // Play audio locally
-  const audio = new Audio(sound.audio_url)
-  audio.volume = 0.5
-  audio.play().catch(() => {
-    // ignore autoplay restrictions — the important thing is the API call
-  })
-  audio.onended = () => {
-    playingId.value = null
-  }
+  // 1. Play locally via synthesized sound
+  const durationMs = playSynthSound(sound.name)
 
+  // 2. Broadcast to classroom via API
   try {
     await playSound(sound.id)
   } catch (e) {
     console.error('Failed to trigger sound broadcast:', e)
-    // Still keep the local play
   }
 
-  // Auto-reset after a timeout if the audio doesn't trigger onended
+  // 3. Auto-reset playing state after the sound finishes
   setTimeout(() => {
     if (playingId.value === sound.id) {
       playingId.value = null
     }
-  }, (sound.duration_seconds || 3) * 1000 + 500)
-}
-
-function handleAudioEnd(soundId: string) {
-  if (playingId.value === soundId) {
-    playingId.value = null
-  }
+  }, durationMs + 200)
 }
 
 async function toggleHistory() {
