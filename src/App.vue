@@ -2,9 +2,16 @@
 import { RouterView, useRoute } from 'vue-router'
 import Navbar from './components/Navbar.vue';
 import { computed } from 'vue';
+import { useAuthStore } from '@/stores/auth';
 
 const route = useRoute();
-const hideNavbar = computed(() => route.meta?.hideNavbar || false);
+const auth = useAuthStore();
+
+const hideNavbar = computed(() => {
+  const routeHide = route.meta?.hideNavbar || false;
+  const isTeacher = auth.isAuthenticated && auth.user?.role === 'teacher';
+  return routeHide || isTeacher;
+});
 </script>
 
 <template>

@@ -23,7 +23,9 @@ async function submit(event: Event) {
     return
   }
 
-  router.replace('/')
+  // Redirect based on user role
+  const targetRoute = auth.user?.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard'
+  router.replace(targetRoute)
 }
 </script>
 

@@ -85,6 +85,19 @@ onUnmounted(() => {
             <RouterLink to="/tools/category/games" class="dropdown-item" @click="closeMobileMenu">Games</RouterLink>
             <RouterLink to="/tools/category/engagement" class="dropdown-item" @click="closeMobileMenu">Engagement</RouterLink>
             <RouterLink to="/tools/category/fun" class="dropdown-item" @click="closeMobileMenu">Fun Activities</RouterLink>
+            <div class="dropdown-divider" />
+            <RouterLink to="/live-voting" class="dropdown-item dropdown-item--vote" @click="closeMobileMenu">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              Manage Polls
+            </RouterLink>
+            <RouterLink to="/vote/live" class="dropdown-item dropdown-item--vote" @click="closeMobileMenu">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
+              </svg>
+              Vote on Polls
+            </RouterLink>
           </div>
         </li>
         <li class="nav-dropdown-trigger" @mouseenter="activeParticipantsDropdown = true" @mouseleave="activeParticipantsDropdown = false">
@@ -315,6 +328,16 @@ onUnmounted(() => {
   background: rgba(99, 102, 241, 0.06);
   color: #6366f1;
   padding-left: 18px;
+}
+
+.dropdown-item--vote {
+  color: #16a34a !important;
+  font-weight: 600;
+}
+
+.dropdown-item--vote:hover {
+  background: rgba(220, 252, 231, 0.5) !important;
+  color: #15803d !important;
 }
 
 .dropdown-divider {
