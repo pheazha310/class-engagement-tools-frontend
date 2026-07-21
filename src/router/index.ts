@@ -225,7 +225,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/live-voting',
     name: 'live-voting',
-    component: () => import('@/pages/LiveVotingPage.vue'),
+    component: () => import('@/pages/LiveClassroomVoting.vue'),
   },
   {
     path: '/teacher/polls',
