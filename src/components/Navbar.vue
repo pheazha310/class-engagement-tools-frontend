@@ -50,8 +50,9 @@ const route = useRoute()
              <RouterLink to="/tools/category/random" class="dropdown-item">Random Tools</RouterLink>
              <RouterLink to="/tools/category/quiz" class="dropdown-item">Quiz & Assessment</RouterLink>
              <RouterLink to="/tools/category/classroom" class="dropdown-item">Classroom Control</RouterLink>
-             <RouterLink to="/tools/category/games" class="dropdown-item">Games</RouterLink>
-             <RouterLink to="/tools/category/engagement" class="dropdown-item">Engagement</RouterLink>
+              <RouterLink to="/tools/category/games" class="dropdown-item">Games</RouterLink>
+              <RouterLink to="/games/history" class="dropdown-item">Game History</RouterLink>
+              <RouterLink to="/tools/category/engagement" class="dropdown-item">Engagement</RouterLink>
              <RouterLink to="/tools/category/fun" class="dropdown-item">Fun Activities</RouterLink>
             </div>
          </li>
