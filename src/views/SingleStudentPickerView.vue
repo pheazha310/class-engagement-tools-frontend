@@ -9,8 +9,6 @@ interface Student {
   color: string
 }
 
-const router = useRouter()
-
 const COLORS = [
   '#6366f1', '#ec4899', '#f59e0b', '#14b8a6',
   '#22c55e', '#ef4444', '#8b5cf6', '#06b6d4',
@@ -132,41 +130,10 @@ async function pickRandom() {
 function formatTime(date: Date) {
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
-
-function goBack() {
-  router.push('/')
-}
 </script>
 
 <template>
   <div class="picker-page">
-    <!-- Header with back button -->
-    <header class="picker-header">
-      <div class="picker-header__inner">
-        <button class="picker-header__back" @click="goBack">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="19" y1="12" x2="5" y2="12" />
-            <polyline points="12 19 5 12 12 5" />
-          </svg>
-          Back
-        </button>
-        <div class="picker-header__info">
-          <h1 class="picker-header__title">Single Student Picker</h1>
-          <p class="picker-header__subtitle">Pick one student at random from the class list</p>
-        </div>
-        <div class="picker-header__stats">
-          <div class="stat">
-            <span class="stat__value">{{ students.length }}</span>
-            <span class="stat__label">Students</span>
-          </div>
-          <div class="stat">
-            <span class="stat__value">{{ totalPicks }}</span>
-            <span class="stat__label">Picks</span>
-          </div>
-        </div>
-      </div>
-    </header>
-
     <div class="picker-content">
       <div class="picker-layout">
         <!-- Left Column: Student Pool -->
@@ -344,8 +311,9 @@ function goBack() {
 <style scoped>
 .picker-page {
   min-height: 100vh;
+  padding-top: 64px;
   background: #f8fafc;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
 
 /* ── Header ── */

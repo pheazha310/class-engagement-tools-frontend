@@ -11,6 +11,7 @@ const emit = defineEmits<{
   start: [id: number]
   end: [id: number]
   view: [id: number]
+  qr: [id: number]
 }>()
 
 const statusColors: Record<string, string> = {
@@ -30,6 +31,13 @@ const statusColors: Record<string, string> = {
       >
         {{ poll.status }}
       </span>
+    </div>
+
+    <div class="mb-2 flex flex-wrap gap-1.5">
+      <span v-if="poll.is_anonymous" class="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">Anonymous</span>
+      <span v-if="poll.is_quiz" class="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">Quiz</span>
+      <span v-if="poll.is_open_text" class="rounded-full bg-cyan-100 px-2 py-0.5 text-xs font-medium text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400">Open Text</span>
+      <span v-if="poll.max_points" class="rounded-full bg-pink-100 px-2 py-0.5 text-xs font-medium text-pink-700 dark:bg-pink-900/30 dark:text-pink-400">Weighted</span>
     </div>
 
     <div class="mb-4 text-sm text-gray-500 dark:text-gray-400">
@@ -67,6 +75,14 @@ const statusColors: Record<string, string> = {
         @click="emit('end', poll.id)"
       >
         End
+      </button>
+
+      <button
+        v-if="poll.status === 'active' || poll.status === 'draft'"
+        class="rounded-lg bg-gray-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-gray-700"
+        @click="emit('qr', poll.id)"
+      >
+        QR
       </button>
 
       <button
