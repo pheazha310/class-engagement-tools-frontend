@@ -10,11 +10,13 @@ import ShareWheelModal from '@/components/ShareWheelModal.vue'
 import Navbar from '@/components/Navbar.vue'
 import type { Participant, WheelTheme, SavedWheel } from '@/types/wheel'
 import { wheelThemes, getThemeById, defaultThemeId } from '@/types/wheel'
-import { createSavedWheel, loadSavedWheel } from '@/services/wheel'
-import { checkAuth } from '@/services/auth'
+import { createSavedWheel, loadSavedWheel, AuthorizationError } from '@/services/wheel'
+import { useAuthStore } from '@/stores/auth'
+import { ensureCsrfCookie } from '@/services/api'
 
 const route = useRoute()
 const router = useRouter()
+const auth = useAuthStore()
 
 const participants = ref<Participant[]>([
   { id: 1, name: 'Alice' },
@@ -50,10 +52,6 @@ watch(selectedTheme, (theme) => {
   saveTheme(theme)
 })
 
-onMounted(() => {
-  loadTheme()
-})
-
 const showSaveModal = ref(false)
 const showMyWheelsModal = ref(false)
 const showShareModal = ref(false)
@@ -63,7 +61,6 @@ const saveSuccess = ref<string | null>(null)
 const wheelName = ref('')
 const wheelDescription = ref('')
 const savedWheelId = ref<string | null>(null)
-const isAuthenticated = ref(false)
 
 const futureListTitle = ref('Future List')
 
@@ -94,7 +91,6 @@ function applyUrlNames() {
 
 onMounted(async () => {
   loadTheme()
-  isAuthenticated.value = await checkAuth()
   applyUrlNames()
 })
 
@@ -140,6 +136,12 @@ async function handleSaveWheel(payload: { name: string; description: string }) {
   saveSuccess.value = null
 
   try {
+    await ensureCsrfCookie()
+    await auth.fetchUser()
+    if (!auth.user) {
+      throw new Error('Your session has expired. Please log in again.')
+    }
+
     const wheel = await createSavedWheel({
       name: payload.name,
       description: payload.description,
@@ -150,7 +152,18 @@ async function handleSaveWheel(payload: { name: string; description: string }) {
     saveSuccess.value = 'Wheel saved successfully!'
     closeSaveModal()
   } catch (err) {
-    saveError.value = err instanceof Error ? err.message : 'Failed to save wheel'
+    if (err instanceof AuthenticationError) {
+      saveError.value = 'Your session has expired. Please log in again to save your wheel.'
+      // Redirect to login page after a brief delay so user sees the message
+      auth.clearUser()
+      setTimeout(() => {
+        router.push('/login?redirect=' + encodeURIComponent(route.fullPath))
+      }, 2000)
+    } else if (err instanceof AuthorizationError) {
+      saveError.value = err.message || 'You do not have permission to perform this action.'
+    } else {
+      saveError.value = err instanceof Error ? err.message : 'Failed to save wheel'
+    }
   } finally {
     saving.value = false
   }
@@ -198,12 +211,18 @@ function handleDeleteWheel() {
       <p class="subtitle">Manage participants and spin to select one randomly</p>
 
       <div class="toolbar">
-        <button type="button" class="btn btn-primary" @click="openSaveModal">
+        <button
+          type="button"
+          class="btn btn-primary"
+          :disabled="!auth.isAuthenticated"
+          @click="openSaveModal"
+        >
           Save Wheel
         </button>
         <button
           type="button"
           class="btn btn-secondary"
+          :disabled="!auth.isAuthenticated"
           @click="showMyWheelsModal = true"
         >
           My Wheels
@@ -211,6 +230,7 @@ function handleDeleteWheel() {
         <button
           type="button"
           class="btn btn-share"
+          :disabled="!auth.isAuthenticated"
           @click="openShareModal"
         >
           Share Wheel
@@ -253,7 +273,7 @@ function handleDeleteWheel() {
         :theme="selectedTheme"
         :loading="saving"
         :error="saveError"
-        :is-authenticated="isAuthenticated"
+        :is-authenticated="auth.isAuthenticated"
         @save="handleSaveWheel"
       />
 
@@ -267,7 +287,7 @@ function handleDeleteWheel() {
 
       <MyWheels
         v-model="showMyWheelsModal"
-        :is-authenticated="isAuthenticated"
+        :is-authenticated="auth.isAuthenticated"
         @open-wheel="handleOpenWheel"
         @delete-wheel="handleDeleteWheel"
       />
