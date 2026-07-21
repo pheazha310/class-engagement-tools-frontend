@@ -47,6 +47,33 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true, role: 'student' },
   },
 
+  // Classroom Quiz (frontend-only)
+  {
+    path: '/classroom',
+    name: 'classroom-quizzes',
+    component: () => import('@/pages/ClassroomQuizList.vue'),
+  },
+  {
+    path: '/classroom/create',
+    name: 'classroom-create-quiz',
+    component: () => import('@/pages/ClassroomCreateQuiz.vue'),
+  },
+  {
+    path: '/classroom/quiz/:quizId',
+    name: 'classroom-quiz-play',
+    component: () => import('@/pages/ClassroomQuizPlay.vue'),
+  },
+  {
+    path: '/classroom/review/:quizId',
+    name: 'classroom-quiz-review',
+    component: () => import('@/pages/ClassroomReview.vue'),
+  },
+  {
+    path: '/classroom/rankings/:quizId',
+    name: 'classroom-quiz-rankings',
+    component: () => import('@/pages/ClassroomRankings.vue'),
+  },
+
   // Quizzes
   {
     path: '/quizzes',

@@ -203,16 +203,19 @@ function isOverdue(dueDate: string) {
       <!-- ===================== QUIZ LIST ===================== -->
       <LoadingSpinner v-if="store.loading && store.quizzes.length === 0" />
 
-      <EmptyState
-        v-else-if="store.quizzes.length === 0"
-        title="No quizzes yet"
-        description="Create your first quiz to engage with your students."
-        icon="📝"
-      >
-        <button class="btn btn-primary mt-4" @click="navigateToCreate">
-          + Create Quiz
+      <div v-else-if="store.quizzes.length === 0" class="empty-state-enhanced">
+        <div class="empty-state-icon-wrapper">
+          <span class="empty-state-icon">📝</span>
+        </div>
+        <h3 class="empty-state-title">No quizzes yet</h3>
+        <p class="empty-state-desc">Create your first quiz to engage with your students.</p>
+        <button class="btn btn-primary mt-6" @click="navigateToCreate">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 5v14" /><path d="M5 12h14" />
+          </svg>
+          Create Quiz
         </button>
-      </EmptyState>
+      </div>
 
       <EmptyState
         v-else-if="filteredQuizzes.length === 0"
@@ -404,8 +407,8 @@ function isOverdue(dueDate: string) {
   width: 52px;
   height: 52px;
   border-radius: 14px;
-  background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
-  box-shadow: 0 8px 24px rgba(13, 148, 136, 0.25);
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.25);
   flex-shrink: 0;
 }
 
@@ -450,25 +453,25 @@ function isOverdue(dueDate: string) {
 }
 
 .btn:focus-visible {
-  outline: 2px solid #14b8a6;
+  outline: 2px solid #3b82f6;
   outline-offset: 2px;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #0d9488, #14b8a6);
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
   color: #ffffff;
-  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.25);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
 }
 
 .btn-primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(13, 148, 136, 0.4);
-  background: linear-gradient(135deg, #0f766e, #0d9488);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+  background: linear-gradient(135deg, #1d4ed8, #2563eb);
 }
 
 .btn-primary:active {
   transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.3);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
 }
 
 .btn-icon {
@@ -507,7 +510,7 @@ function isOverdue(dueDate: string) {
 .stat-value {
   font-size: 1.75rem;
   font-weight: 800;
-  color: #0d9488;
+  color: #2563eb;
   line-height: 1.1;
 }
 
@@ -570,8 +573,8 @@ function isOverdue(dueDate: string) {
 }
 
 .search-input:focus {
-  border-color: #14b8a6;
-  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 /* Filter buttons */
@@ -617,8 +620,8 @@ function isOverdue(dueDate: string) {
 }
 
 .filter-btn--published.filter-btn--active {
-  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
-  color: #065f46;
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  color: #1e40af;
 }
 
 /* ============================================================
@@ -674,8 +677,8 @@ function isOverdue(dueDate: string) {
 }
 
 .badge--published {
-  background: #d1fae5;
-  color: #065f46;
+  background: #dbeafe;
+  color: #1e40af;
 }
 
 .badge--overdue {
@@ -770,8 +773,8 @@ function isOverdue(dueDate: string) {
 }
 
 .card-action-btn--view:hover {
-  border-color: #14b8a6;
-  color: #0d9488;
+  border-color: #3b82f6;
+  color: #2563eb;
 }
 
 .card-action-btn--delete:hover {
@@ -821,8 +824,8 @@ function isOverdue(dueDate: string) {
 }
 
 .nav-btn--questions:hover {
-  background: #f0fdfa;
-  color: #0d9488;
+  background: #eff6ff;
+  color: #2563eb;
 }
 
 .nav-btn--rankings:hover {
@@ -833,6 +836,55 @@ function isOverdue(dueDate: string) {
 .nav-btn--report:hover {
   background: #f0f9ff;
   color: #0369a1;
+}
+
+/* ============================================================
+   ENHANCED EMPTY STATE
+   ============================================================ */
+.empty-state-enhanced {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  border: 2px dashed #cbd5e1;
+  border-radius: 16px;
+  background: #ffffff;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.empty-state-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.empty-state-icon {
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
+.empty-state-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 0.75rem;
+  letter-spacing: -0.02em;
+}
+
+.empty-state-desc {
+  font-size: 1rem;
+  color: #475569;
+  margin: 0 0 2rem;
+  max-width: 420px;
+  line-height: 1.6;
 }
 
 /* ============================================================
