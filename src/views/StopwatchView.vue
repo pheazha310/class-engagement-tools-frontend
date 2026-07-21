@@ -1,0 +1,79 @@
+<script setup lang="ts">
+import Navbar from '@/components/Navbar.vue'
+import Stopwatch from '@/components/Stopwatch.vue'
+</script>
+
+<template>
+  <div class="stopwatch-view">
+    <Navbar />
+
+    <section class="stopwatch-hero">
+      <div class="container">
+        <!-- <div class="hero-copy">
+          <h1>Stopwatch</h1>
+        </div> -->
+      </div>
+    </section>
+
+    <div class="container">
+      <Stopwatch />
+      <div class="back-link">
+        <RouterLink to="/tools" class="btn-back">← Back to all tools</RouterLink>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.timer-hero {
+  background: linear-gradient(135deg, #4f46e5 0%, #64748b 100%);
+  color: white;
+  padding: 90px 20px 60px;
+  text-align: center;
+}
+
+.stopwatch-hero {
+  color: white;
+  padding: 90px 20px 60px;
+  text-align: center;
+}
+
+.hero-copy {
+  font-size: 44px;
+  margin-bottom: 16px;
+  font-weight: 800;
+}
+
+.hero-copy h1 {
+  font-size: 44px;
+  margin-bottom: 16px;
+  font-weight: 800;
+}
+.hero-copy p {
+  font-size: 18px;
+  line-height: 1.8;
+  opacity: 0.95;
+}
+.back-link {
+  display: flex;
+  justify-content: flex-start;
+  margin: 32px 0 48px;
+  
+}
+
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  padding: 12px 22px;
+  border-radius: 10px;
+  border: 1.5px solid #5a5a5a;
+  color: #080808;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.12);
+  transition: all 0.2s ease;
+}
+
+.btn-back:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+</style>

@@ -21,8 +21,9 @@ export const categories: Category[] = [
     slug: 'random',
     tools: [
       { title: 'Random Wheel', slug: 'random-wheel', icon: '🎡', description: 'Choose students fairly with smooth spinning animations and reusable wheels.', category: 'Random Tools', route: '/wheel' },
+      { title: 'Card Picker', slug: 'card-picker', icon: '🃏', description: 'Flip through student cards with a visually interactive picker — tap to select.', category: 'Random Tools', route: '/card-picker' },
       { title: 'Student Picker', slug: 'student-picker', icon: '🎯', description: 'Pick one or several learners at once with visual card and lucky draw modes.', category: 'Random Tools', route: '/student-picker' },
-      { title: 'Group Generator', slug: 'group-generator', icon: '👥', description: 'Create balanced teams quickly and share the groups with your class.', category: 'Random Tools' },
+      { title: 'Group Generator', slug: 'group-generator', icon: '👥', description: 'Create balanced teams quickly and share the groups with your class.', category: 'Random Tools', route: '/group-generator' },
     ]
   },
   {
@@ -30,7 +31,7 @@ export const categories: Category[] = [
     icon: '📝',
     slug: 'quiz',
     tools: [
-      { title: 'Classroom Quiz', slug: 'classroom-quiz', icon: '📝', description: 'Create quizzes with multiple formats and display live rankings.', category: 'Quiz & Assessment' },
+      { title: 'Classroom Quiz', slug: 'classroom-quiz', icon: '📝', description: 'Create quizzes with multiple formats and display live rankings.', category: 'Quiz & Assessment', route: '/quizzes' },
       { title: 'Live Voting', slug: 'live-voting', icon: '🗳️', description: 'Collect instant feedback with polls that work on any device.', category: 'Quiz & Assessment' },
       { title: 'Exit Ticket', slug: 'exit-ticket', icon: '🎫', description: 'Quick formative assessments to check student understanding.', category: 'Quiz & Assessment' },
     ]
@@ -41,6 +42,7 @@ export const categories: Category[] = [
     slug: 'classroom',
     tools: [
       { title: 'Timer', slug: 'timer', icon: '⏱️', description: 'Run countdowns, stopwatches, and Pomodoro sessions with alerts.', category: 'Classroom Control' },
+      { title: 'Stopwatch', slug: 'stopwatch', icon: '⏱️', description: 'Measure activity duration with an easy-start stopwatch.', category: 'Classroom Control', route: '/stopwatch' },
       { title: 'Soundboard', slug: 'soundboard', icon: '🔊', description: 'Bring excitement to lessons with applause, countdown, and success sounds.', category: 'Classroom Control' },
     ]
   },

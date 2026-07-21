@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import type { WheelTheme } from '@/types/wheel'
 import { generateShareToken, type ShareTokenResponse } from '@/services/wheel'
+
+const router = useRouter()
 
 const props = defineProps<{
   modelValue: boolean
@@ -65,7 +67,15 @@ async function generateLink() {
     shareData.value = data
     emit('shared', data)
   } catch (err) {
-    localError.value = err instanceof Error ? err.message : 'Failed to generate share link'
+    if (err instanceof Error && err.name === 'AuthenticationError') {
+      localError.value = 'Please log in to share wheels'
+      setTimeout(() => {
+        close()
+        router.push('/login')
+      }, 1500)
+    } else {
+      localError.value = err instanceof Error ? err.message : 'Failed to generate share link'
+    }
   } finally {
     generating.value = false
   }

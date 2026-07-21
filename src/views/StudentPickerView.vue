@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import Navbar from '@/components/Navbar.vue'
 
 const router = useRouter()
 
@@ -30,6 +29,8 @@ const features: FeatureCard[] = [
     gradient: 'linear-gradient(135deg, #ec4899, #f472b6)',
     icon: 'multiple',
     actionLabel: 'Pick Selected',
+    route: '/multiple-student-picker',
+    isLive: true,
   },
   {
     title: 'Lucky Draw',
@@ -37,13 +38,17 @@ const features: FeatureCard[] = [
     gradient: 'linear-gradient(135deg, #f59e0b, #f97316)',
     icon: 'lucky',
     actionLabel: 'Spin!',
+    route: '/lucky-draw',
+    isLive: true,
   },
   {
     title: 'Card Picker',
-    description: 'Flip animated cards to reveal selected students with a game-like feel.',
+    description: 'Flip through student cards with a visually interactive picker — tap to select.',
     gradient: 'linear-gradient(135deg, #14b8a6, #06b6d4)',
     icon: 'card',
-    actionLabel: 'Flip Card',
+    actionLabel: 'Pick Cards',
+    route: '/card-picker',
+    isLive: true,
   },
   {
     title: 'Image Picker',
@@ -63,8 +68,6 @@ function openFeature(feature: FeatureCard) {
 
 <template>
   <div class="dashboard">
-    <Navbar />
-
     <!-- Header -->
     <header class="header">
       <div class="header__inner">
