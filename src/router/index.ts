@@ -11,6 +11,7 @@ import Icebreakers from '@/views/Icebreakers.vue'
 import TwoTruthsOneLie from '@/views/TwoTruthsOneLie.vue'
 import WouldYouRather from '@/views/WouldYouRather.vue'
 import SpinTheQuestion from '@/views/SpinTheQuestion.vue'
+import SpinTheQuestionResults from '@/views/SpinTheQuestionResults.vue'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -230,6 +231,11 @@ const routes: RouteRecordRaw[] = [
     path: '/tools/icebreakers/spin-the-question',
     name: 'spin-the-question',
     component: SpinTheQuestion,
+  },
+  {
+    path: '/tools/icebreakers/spin-the-question/results',
+    name: 'spin-the-question-results',
+    component: SpinTheQuestionResults,
   },
 ]
 

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { RouterLink } from 'vue-router'
+import Navbar from '@/components/Navbar.vue'
 
 // Game state
 const gamePhase = ref<'setup' | 'playing' | 'revealed'>('setup')
@@ -75,28 +76,7 @@ const toggleLie = (id: number) => {
 
 <template>
   <div class="two-truths-one-lie-page">
-    <!-- Navigation Bar -->
-    <nav class="navbar">
-      <div class="nav-container">
-        <div class="nav-logo">
-          <RouterLink to="/" class="logo-link">
-            <img src="@/assets/photo_logo.jpg" alt="Graduation" class="image" />
-          </RouterLink>
-        </div>
-
-        <ul class="nav-menu">
-          <li><RouterLink to="/" class="nav-link">Home</RouterLink></li>
-          <li><RouterLink to="/about" class="nav-link">About</RouterLink></li>
-          <li><RouterLink to="/" class="nav-link">Tools</RouterLink></li>
-          <li><RouterLink to="/contact" class="nav-link">Contact</RouterLink></li>
-        </ul>
-
-        <div class="nav-buttons">
-          <RouterLink to="/login" class="btn btn-login">Login</RouterLink>
-          <RouterLink to="/register" class="btn btn-register">Register</RouterLink>
-        </div>
-      </div>
-    </nav>
+    <Navbar />
 
     <!-- Activity Header -->
     <section class="activity-header">
@@ -291,7 +271,7 @@ const toggleLie = (id: number) => {
             </div>
 
             <div class="image-card">
-              <img src="@/assets/images/Me.jpg" alt="Students collaborating" class="sidebar-image" />
+              <img src="@/assets/images/Two.webp" alt="Students collaborating" class="sidebar-image" />
               <div class="image-overlay">
                 <p class="image-text">Build classroom community through sharing!</p>
               </div>
@@ -352,18 +332,13 @@ const toggleLie = (id: number) => {
   box-sizing: border-box;
 }
 
-.image {
-  width: 180px;
-  height: auto;
-  display: block;
-}
-
 .two-truths-one-lie-page {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   line-height: 1.6;
   color: #1f2937;
   background: #f9fafb;
   min-height: 100vh;
+  padding-top: 64px;
 }
 
 .container {
@@ -383,75 +358,6 @@ const toggleLie = (id: number) => {
   border: none;
   cursor: pointer;
   transition: all 0.3s ease;
-}
-
-.btn-login {
-  background: transparent;
-  color: #6366f1;
-  border: 1px solid #6366f1;
-}
-
-.btn-login:hover {
-  background: #6366f1;
-  color: white;
-}
-
-.btn-register {
-  background: #6366f1;
-  color: white;
-}
-
-.btn-register:hover {
-  background: #4f46e5;
-}
-
-/* Navigation Bar */
-.navbar {
-  background: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-}
-
-.nav-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 16px 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.nav-logo {
-  display: flex;
-  align-items: center;
-}
-
-.logo-link {
-  text-decoration: none;
-}
-
-.nav-menu {
-  display: flex;
-  list-style: none;
-  gap: 32px;
-}
-
-.nav-link {
-  color: #6b7280;
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.3s ease;
-}
-
-.nav-link:hover {
-  color: #6366f1;
-}
-
-.nav-buttons {
-  display: flex;
-  gap: 12px;
 }
 
 /* Activity Header */
@@ -1070,10 +976,6 @@ const toggleLie = (id: number) => {
 }
 
 @media (max-width: 768px) {
-  .nav-menu {
-    display: none;
-  }
-
   .activity-title {
     font-size: 32px;
   }
@@ -1117,15 +1019,6 @@ const toggleLie = (id: number) => {
 }
 
 @media (max-width: 480px) {
-  .nav-buttons {
-    gap: 8px;
-  }
-
-  .btn {
-    padding: 10px 16px;
-    font-size: 14px;
-  }
-
   .activity-header {
     padding: 40px 20px;
   }

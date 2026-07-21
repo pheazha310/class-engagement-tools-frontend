@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
+import Navbar from '@/components/Navbar.vue'
 
 const activities = [
   {
@@ -59,28 +60,7 @@ const stats = [
 
 <template>
   <div class="icebreakers-page">
-    <!-- Navigation Bar -->
-    <nav class="navbar">
-      <div class="nav-container">
-        <div class="nav-logo">
-          <RouterLink to="/" class="logo-link">
-            <img src="@/assets/photo_logo.jpg" alt="Graduation" class="image" />
-          </RouterLink>
-        </div>
-
-        <ul class="nav-menu">
-          <li><RouterLink to="/" class="nav-link">Home</RouterLink></li>
-          <li><RouterLink to="/about" class="nav-link">About</RouterLink></li>
-          <li><RouterLink to="/" class="nav-link">Tools</RouterLink></li>
-          <li><RouterLink to="/contact" class="nav-link">Contact</RouterLink></li>
-        </ul>
-
-        <div class="nav-buttons">
-          <RouterLink to="/login" class="btn btn-login">Login</RouterLink>
-          <RouterLink to="/register" class="btn btn-register">Register</RouterLink>
-        </div>
-      </div>
-    </nav>
+    <Navbar />
 
     <!-- Module Header -->
     <section class="module-header">
@@ -130,6 +110,14 @@ const stats = [
                 >
                   Launch
                 </RouterLink>
+                <RouterLink
+                  v-else-if="activity.id === 3"
+                  to="/tools/icebreakers/spin-the-question/results"
+                  class="results-btn"
+                  :style="{ backgroundColor: activity.color }"
+                >
+                  See Results
+                </RouterLink>
                 <button
                   v-else
                   class="launch-btn"
@@ -164,106 +152,19 @@ const stats = [
   box-sizing: border-box;
 }
 
-.image {
-  width: 180px;
-  height: auto;
-  display: block;
-}
-
 .icebreakers-page {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   line-height: 1.6;
   color: #1f2937;
   background: #f9fafb;
   min-height: 100vh;
+  padding-top: 64px;
 }
 
 .container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
-}
-
-/* Buttons */
-.btn {
-  display: inline-block;
-  padding: 12px 24px;
-  border-radius: 8px;
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 16px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.btn-login {
-  background: transparent;
-  color: #6366f1;
-  border: 1px solid #6366f1;
-}
-
-.btn-login:hover {
-  background: #6366f1;
-  color: white;
-}
-
-.btn-register {
-  background: #6366f1;
-  color: white;
-}
-
-.btn-register:hover {
-  background: #4f46e5;
-}
-
-/* Navigation Bar */
-.navbar {
-  background: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-}
-
-.nav-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 16px 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.nav-logo {
-  display: flex;
-  align-items: center;
-}
-
-.logo-link {
-  text-decoration: none;
-}
-
-.nav-menu {
-  display: flex;
-  list-style: none;
-  gap: 32px;
-}
-
-.nav-link {
-  color: #6b7280;
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.3s ease;
-}
-
-.nav-link:hover {
-  color: #6366f1;
-}
-
-.nav-buttons {
-  display: flex;
-  gap: 12px;
 }
 
 /* Module Header */
@@ -320,17 +221,18 @@ const stats = [
 }
 
 .activity-card {
-  border-radius: 16px;
+  border-radius: 20px;
   padding: 32px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   display: flex;
   flex-direction: column;
+  border: 1px solid rgba(0, 0, 0, 0.04);
 }
 
 .activity-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  transform: translateY(-6px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
 }
 
 .activity-icon {
@@ -342,10 +244,7 @@ const stats = [
   justify-content: center;
   margin-bottom: 20px;
   color: white;
-}
-
-.icon-emoji {
-  font-size: 32px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .activity-content {
@@ -359,31 +258,48 @@ const stats = [
   font-weight: 700;
   margin-bottom: 12px;
   color: #1f2937;
+  line-height: 1.3;
 }
 
 .activity-description {
   color: #4b5563;
   font-size: 14px;
-  line-height: 1.6;
-  margin-bottom: 20px;
+  line-height: 1.7;
+  margin-bottom: 24px;
   flex: 1;
 }
 
-.launch-btn {
+.launch-btn,
+.results-btn {
   padding: 12px 24px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   color: white;
   font-weight: 600;
-  font-size: 16px;
+  font-size: 15px;
   cursor: pointer;
   transition: all 0.3s ease;
   align-self: flex-start;
+  text-decoration: none;
+  display: inline-block;
 }
 
-.launch-btn:hover {
+.launch-btn:hover,
+.results-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.activities-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+@media (max-width: 768px) {
+  .activities-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Stats Section */
@@ -423,10 +339,6 @@ const stats = [
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .nav-menu {
-    display: none;
-  }
-
   .module-title {
     font-size: 32px;
   }
@@ -449,15 +361,6 @@ const stats = [
 }
 
 @media (max-width: 480px) {
-  .nav-buttons {
-    gap: 8px;
-  }
-
-  .btn {
-    padding: 10px 16px;
-    font-size: 14px;
-  }
-
   .module-header {
     padding: 60px 20px;
   }

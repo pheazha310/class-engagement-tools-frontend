@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
+import Navbar from '@/components/Navbar.vue'
+
+const router = useRouter()
 
 const gamePhase = ref<'ready' | 'spinning' | 'selected'>('ready')
 
@@ -58,25 +61,7 @@ onMounted(() => {
 
 <template>
   <div class="spin-the-question-page">
-    <nav class="navbar">
-      <div class="nav-container">
-        <div class="nav-logo">
-          <RouterLink to="/" class="logo-link">
-            <img src="@/assets/photo_logo.jpg" alt="Graduation" class="image" />
-          </RouterLink>
-        </div>
-        <ul class="nav-menu">
-          <li><RouterLink to="/" class="nav-link">Home</RouterLink></li>
-          <li><RouterLink to="/about" class="nav-link">About</RouterLink></li>
-          <li><RouterLink to="/" class="nav-link">Tools</RouterLink></li>
-          <li><RouterLink to="/contact" class="nav-link">Contact</RouterLink></li>
-        </ul>
-        <div class="nav-buttons">
-          <RouterLink to="/login" class="btn btn-login">Login</RouterLink>
-          <RouterLink to="/register" class="btn btn-register">Register</RouterLink>
-        </div>
-      </div>
-    </nav>
+    <Navbar />
 
     <section class="activity-header">
       <div class="container">
@@ -105,9 +90,10 @@ onMounted(() => {
 
               <div class="wheel-container">
                 <div class="wheel-wrapper">
+                  <div class="wheel-pointer"></div>
                   <div class="wheel" :style="{ transform: `rotate(${wheelRotation}deg)` }">
                     <div v-for="(question, index) in questions" :key="question.id" class="wheel-segment" :style="{ transform: `rotate(${(index * 360) / questions.length}deg)`, background: wheelColors[index % wheelColors.length] }">
-                      <span class="segment-text">{{ question.text.substring(0, 15) }}...</span>
+                      <span class="segment-text">{{ question.text }}</span>
                     </div>
                   </div>
                   <button class="spin-button" :disabled="isSpinning" :class="{ 'disabled': isSpinning }" @click="spinWheel">
@@ -130,6 +116,10 @@ onMounted(() => {
                       Next Student
                       <span class="arrow">→</span>
                     </button>
+                    <RouterLink to="/tools/icebreakers/spin-the-question/results" class="btn-view-results">
+                      View Results
+                      <span class="icon">📊</span>
+                    </RouterLink>
                     <button class="btn-spin-again" @click="spinAgain">
                       <span class="icon">🔄</span>
                       Spin Again
@@ -138,7 +128,7 @@ onMounted(() => {
 
                   <div class="session-info">
                     <div class="info-item">
-                      <span class="info-label">TIME UNIT</span>
+                      <span class="info-label">TIME LIMIT</span>
                       <span class="info-value">02:00</span>
                     </div>
                     <div class="info-item">
@@ -239,18 +229,13 @@ onMounted(() => {
   box-sizing: border-box;
 }
 
-.image {
-  width: 180px;
-  height: auto;
-  display: block;
-}
-
 .spin-the-question-page {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   line-height: 1.6;
   color: #1f2937;
   background: #f9fafb;
   min-height: 100vh;
+  padding-top: 64px;
 }
 
 .container {
@@ -259,86 +244,7 @@ onMounted(() => {
   padding: 0 20px;
 }
 
-.btn {
-  display: inline-block;
-  padding: 12px 24px;
-  border-radius: 8px;
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 16px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.btn-login {
-  background: transparent;
-  color: #6366f1;
-  border: 1px solid #6366f1;
-}
-
-.btn-login:hover {
-  background: #6366f1;
-  color: white;
-}
-
-.btn-register {
-  background: #6366f1;
-  color: white;
-}
-
-.btn-register:hover {
-  background: #4f46e5;
-}
-
-.navbar {
-  background: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-}
-
-.nav-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 16px 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.nav-logo {
-  display: flex;
-  align-items: center;
-}
-
-.logo-link {
-  text-decoration: none;
-}
-
-.nav-menu {
-  display: flex;
-  list-style: none;
-  gap: 32px;
-}
-
-.nav-link {
-  color: #6b7280;
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.3s ease;
-}
-
-.nav-link:hover {
-  color: #6366f1;
-}
-
-.nav-buttons {
-  display: flex;
-  gap: 12px;
-}
-
+/* Activity Header */
 .activity-header {
   background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
   color: white;
@@ -401,6 +307,7 @@ onMounted(() => {
   line-height: 1.6;
 }
 
+/* Main Content */
 .main-content {
   padding: 60px 20px;
 }
@@ -412,6 +319,7 @@ onMounted(() => {
   align-items: start;
 }
 
+/* Activity Area */
 .activity-area {
   min-width: 0;
 }
@@ -437,6 +345,7 @@ onMounted(() => {
   font-size: 28px;
 }
 
+/* Wheel */
 .wheel-container {
   display: flex;
   justify-content: center;
@@ -448,6 +357,20 @@ onMounted(() => {
   position: relative;
   width: 400px;
   height: 400px;
+}
+
+.wheel-pointer {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 20px solid transparent;
+  border-right: 20px solid transparent;
+  border-top: 40px solid #1f2937;
+  z-index: 20;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 .wheel {
@@ -478,12 +401,14 @@ onMounted(() => {
   position: absolute;
   transform: rotate(90deg) translateX(-50%);
   color: white;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   text-align: center;
-  width: 100px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  width: 120px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .spin-button {
@@ -628,6 +553,31 @@ onMounted(() => {
   font-size: 20px;
 }
 
+.btn-view-results {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 32px;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.btn-view-results:hover {
+  background: #059669;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.btn-view-results .icon {
+  font-size: 20px;
+}
+
 .session-info {
   display: flex;
   justify-content: center;
@@ -666,37 +616,6 @@ onMounted(() => {
   font-size: 18px;
   color: #6b7280;
   font-style: italic;
-}
-
-.action-buttons {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-start;
-}
-
-.btn-spin-again {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 14px 32px;
-  background: #6366f1;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.btn-spin-again:hover {
-  background: #4f46e5;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-}
-
-.btn-spin-again .icon {
-  font-size: 20px;
 }
 
 .sidebar {
@@ -928,10 +847,6 @@ onMounted(() => {
     width: 80px;
     height: 80px;
     font-size: 16px;
-  }
-
-  .nav-menu {
-    display: none;
   }
 
   .stats-grid {
