@@ -326,6 +326,11 @@ const router = createRouter({
 router.beforeEach((to) => {
   const authStore = useAuthStore()
 
+  // Allow access to homepage without authentication
+  if (to.name === 'home') {
+    return true
+  }
+
   if (to.meta.requiresAuth && !authStore.user) {
     return '/login'
   }
