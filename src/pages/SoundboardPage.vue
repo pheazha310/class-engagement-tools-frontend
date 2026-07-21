@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { fetchSounds, playSound, fetchPlayHistory, type Sound, type SoundPlayHistory } from '@/services/sound'
-import { playSynthSound } from '@/utils/soundSynthesizer'
+import { playSynthSound, stopAll, setVolume, getVolume } from '@/utils/soundSynthesizer'
 import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
@@ -9,10 +9,18 @@ const authStore = useAuthStore()
 const sounds = ref<Sound[]>([])
 const history = ref<SoundPlayHistory[]>([])
 const loading = ref(true)
-const playingId = ref<string | null>(null)
 const error = ref<string | null>(null)
 const showHistory = ref(false)
 const historyLoading = ref(false)
+
+// Playback state
+const currentSound = ref<Sound | null>(null)
+const isPlaying = ref(false)
+const volume = ref(getVolume())
+const volumeBeforeMute = ref(0.5)
+const progress = ref(0)
+
+let progressInterval: ReturnType<typeof setInterval> | null = null
 
 const categories = computed(() => {
   const map = new Map<string, Sound[]>()
@@ -22,6 +30,11 @@ const categories = computed(() => {
     map.get(cat)!.push(sound)
   }
   return Array.from(map.entries())
+})
+
+const currentCategoryColor = computed(() => {
+  if (!currentSound.value) return '#3B82F6'
+  return getCategoryColor(currentSound.value.category || '')
 })
 
 async function loadSounds() {
@@ -39,12 +52,38 @@ async function loadSounds() {
 
 onMounted(loadSounds)
 
+onUnmounted(() => {
+  stopAll()
+  if (progressInterval) clearInterval(progressInterval)
+})
+
+function startProgress(durationMs: number) {
+  const start = Date.now()
+  if (progressInterval) clearInterval(progressInterval)
+  progress.value = 0
+  progressInterval = setInterval(() => {
+    const elapsed = Date.now() - start
+    progress.value = Math.min(100, (elapsed / durationMs) * 100)
+    if (progress.value >= 100) {
+      if (progressInterval) clearInterval(progressInterval)
+      progressInterval = null
+    }
+  }, 30)
+}
+
+function stopProgress() {
+  if (progressInterval) {
+    clearInterval(progressInterval)
+    progressInterval = null
+  }
+  progress.value = 0
+}
+
 async function handlePlay(sound: Sound) {
-  if (playingId.value) return
-  playingId.value = sound.id
+  if (isPlaying.value && currentSound.value?.id === sound.id) return
 
   // 1. Play locally via synthesized sound
-  const durationMs = playSynthSound(sound.name)
+  const { duration } = playSynthSound(sound.name)
 
   // 2. Broadcast to classroom via API
   try {
@@ -53,31 +92,44 @@ async function handlePlay(sound: Sound) {
     console.error('Failed to trigger sound broadcast:', e)
   }
 
-  // 3. Auto-reset playing state after the sound finishes
-  setTimeout(() => {
-    if (playingId.value === sound.id) {
-      playingId.value = null
-    }
-  }, durationMs + 200)
+  // 3. Update UI state
+  currentSound.value = sound
+  isPlaying.value = true
+  startProgress(duration)
 }
 
-async function toggleHistory() {
-  showHistory.value = !showHistory.value
-  if (showHistory.value && history.value.length === 0) {
-    historyLoading.value = true
-    try {
-      const result = await fetchPlayHistory()
-      history.value = result.data
-    } catch (e) {
-      console.error('Failed to load history:', e)
-    } finally {
-      historyLoading.value = false
-    }
+function handleStop() {
+  stopAll()
+  isPlaying.value = false
+  stopProgress()
+  // Keep currentSound visible so users can replay
+}
+
+function handleReplay() {
+  if (!currentSound.value) return
+  handlePlay(currentSound.value)
+}
+
+function handleVolumeChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  const val = parseFloat(input.value)
+  volume.value = val
+  setVolume(val)
+}
+
+function toggleMute() {
+  if (volume.value === 0) {
+    volume.value = volumeBeforeMute.value
+    setVolume(volumeBeforeMute.value)
+  } else {
+    volumeBeforeMute.value = volume.value
+    volume.value = 0
+    setVolume(0)
   }
 }
 
-function isPlaying(soundId: string): boolean {
-  return playingId.value === soundId
+function isSoundPlaying(soundId: string): boolean {
+  return isPlaying.value && currentSound.value?.id === soundId
 }
 
 function getCategoryEmoji(category: string): string {
@@ -102,6 +154,21 @@ function getCategoryColor(category: string): string {
     'Fun': '#EC4899',
   }
   return colorMap[category] || '#6B7280'
+}
+
+async function toggleHistory() {
+  showHistory.value = !showHistory.value
+  if (showHistory.value && history.value.length === 0) {
+    historyLoading.value = true
+    try {
+      const result = await fetchPlayHistory()
+      history.value = result.data
+    } catch (e) {
+      console.error('Failed to load history:', e)
+    } finally {
+      historyLoading.value = false
+    }
+  }
 }
 </script>
 
@@ -183,7 +250,12 @@ function getCategoryColor(category: string): string {
 
       <!-- Sound grid -->
       <div v-else class="sb-content">
-        <div v-for="[category, categorySounds] in categories" :key="category" class="sb-category">
+        <div
+          v-for="[category, categorySounds] in categories"
+          :key="category"
+          class="sb-category"
+          :class="{ 'sb-category--now-playing': currentSound && categorySounds.some(s => s.id === currentSound?.id) }"
+        >
           <div class="sb-category__header">
             <h2 class="sb-category__title">
               <span class="sb-category__emoji">{{ getCategoryEmoji(category) }}</span>
@@ -197,15 +269,18 @@ function getCategoryColor(category: string): string {
               v-for="sound in categorySounds"
               :key="sound.id"
               class="sb-sound-btn"
-              :class="{ 'sb-sound-btn--playing': isPlaying(sound.id) }"
+              :class="{
+                'sb-sound-btn--playing': isSoundPlaying(sound.id),
+                'sb-sound-btn--was-playing': !isPlaying && currentSound?.id === sound.id,
+              }"
               :style="{ '--accent': getCategoryColor(category) }"
               @click="handlePlay(sound)"
-              :disabled="!!playingId"
+              :disabled="isPlaying && currentSound?.id !== sound.id"
               :aria-label="'Play ' + sound.name"
             >
               <div class="sb-sound-btn__icon-wrap">
                 <span class="sb-sound-btn__icon">{{ sound.icon || '🔊' }}</span>
-                <div v-if="isPlaying(sound.id)" class="sb-sound-btn__wave">
+                <div v-if="isSoundPlaying(sound.id)" class="sb-sound-btn__wave">
                   <span /><span /><span /><span />
                 </div>
               </div>
@@ -216,7 +291,7 @@ function getCategoryColor(category: string): string {
 
               <!-- Playing overlay -->
               <Transition name="fade">
-                <div v-if="isPlaying(sound.id)" class="sb-sound-btn__overlay">
+                <div v-if="isSoundPlaying(sound.id)" class="sb-sound-btn__overlay">
                   <svg class="sb-sound-btn__pulse" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <polygon points="5 3 19 12 5 21 5 3" />
                   </svg>
@@ -235,6 +310,101 @@ function getCategoryColor(category: string): string {
         </div>
       </div>
     </main>
+
+    <!-- ═══════════════════════════════════
+         Now Playing Bar
+         ═══════════════════════════════════ -->
+    <Transition name="bar-up">
+      <div v-if="currentSound" class="sb-now-playing" :style="{ '--accent': currentCategoryColor }">
+        <div class="sb-now-playing__bg" />
+
+        <!-- Progress bar -->
+        <div class="sb-now-playing__progress-track">
+          <div class="sb-now-playing__progress-fill" :style="{ width: progress + '%' }" />
+        </div>
+
+        <div class="sb-now-playing__inner">
+          <!-- Sound info -->
+          <div class="sb-now-playing__info">
+            <span class="sb-now-playing__icon">{{ currentSound.icon || '🔊' }}</span>
+            <div class="sb-now-playing__meta">
+              <span class="sb-now-playing__name">{{ currentSound.name }}</span>
+              <span class="sb-now-playing__status">
+                {{ isPlaying ? 'Now Playing' : 'Ready' }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Controls -->
+          <div class="sb-now-playing__controls">
+            <!-- Replay -->
+            <button
+              class="sb-ctrl-btn"
+              :disabled="isPlaying"
+              @click="handleReplay"
+              title="Replay"
+              aria-label="Replay"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="1 4 1 10 7 10" />
+                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+              </svg>
+            </button>
+
+            <!-- Play / Stop -->
+            <button
+              class="sb-ctrl-btn sb-ctrl-btn--play"
+              @click="isPlaying ? handleStop() : handleReplay()"
+              :title="isPlaying ? 'Stop' : 'Play'"
+              :aria-label="isPlaying ? 'Stop' : 'Play'"
+            >
+              <svg v-if="isPlaying" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="6" y="4" width="4" height="16" rx="1" />
+                <rect x="14" y="4" width="4" height="16" rx="1" />
+              </svg>
+              <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3" />
+              </svg>
+            </button>
+
+            <!-- Volume -->
+            <div class="sb-volume">
+              <button
+                class="sb-ctrl-btn sb-ctrl-btn--vol"
+                @click="toggleMute"
+                :title="volume === 0 ? 'Unmute' : 'Mute'"
+                :aria-label="volume === 0 ? 'Unmute' : 'Mute'"
+              >
+                <svg v-if="volume === 0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                  <line x1="23" y1="9" x2="17" y2="15" />
+                  <line x1="17" y1="9" x2="23" y2="15" />
+                </svg>
+                <svg v-else-if="volume < 0.5" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                </svg>
+                <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
+                </svg>
+              </button>
+              <input
+                type="range"
+                class="sb-volume__slider"
+                min="0"
+                max="1"
+                step="0.01"
+                :value="volume"
+                @input="handleVolumeChange"
+                aria-label="Volume"
+              />
+              <span class="sb-volume__label">{{ Math.round(volume * 100) }}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -293,9 +463,7 @@ function getCategoryColor(category: string): string {
   gap: 0.5rem;
 }
 
-.sb-header__icon {
-  font-size: 1.4rem;
-}
+.sb-header__icon { font-size: 1.4rem; }
 
 .sb-header__desc {
   margin: 0.35rem 0 0;
@@ -304,9 +472,7 @@ function getCategoryColor(category: string): string {
   font-weight: 400;
 }
 
-.sb-header__actions {
-  flex-shrink: 0;
-}
+.sb-header__actions { flex-shrink: 0; }
 
 /* ═══════════════════════════════════
    Buttons
@@ -326,9 +492,7 @@ function getCategoryColor(category: string): string {
   white-space: nowrap;
 }
 
-.sb-btn:active {
-  transform: scale(0.97);
-}
+.sb-btn:active { transform: scale(0.97); }
 
 .sb-btn--primary {
   background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
@@ -388,10 +552,7 @@ function getCategoryColor(category: string): string {
   font-size: 0.85rem;
 }
 
-.sb-history__empty {
-  color: #9CA3AF;
-  font-size: 0.85rem;
-}
+.sb-history__empty { color: #9CA3AF; font-size: 0.85rem; }
 
 .sb-history__list {
   display: flex;
@@ -410,9 +571,7 @@ function getCategoryColor(category: string): string {
   animation: fade-in 0.3s ease-out;
 }
 
-.sb-history__icon {
-  font-size: 1rem;
-}
+.sb-history__icon { font-size: 1rem; }
 
 .sb-history__info {
   display: flex;
@@ -420,11 +579,7 @@ function getCategoryColor(category: string): string {
   gap: 0.05rem;
 }
 
-.sb-history__name {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #1F2937;
-}
+.sb-history__name { font-size: 0.8rem; font-weight: 600; color: #1F2937; }
 
 .sb-history__time {
   font-size: 0.7rem;
@@ -444,24 +599,29 @@ function getCategoryColor(category: string): string {
   max-width: 80rem;
   margin: 0 auto;
   padding: 2rem 2rem 7rem;
+  transition: padding-bottom 0.3s;
+}
+
+/* Extra space when now-playing bar is visible */
+.soundboard:has(.sb-now-playing) .sb-main {
+  padding-bottom: 7rem;
 }
 
 /* ═══════════════════════════════════
-   Loading
+   Loading & Error
    ═══════════════════════════════════ */
-.sb-loading {
+.sb-loading, .sb-error {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
   padding: 5rem 2rem;
+  text-align: center;
 }
 
-.sb-loading__text {
-  color: #6B7280;
-  font-size: 0.9rem;
-  margin: 0;
-}
+.sb-error__icon { font-size: 2.5rem; }
+.sb-error__title { font-size: 1.1rem; font-weight: 700; color: #1F2937; margin: 0; }
+.sb-error__text { color: #6B7280; font-size: 0.9rem; margin: 0 0 0.5rem; }
 
 .sb-spinner {
   width: 1.2rem;
@@ -472,53 +632,14 @@ function getCategoryColor(category: string): string {
   animation: spin 0.6s linear infinite;
 }
 
-.sb-spinner--lg {
-  width: 2rem;
-  height: 2rem;
-  border-width: 3px;
-}
+.sb-spinner--lg { width: 2rem; height: 2rem; border-width: 3px; }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* ═══════════════════════════════════
-   Error
-   ═══════════════════════════════════ */
-.sb-error {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 5rem 2rem;
-  text-align: center;
-}
-
-.sb-error__icon {
-  font-size: 2.5rem;
-}
-
-.sb-error__title {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #1F2937;
-  margin: 0;
-}
-
-.sb-error__text {
-  color: #6B7280;
-  font-size: 0.9rem;
-  margin: 0 0 0.5rem;
-}
+@keyframes spin { to { transform: rotate(360deg); } }
 
 /* ═══════════════════════════════════
    Category Section
    ═══════════════════════════════════ */
-.sb-content {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
+.sb-content { display: flex; flex-direction: column; gap: 2rem; }
 
 .sb-category__header {
   display: flex;
@@ -538,9 +659,7 @@ function getCategoryColor(category: string): string {
   margin: 0;
 }
 
-.sb-category__emoji {
-  font-size: 1.2rem;
-}
+.sb-category__emoji { font-size: 1.2rem; }
 
 .sb-category__count {
   font-size: 0.8rem;
@@ -561,15 +680,9 @@ function getCategoryColor(category: string): string {
   gap: 0.85rem;
 }
 
-@media (min-width: 1024px) {
-  .sb-grid { grid-template-columns: repeat(5, 1fr); }
-}
-@media (max-width: 1023px) and (min-width: 640px) {
-  .sb-grid { grid-template-columns: repeat(3, 1fr); }
-}
-@media (max-width: 380px) {
-  .sb-grid { grid-template-columns: repeat(2, 1fr); gap: 0.65rem; }
-}
+@media (min-width: 1024px) { .sb-grid { grid-template-columns: repeat(5, 1fr); } }
+@media (max-width: 1023px) and (min-width: 640px) { .sb-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 380px) { .sb-grid { grid-template-columns: repeat(2, 1fr); gap: 0.65rem; } }
 
 /* ═══════════════════════════════════
    Sound Button
@@ -600,20 +713,20 @@ function getCategoryColor(category: string): string {
   box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 4px 8px rgba(0,0,0,0.04);
 }
 
-.sb-sound-btn:active:not(:disabled) {
-  transform: translateY(-2px) scale(0.97);
-}
+.sb-sound-btn:active:not(:disabled) { transform: translateY(-2px) scale(0.97); }
 
-.sb-sound-btn:disabled {
-  cursor: not-allowed;
-  opacity: 0.7;
-}
+.sb-sound-btn:disabled { cursor: not-allowed; opacity: 0.7; }
 
 .sb-sound-btn--playing {
   border-color: var(--accent, #3B82F6) !important;
-  background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%);
+  background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%) !important;
   box-shadow: 0 0 0 2px var(--accent, #3B82F6), 0 12px 28px rgba(0,0,0,0.1) !important;
   transform: translateY(-4px) scale(1.02);
+}
+
+.sb-sound-btn--was-playing {
+  border-color: var(--accent, #3B82F6) !important;
+  background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%) !important;
 }
 
 /* Icon */
@@ -628,14 +741,9 @@ function getCategoryColor(category: string): string {
   transition: all 0.3s;
 }
 
-.sb-sound-btn__icon {
-  font-size: 1.6rem;
-  transition: transform 0.3s;
-}
+.sb-sound-btn__icon { font-size: 1.6rem; transition: transform 0.3s; }
 
-.sb-sound-btn--playing .sb-sound-btn__icon {
-  transform: scale(1.2);
-}
+.sb-sound-btn--playing .sb-sound-btn__icon { transform: scale(1.2); }
 
 /* Wave animation */
 .sb-sound-btn__wave {
@@ -665,7 +773,6 @@ function getCategoryColor(category: string): string {
   50% { transform: scaleY(1.2); opacity: 1; }
 }
 
-/* Name */
 .sb-sound-btn__name {
   font-size: 0.85rem;
   font-weight: 600;
@@ -677,11 +784,8 @@ function getCategoryColor(category: string): string {
   white-space: nowrap;
 }
 
-.sb-sound-btn--playing .sb-sound-btn__name {
-  color: var(--accent, #3B82F6);
-}
+.sb-sound-btn--playing .sb-sound-btn__name { color: var(--accent, #3B82F6); }
 
-/* Duration badge */
 .sb-sound-btn__duration {
   font-size: 0.7rem;
   font-weight: 500;
@@ -693,10 +797,7 @@ function getCategoryColor(category: string): string {
   transition: all 0.3s;
 }
 
-.sb-sound-btn--playing .sb-sound-btn__duration {
-  background: var(--accent, #3B82F6);
-  color: white;
-}
+.sb-sound-btn--playing .sb-sound-btn__duration { background: var(--accent, #3B82F6); color: white; }
 
 /* Playing overlay */
 .sb-sound-btn__overlay {
@@ -715,9 +816,7 @@ function getCategoryColor(category: string): string {
   backdrop-filter: blur(4px);
 }
 
-.sb-sound-btn__pulse {
-  animation: pulse-icon 0.8s ease-in-out infinite;
-}
+.sb-sound-btn__pulse { animation: pulse-icon 0.8s ease-in-out infinite; }
 
 @keyframes pulse-icon {
   0%, 100% { transform: scale(1); opacity: 1; }
@@ -736,74 +835,239 @@ function getCategoryColor(category: string): string {
   text-align: center;
 }
 
-.sb-empty__icon {
-  font-size: 2.5rem;
+.sb-empty__icon { font-size: 2.5rem; }
+.sb-empty__title { font-size: 1.1rem; font-weight: 700; color: #1F2937; margin: 0; }
+.sb-empty__text { color: #6B7280; font-size: 0.9rem; margin: 0; }
+
+/* ═══════════════════════════════════
+   Now Playing Bar
+   ═══════════════════════════════════ */
+.sb-now-playing {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: #0F172A;
+  border-top: 1px solid #1E293B;
+  color: white;
+  box-shadow: 0 -8px 30px rgba(0,0,0,0.25);
 }
 
-.sb-empty__title {
-  font-size: 1.1rem;
+.sb-now-playing__bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(15,23,42,0.98) 0%, rgba(30,41,59,0.98) 100%);
+  pointer-events: none;
+}
+
+/* Progress bar */
+.sb-now-playing__progress-track {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: rgba(255,255,255,0.08);
+  overflow: hidden;
+}
+
+.sb-now-playing__progress-fill {
+  height: 100%;
+  background: var(--accent, #3B82F6);
+  transition: width 0.03s linear;
+  border-radius: 0 2px 2px 0;
+}
+
+.sb-now-playing__inner {
+  position: relative;
+  z-index: 1;
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 0.85rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+/* Info */
+.sb-now-playing__info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.sb-now-playing__icon {
+  font-size: 1.6rem;
+  flex-shrink: 0;
+}
+
+.sb-now-playing__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  min-width: 0;
+}
+
+.sb-now-playing__name {
+  font-size: 0.95rem;
   font-weight: 700;
-  color: #1F2937;
-  margin: 0;
+  color: #F1F5F9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.sb-empty__text {
-  color: #6B7280;
-  font-size: 0.9rem;
-  margin: 0;
+.sb-now-playing__status {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--accent, #60A5FA);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Controls */
+.sb-now-playing__controls {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.sb-ctrl-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  color: #CBD5E1;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sb-ctrl-btn:hover:not(:disabled) {
+  background: rgba(255,255,255,0.16);
+  color: #F1F5F9;
+  transform: scale(1.05);
+}
+
+.sb-ctrl-btn:active:not(:disabled) { transform: scale(0.93); }
+
+.sb-ctrl-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.sb-ctrl-btn--play {
+  width: 2.8rem;
+  height: 2.8rem;
+  background: var(--accent, #3B82F6);
+  color: white;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+}
+
+.sb-ctrl-btn--play:hover:not(:disabled) {
+  background: var(--accent, #2563EB);
+  filter: brightness(1.1);
+}
+
+.sb-ctrl-btn--vol { width: 2.2rem; height: 2.2rem; }
+
+/* Volume */
+.sb-volume {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: 0.3rem;
+}
+
+.sb-volume__slider {
+  width: 5rem;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(255,255,255,0.15);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.sb-volume__slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent, #3B82F6);
+  border: 2px solid white;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  cursor: pointer;
+  transition: transform 0.12s;
+}
+
+.sb-volume__slider::-webkit-slider-thumb:hover { transform: scale(1.15); }
+
+.sb-volume__slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent, #3B82F6);
+  border: 2px solid white;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  cursor: pointer;
+}
+
+.sb-volume__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #94A3B8;
+  min-width: 2.5rem;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ═══════════════════════════════════
    Transitions
    ═══════════════════════════════════ */
-.slide-enter-active,
-.slide-leave-active {
-  transition: all 0.2s ease;
-}
-.slide-enter-from,
-.slide-leave-to {
-  opacity: 0;
-  transform: translateY(-8px);
-}
+.slide-enter-active, .slide-leave-active { transition: all 0.2s ease; }
+.slide-enter-from, .slide-leave-to { opacity: 0; transform: translateY(-8px); }
 
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.15s;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
+.fade-enter-active, .fade-leave-active { transition: opacity 0.15s; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+
+.bar-up-enter-active { transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.bar-up-leave-active { transition: all 0.2s ease; }
+.bar-up-enter-from { transform: translateY(100%); opacity: 0; }
+.bar-up-leave-to { transform: translateY(100%); opacity: 0; }
 
 /* ═══════════════════════════════════
    Responsive
    ═══════════════════════════════════ */
 @media (max-width: 640px) {
-  .sb-header__inner {
-    padding: 1.5rem 1.25rem;
-    flex-wrap: wrap;
-  }
-  .sb-header__title {
-    font-size: 1.25rem;
-  }
+  .sb-header__inner { padding: 1.5rem 1.25rem; flex-wrap: wrap; }
+  .sb-header__title { font-size: 1.25rem; }
 
-  .sb-main {
-    padding: 1.5rem 1.25rem 6rem;
-  }
+  .sb-main { padding: 1.5rem 1.25rem; }
 
   .sb-sound-btn {
     min-height: 115px;
     padding: 1rem 0.6rem 0.7rem;
   }
-  .sb-sound-btn__icon-wrap {
-    width: 2.5rem;
-    height: 2.5rem;
+  .sb-sound-btn__icon-wrap { width: 2.5rem; height: 2.5rem; }
+  .sb-sound-btn__icon { font-size: 1.3rem; }
+  .sb-sound-btn__name { font-size: 0.8rem; }
+
+  .sb-now-playing__inner {
+    padding: 0.7rem 1rem;
+    flex-direction: column;
+    gap: 0.6rem;
   }
-  .sb-sound-btn__icon {
-    font-size: 1.3rem;
-  }
-  .sb-sound-btn__name {
-    font-size: 0.8rem;
-  }
+  .sb-now-playing__controls { width: 100%; justify-content: center; }
+  .sb-volume__slider { width: 4rem; }
 }
 </style>
