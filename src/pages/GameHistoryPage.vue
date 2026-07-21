@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import Navbar from '@/components/Navbar.vue'
-import { fetchGameHistories, fetchGameHistoryById } from '@/services/game'
+import { fetchGameHistories, fetchGameHistoryById, exportGameHistory } from '@/services/game'
 import type { GameHistory } from '@/types/game'
 import { gameTypes } from '@/types/game'
 
@@ -10,6 +10,8 @@ const histories = ref<GameHistory[]>([])
 const selectedHistory = ref<GameHistory | null>(null)
 const isLoading = ref(true)
 const errorMessage = ref('')
+const isDownloading = ref(false)
+const downloadError = ref('')
 
 const view = ref<'list' | 'detail'>('list')
 
@@ -66,6 +68,19 @@ async function viewDetails(history: GameHistory) {
     errorMessage.value = err instanceof Error ? err.message : 'Failed to load game details.'
   } finally {
     isLoading.value = false
+  }
+}
+
+async function handleExport(format: 'csv' | 'pdf') {
+  if (!selectedHistory.value) return
+  isDownloading.value = true
+  downloadError.value = ''
+  try {
+    await exportGameHistory(selectedHistory.value.id, format)
+  } catch (err) {
+    downloadError.value = err instanceof Error ? err.message : `Failed to export ${format.toUpperCase()}.`
+  } finally {
+    isDownloading.value = false
   }
 }
 
@@ -174,6 +189,24 @@ const sortedScores = computed(() => {
           <div v-else key="detail" class="detail-view">
             <div class="detail-header">
               <button class="btn-back" @click="goBack">&larr; Back to history</button>
+              <div class="detail-actions" v-if="selectedHistory">
+                <button
+                  class="btn-export"
+                  :class="'btn-export-csv'"
+                  :disabled="isDownloading"
+                  @click="handleExport('csv')"
+                >
+                  <span class="export-icon">&#x1F4C4;</span> Download CSV
+                </button>
+                <button
+                  class="btn-export"
+                  :class="'btn-export-pdf'"
+                  :disabled="isDownloading"
+                  @click="handleExport('pdf')"
+                >
+                  <span class="export-icon">&#x1F4D5;</span> Download PDF
+                </button>
+              </div>
               <div class="detail-title-group" v-if="selectedHistory">
                 <span class="detail-icon">{{ getGameTypeOption(selectedHistory.game_type).icon }}</span>
                 <div>
@@ -185,6 +218,10 @@ const sortedScores = computed(() => {
 
             <Transition name="alert-fade" mode="out-in">
               <div v-if="errorMessage" key="error" class="alert alert-error">{{ errorMessage }}</div>
+            </Transition>
+
+            <Transition name="alert-fade" mode="out-in">
+              <div v-if="downloadError" key="download-error" class="alert alert-error">{{ downloadError }}</div>
             </Transition>
 
             <div v-if="isLoading" class="loading-state">
@@ -528,6 +565,61 @@ const sortedScores = computed(() => {
   gap: 16px;
   margin-bottom: 24px;
   flex-wrap: wrap;
+}
+
+.detail-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.btn-export {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: 1.5px solid #e2e8f0;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.btn-export:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.btn-export:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-export-csv {
+  color: #059669;
+  border-color: #a7f3d0;
+}
+
+.btn-export-csv:hover:not(:disabled) {
+  background: #ecfdf5;
+  border-color: #059669;
+}
+
+.btn-export-pdf {
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.btn-export-pdf:hover:not(:disabled) {
+  background: #fef2f2;
+  border-color: #dc2626;
+}
+
+.export-icon {
+  font-size: 16px;
+  line-height: 1;
 }
 
 .btn-back {
