@@ -1,6 +1,5 @@
 import Echo from 'laravel-echo'
 import Pusher from 'pusher-js'
-import type { VoteUpdatedPayload } from '@/types/poll'
 
 declare global {
   interface Window {

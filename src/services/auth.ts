@@ -1,23 +1,9 @@
-function getApiUrl(path: string): string {
-  const baseUrl = typeof import.meta.env.VITE_API_URL === 'string' ? import.meta.env.VITE_API_URL.trim() : ''
-  const normalizedBase = baseUrl.replace(/\/$/, '')
-  if (normalizedBase) {
-    return `${normalizedBase}${path}`
-  }
-  return path
-}
+import api from './api'
 
 export async function checkAuth(): Promise<boolean> {
   try {
-    const response = await fetch(getApiUrl('/api/user'), {
-      method: 'GET',
-      headers: {
-        Accept: 'application/json',
-      },
-      credentials: 'include',
-    })
-
-    return response.ok
+    const { data } = await api.get('/api/user')
+    return !!data?.user
   } catch {
     return false
   }

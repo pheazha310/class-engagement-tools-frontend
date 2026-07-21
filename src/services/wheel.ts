@@ -1,30 +1,47 @@
 import type { Participant, SavedWheel } from '@/types/wheel'
+import api from '@/services/api'
+import type { AxiosError } from 'axios'
 
-function getApiUrl(path: string): string {
-  const baseUrl = typeof import.meta.env.VITE_API_URL === 'string' ? import.meta.env.VITE_API_URL.trim() : ''
-  const normalizedBase = baseUrl.replace(/\/$/, '')
-  if (normalizedBase) {
-    return `${normalizedBase}${path}`
+export class AuthenticationError extends Error {
+  constructor(message: string = 'Unauthenticated') {
+    super(message)
+    this.name = 'AuthenticationError'
   }
-  return path
+}
+
+export class AuthorizationError extends Error {
+  constructor(message: string = 'Unauthorized access') {
+    super(message)
+    this.name = 'AuthorizationError'
+  }
+}
+
+function handleAxiosError(error: unknown): Error {
+  const axiosError = error as AxiosError
+  if (axiosError?.response) {
+    const status = axiosError.response.status
+    const message = (axiosError.response.data as Record<string, unknown>)?.message || axiosError.message
+
+    if (status === 401) {
+      return new AuthenticationError(message as string || 'Session expired. Please log in again.')
+    }
+
+    if (status === 403) {
+      return new AuthorizationError(message as string || 'You do not have permission to perform this action.')
+    }
+
+    return new Error(message as string || `Request failed: ${status}`)
+  }
+
+  return error instanceof Error ? error : new Error('Unknown error occurred')
 }
 
 export async function spinWheel(participants: Participant[]): Promise<Participant> {
   try {
-    const response = await fetch(getApiUrl('/api/wheel/spin'), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ participants: participants.map((p) => ({ id: p.id, name: p.name })) }),
+    const { data } = await api.post('/api/wheel/spin', {
+      participants: participants.map((p) => ({ id: p.id, name: p.name })),
     })
 
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}))
-      throw new Error(data.message || `Spin failed: ${response.status}`)
-    }
-
-    const data = await response.json()
     const selected = participants.find(
       (p) => p.id === data.participant.id || p.name === data.participant.name,
     )
@@ -43,37 +60,22 @@ export async function spinWheel(participants: Participant[]): Promise<Participan
 }
 
 async function addParticipant(wheelId: string, name: string): Promise<void> {
-  const response = await fetch(getApiUrl(`/api/wheels/${wheelId}/participants`), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-    },
-    credentials: 'include',
-    body: JSON.stringify({ name }),
-  })
-
-  if (!response.ok) {
-    const data = await response.json().catch(() => ({}))
-    console.error('Failed to add participant:', data.message || response.status)
+  try {
+    await api.post(`/api/wheels/${wheelId}/participants`, { name })
+  } catch (error) {
+    const axiosError = error as AxiosError
+    console.error('Failed to add participant:', axiosError.response?.data)
+    throw error
   }
 }
 
 export async function listSavedWheels(): Promise<SavedWheel[]> {
-  const response = await fetch(getApiUrl('/api/wheels'), {
-    method: 'GET',
-    headers: {
-      Accept: 'application/json',
-    },
-    credentials: 'include',
-  })
-
-  if (!response.ok) {
-    const data = await response.json().catch(() => ({}))
-    throw new Error(data.message || `Failed to load wheels: ${response.status}`)
+  try {
+    const { data } = await api.get('/api/wheels')
+    return data
+  } catch (error) {
+    throw handleAxiosError(error)
   }
-
-  return response.json()
 }
 
 export async function createSavedWheel(payload: {
@@ -82,44 +84,26 @@ export async function createSavedWheel(payload: {
   color?: string
   participants: Participant[]
 }): Promise<SavedWheel> {
-  const response = await fetch(getApiUrl('/api/wheels'), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-    },
-    credentials: 'include',
-    body: JSON.stringify({
+  try {
+    const { data: wheel } = await api.post('/api/wheels', {
       name: payload.name,
       description: payload.description,
       color: payload.color,
-    }),
-  })
+    })
 
-  if (!response.ok) {
-    const data = await response.json().catch(() => ({}))
-    throw new Error(data.message || `Failed to save wheel: ${response.status}`)
+    for (const participant of payload.participants) {
+      await addParticipant(wheel.id, participant.name)
+    }
+
+    try {
+      const { data: fullWheel } = await api.get(`/api/wheels/${wheel.id}`)
+      return fullWheel
+    } catch {
+      return wheel
+    }
+  } catch (error) {
+    throw handleAxiosError(error)
   }
-
-  const wheel = await response.json()
-
-  for (const participant of payload.participants) {
-    await addParticipant(wheel.id, participant.name)
-  }
-
-  const wheelResponse = await fetch(getApiUrl(`/api/wheels/${wheel.id}`), {
-    method: 'GET',
-    headers: {
-      Accept: 'application/json',
-    },
-    credentials: 'include',
-  })
-
-  if (!wheelResponse.ok) {
-    return wheel
-  }
-
-  return wheelResponse.json()
 }
 
 export async function updateSavedWheel(
@@ -131,53 +115,28 @@ export async function updateSavedWheel(
     participants?: Participant[]
   },
 ): Promise<SavedWheel> {
-  const response = await fetch(getApiUrl(`/api/wheels/${id}`), {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-    },
-    credentials: 'include',
-    body: JSON.stringify(payload),
-  })
-
-  if (!response.ok) {
-    const data = await response.json().catch(() => ({}))
-    throw new Error(data.message || `Failed to update wheel: ${response.status}`)
+  try {
+    const { data } = await api.put(`/api/wheels/${id}`, payload)
+    return data
+  } catch (error) {
+    throw handleAxiosError(error)
   }
-
-  return response.json()
 }
 
 export async function loadSavedWheel(id: string): Promise<SavedWheel> {
-  const response = await fetch(getApiUrl(`/api/wheels/${id}`), {
-    method: 'GET',
-    headers: {
-      Accept: 'application/json',
-    },
-    credentials: 'include',
-  })
-
-  if (!response.ok) {
-    const data = await response.json().catch(() => ({}))
-    throw new Error(data.message || `Failed to load wheel: ${response.status}`)
+  try {
+    const { data } = await api.get(`/api/wheels/${id}`)
+    return data
+  } catch (error) {
+    throw handleAxiosError(error)
   }
-
-  return response.json()
 }
 
 export async function deleteSavedWheel(id: string): Promise<void> {
-  const response = await fetch(getApiUrl(`/api/wheels/${id}`), {
-    method: 'DELETE',
-    headers: {
-      Accept: 'application/json',
-    },
-    credentials: 'include',
-  })
-
-  if (!response.ok) {
-    const data = await response.json().catch(() => ({}))
-    throw new Error(data.message || `Failed to delete wheel: ${response.status}`)
+  try {
+    await api.delete(`/api/wheels/${id}`)
+  } catch (error) {
+    throw handleAxiosError(error)
   }
 }
 
@@ -187,21 +146,12 @@ export interface ShareTokenResponse {
 }
 
 export async function generateShareToken(wheelId: string): Promise<ShareTokenResponse> {
-  const response = await fetch(getApiUrl(`/api/wheels/${wheelId}/share-token`), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-    },
-    credentials: 'include',
-  })
-
-  if (!response.ok) {
-    const data = await response.json().catch(() => ({}))
-    throw new Error(data.message || `Failed to generate share link: ${response.status}`)
+  try {
+    const { data } = await api.post(`/api/wheels/${wheelId}/share-token`, {})
+    return data
+  } catch (error) {
+    throw handleAxiosError(error)
   }
-
-  return response.json()
 }
 
 export interface SharedWheel extends SavedWheel {
@@ -222,17 +172,10 @@ export interface SharedWheel extends SavedWheel {
 }
 
 export async function loadSharedWheel(shareToken: string): Promise<SharedWheel> {
-  const response = await fetch(getApiUrl(`/api/wheels/shared/${encodeURIComponent(shareToken)}`), {
-    method: 'GET',
-    headers: {
-      Accept: 'application/json',
-    },
-  })
-
-  if (!response.ok) {
-    const data = await response.json().catch(() => ({}))
-    throw new Error(data.message || `Failed to load shared wheel: ${response.status}`)
+  try {
+    const { data } = await api.get(`/api/wheels/shared/${encodeURIComponent(shareToken)}`)
+    return data
+  } catch (error) {
+    throw handleAxiosError(error)
   }
-
-  return response.json()
 }
