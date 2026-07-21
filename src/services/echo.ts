@@ -1,7 +1,5 @@
 import Echo from 'laravel-echo'
-// @ts-expect-error Pusher JS types
 import Pusher from 'pusher-js'
-import type { VoteUpdatedPayload } from '@/types/poll'
 
 declare global {
   interface Window {
@@ -11,9 +9,9 @@ declare global {
 
 window.Pusher = Pusher
 
-let echo: Echo | null = null
+let echo: Echo<any> | null = null
 
-export function getEcho(): Echo {
+export function getEcho(): Echo<any> {
   if (echo) return echo
 
   echo = new Echo({

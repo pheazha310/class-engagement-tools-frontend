@@ -1,7 +1,10 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import type { Participant, WheelTheme } from '@/types/wheel'
+import { useAuthStore } from '@/stores/auth'
+
+const auth = useAuthStore()
 
 const props = defineProps<{
   modelValue: boolean
@@ -21,6 +24,11 @@ const emit = defineEmits<{
 
 const localName = ref(props.name)
 const localDescription = ref(props.description)
+
+const shouldShowLoginPrompt = computed(() => {
+  // Only show login prompt if user is not authenticated
+  return !auth.isAuthenticated
+})
 
 watch(() => props.modelValue, (open) => {
   if (open) {
@@ -67,14 +75,14 @@ function handleBackdropClick(event: MouseEvent) {
           {{ error }}
         </div>
 
-        <div v-if="!props.isAuthenticated" class="auth-prompt">
+        <div v-if="shouldShowLoginPrompt" class="auth-prompt">
           <p class="auth-prompt-text">
             <strong>Please login first</strong> to save your wheel.
           </p>
           <RouterLink to="/login" class="auth-prompt-link">Go to login</RouterLink>
         </div>
 
-        <template v-else>
+        <template v-else-if="auth.isAuthenticated">
           <div class="form-group">
             <label for="wheel-name" class="form-label">Wheel Name</label>
             <input
@@ -122,7 +130,7 @@ function handleBackdropClick(event: MouseEvent) {
           Cancel
         </button>
         <button
-          v-if="props.isAuthenticated"
+          v-if="auth.isAuthenticated"
           type="button"
           class="btn btn-primary"
           :style="{

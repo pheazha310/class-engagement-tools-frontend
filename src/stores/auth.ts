@@ -1,5 +1,7 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
+import api, { ensureCsrfCookie } from '@/services/api'
+import { AxiosError } from 'axios'
 
 export interface AuthUser {
   id: number
@@ -51,8 +53,9 @@ export const useAuthStore = defineStore('auth', () => {
 
     const candidateRecord = candidate as Record<string, unknown>
 
+    const rawId = candidateRecord.id
     if (
-      typeof candidateRecord.id !== 'number' ||
+      rawId === null || rawId === undefined ||
       typeof candidateRecord.name !== 'string' ||
       typeof candidateRecord.email !== 'string'
     ) {
@@ -60,7 +63,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     return {
-      id: candidateRecord.id,
+      id: Number(rawId),
       name: candidateRecord.name,
       email: candidateRecord.email,
       role: typeof candidateRecord.role === 'string' ? candidateRecord.role : 'student',
@@ -74,15 +77,14 @@ export const useAuthStore = defineStore('auth', () => {
   async function fetchUser() {
     loading.value = true
     try {
-      const res = await fetch('/api/user', { credentials: 'include' })
-      if (res.ok) {
-        const data = await res.json()
-        setUser(normalizeUser(data))
-      } else {
+      const { data } = await api.get('/api/user')
+      setUser(normalizeUser(data))
+    } catch (err) {
+      // Only clear user on 401 (unauthenticated) — not on transient network/server errors
+      if (err instanceof AxiosError && err.response?.status === 401) {
         clearUser()
       }
-    } catch {
-      clearUser()
+      // For other errors, keep the existing user state
     } finally {
       loading.value = false
       initialized.value = true
@@ -92,25 +94,20 @@ export const useAuthStore = defineStore('auth', () => {
   async function login(email: string, password: string): Promise<string | null> {
     loading.value = true
     try {
-      const res = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ email: email.trim(), password }),
-      })
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        return data.message || `Login failed: ${res.status}`
-      }
-      const data = await res.json().catch(() => ({}))
+      await ensureCsrfCookie()
+      const { data } = await api.post('/api/login', { email: email.trim(), password })
       const authenticatedUser = normalizeUser(data)
       if (authenticatedUser) {
         setUser(authenticatedUser)
+        initialized.value = true
       } else {
         await fetchUser()
       }
       return null
     } catch (err) {
+      if (err instanceof AxiosError) {
+        return err.response?.data?.message || err.message || 'Login failed'
+      }
       return err instanceof Error ? err.message : 'Login failed'
     } finally {
       loading.value = false
@@ -120,25 +117,20 @@ export const useAuthStore = defineStore('auth', () => {
   async function register(payload: Record<string, unknown>): Promise<string | null> {
     loading.value = true
     try {
-      const res = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(payload),
-      })
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        return data.message || `Registration failed: ${res.status}`
-      }
-      const data = await res.json().catch(() => ({}))
+      await ensureCsrfCookie()
+      const { data } = await api.post('/api/auth/register', payload)
       const authenticatedUser = normalizeUser(data)
       if (authenticatedUser) {
         setUser(authenticatedUser)
+        initialized.value = true
       } else {
         await fetchUser()
       }
       return null
     } catch (err) {
+      if (err instanceof AxiosError) {
+        return err.response?.data?.message || err.message || 'Registration failed'
+      }
       return err instanceof Error ? err.message : 'Registration failed'
     } finally {
       loading.value = false
@@ -147,11 +139,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function logout() {
     try {
-      await fetch('/api/logout', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { Accept: 'application/json' },
-      })
+      await api.post('/api/logout')
     } catch {
       // ignore
     }

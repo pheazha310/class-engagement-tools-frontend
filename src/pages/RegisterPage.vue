@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import api from '@/services/api'
 
 import '@/assets/css/auth.css'
 
@@ -17,8 +18,11 @@ interface FormData {
   passwordConfirmation: string
   role: Role
   countryCode: string
+  countryId: number | null
   countryName: string
+  provinceId: number | null
   province: string
+  schoolId: number | null
   schoolName: string
 }
 
@@ -29,8 +33,11 @@ const form = ref<FormData>({
   passwordConfirmation: '',
   role: '',
   countryCode: '',
+  countryId: null,
   countryName: '',
+  provinceId: null,
   province: '',
+  schoolId: null,
   schoolName: '',
 })
 
@@ -50,12 +57,29 @@ interface SchoolOption {
   name: string
 }
 
+interface LocationOptionResponse {
+  country: CountryOption
+  province: ProvinceOption
+  school: SchoolOption
+}
+
 const countries = ref<CountryOption[]>([])
 const provinces = ref<ProvinceOption[]>([])
 const schools = ref<SchoolOption[]>([])
 const loadingCountries = ref(false)
 const loadingProvinces = ref(false)
 const loadingSchools = ref(false)
+const showAddLocation = ref(false)
+const savingLocation = ref(false)
+const locationError = ref('')
+const locationSuccess = ref('')
+
+const newLocation = ref({
+  countryName: '',
+  countryCode: '',
+  provinceName: '',
+  schoolName: '',
+})
 
 const step = ref(1)
 const error = ref('')
@@ -100,7 +124,7 @@ const step1Valid = computed(
   () =>
     form.value.name.trim() !== '' &&
     form.value.email.trim() !== '' &&
-    form.value.password.length >= 6 &&
+    form.value.password.length >= 8 &&
     passwordMatch.value
 )
 
@@ -109,8 +133,19 @@ const step2Valid = computed(() => form.value.role !== '')
 const step3Valid = computed(
   () =>
     form.value.countryCode !== '' &&
-    form.value.province !== '' &&
-    form.value.schoolName !== ''
+    form.value.provinceId !== null &&
+    form.value.schoolId !== null
+)
+
+const selectedCountry = computed(() =>
+  countries.value.find(c => c.code === form.value.countryCode) ?? null
+)
+
+const addLocationValid = computed(
+  () =>
+    newLocation.value.countryName.trim() !== '' &&
+    newLocation.value.provinceName.trim() !== '' &&
+    newLocation.value.schoolName.trim() !== ''
 )
 
 const steps = [
@@ -123,51 +158,139 @@ const steps = [
 async function fetchCountries() {
   loadingCountries.value = true
   try {
-    const res = await fetch('/api/countries')
-    const data = await res.json()
+    const { data } = await api.get('/api/countries')
+    console.log('[RegisterPage] countries response', data)
     countries.value = data.data ?? data
-  } catch {
-    // ignore
+  } catch (err) {
+    console.error('[RegisterPage] failed to load countries', err)
   } finally {
     loadingCountries.value = false
   }
 }
 
+async function selectCountry(countryCode: string) {
+  form.value.countryCode = countryCode
+  form.value.countryName = countries.value.find(c => c.code === countryCode)?.name ?? ''
+  await fetchProvinces()
+}
+
 async function fetchProvinces() {
   const country = countries.value.find(c => c.code === form.value.countryCode)
   if (!country) return
+  form.value.countryId = country.id
   form.value.province = ''
+  form.value.provinceId = null
   form.value.schoolName = ''
+  form.value.schoolId = null
   provinces.value = []
   schools.value = []
   loadingProvinces.value = true
   try {
-    const res = await fetch(`/api/provinces?country_id=${country.id}`)
-    const data = await res.json()
+    const { data } = await api.get(`/api/provinces`, { params: { country_id: country.id } })
+    console.log('[RegisterPage] provinces response', data)
     provinces.value = data.data ?? data
-  } catch {
-    // ignore
+  } catch (err) {
+    console.error('[RegisterPage] failed to load provinces', err)
   } finally {
     loadingProvinces.value = false
   }
 }
 
 async function fetchSchools() {
+  if (!form.value.provinceId) return
   form.value.schoolName = ''
+  form.value.schoolId = null
   schools.value = []
   loadingSchools.value = true
   try {
-    const res = await fetch(`/api/location-schools?province=${encodeURIComponent(form.value.province)}`)
-    const data = await res.json()
+    const { data } = await api.get(`/api/location-schools`, {
+      params: {
+        province: form.value.province,
+        country: form.value.countryName || undefined,
+      },
+    })
+    console.log('[RegisterPage] schools response', data)
     schools.value = data ?? []
-  } catch {
-    // ignore
+  } catch (err) {
+    console.error('[RegisterPage] failed to load schools', err)
   } finally {
     loadingSchools.value = false
   }
 }
 
-onMounted(fetchCountries)
+onMounted(async () => {
+  await fetchCountries()
+  const cambodia = countries.value.find(c => c.code === 'KH')
+  if (cambodia) {
+    form.value.countryCode = cambodia.code
+    form.value.countryName = cambodia.name
+    form.value.countryId = cambodia.id
+    await fetchProvinces()
+  }
+})
+
+function openAddLocation() {
+  locationError.value = ''
+  locationSuccess.value = ''
+  newLocation.value = {
+    countryName: form.value.countryName || selectedCountry.value?.name || '',
+    countryCode: form.value.countryCode || '',
+    provinceName: form.value.province,
+    schoolName: form.value.schoolName,
+  }
+  showAddLocation.value = true
+}
+
+function closeAddLocation() {
+  if (savingLocation.value) return
+  showAddLocation.value = false
+  locationError.value = ''
+  locationSuccess.value = ''
+}
+
+async function addLocationOption() {
+  if (!addLocationValid.value) return
+
+  savingLocation.value = true
+  locationError.value = ''
+  locationSuccess.value = ''
+
+  try {
+    const { data } = await api.post<LocationOptionResponse>('/api/location-options', {
+      country_name: newLocation.value.countryName,
+      country_code: newLocation.value.countryCode || undefined,
+      province_name: newLocation.value.provinceName,
+      school_name: newLocation.value.schoolName,
+    })
+
+    await fetchCountries()
+    if (!countries.value.some(c => c.code === data.country.code)) {
+      countries.value.push(data.country)
+    }
+
+    await selectCountry(data.country.code)
+    if (!provinces.value.some(p => p.id === data.province.id)) {
+      provinces.value.push(data.province)
+    }
+
+    form.value.province = data.province.name
+    await fetchSchools()
+    if (!schools.value.some(s => s.id === data.school.id)) {
+      schools.value.push(data.school)
+    }
+
+    form.value.schoolName = data.school.name
+    locationSuccess.value = 'Location added and selected.'
+    showAddLocation.value = false
+  } catch (err) {
+    const response = (err as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } }).response
+    locationError.value = response?.data?.message
+      || (response?.data?.errors ? Object.values(response.data.errors).flat().join(', ') : '')
+      || 'Could not add this location.'
+  } finally {
+    savingLocation.value = false
+  }
+}
 
 function nextStep() {
   if (step.value === 1 && step1Valid.value) step.value = 2
@@ -194,8 +317,11 @@ async function submit() {
     password: form.value.password,
     password_confirmation: form.value.passwordConfirmation,
     role: form.value.role,
-    country: form.value.countryName,
-    province: form.value.province,
+    country_id: form.value.countryId,
+    province_id: form.value.provinceId,
+    school_id: form.value.schoolId,
+    country_name: form.value.countryName,
+    province_name: form.value.province,
     school_name: form.value.schoolName,
   })
 
@@ -294,29 +420,27 @@ const stepErrors = computed(() => {
       </div>
 
       <!-- Success State -->
-      <template v-if="success">
-        <Transition name="scale-fade">
-          <div class="auth-success">
-            <div class="auth-success__orb" />
-            <div class="auth-success__icon-wrap">
-              <svg class="auth-success__icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-            </div>
-            <div class="auth-success__particles">
-              <span v-for="i in 12" :key="i" class="auth-success__particle" :style="{ '--angle': `${i * 30}deg`, '--delay': `${i * 0.05}s` }" />
-            </div>
-            <h3 class="auth-success__title">Account Created!</h3>
-            <p class="auth-success__text">Welcome aboard! Redirecting to your dashboard...</p>
-            <div class="auth-success__dots">
-              <span v-for="i in 3" :key="i" class="auth-success__dot" :style="{ animationDelay: `${i * 0.2}s` }" />
-            </div>
+      <Transition name="scale-fade">
+        <div v-if="success" class="auth-success">
+          <div class="auth-success__orb" />
+          <div class="auth-success__icon-wrap">
+            <svg class="auth-success__icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
           </div>
-        </Transition>
-      </template>
+          <div class="auth-success__particles">
+            <span v-for="i in 12" :key="i" class="auth-success__particle" :style="{ '--angle': `${i * 30}deg`, '--delay': `${i * 0.05}s` }" />
+          </div>
+          <h3 class="auth-success__title">Account Created!</h3>
+          <p class="auth-success__text">Welcome aboard! Redirecting to your dashboard...</p>
+          <div class="auth-success__dots">
+            <span v-for="i in 3" :key="i" class="auth-success__dot" :style="{ animationDelay: `${i * 0.2}s` }" />
+          </div>
+        </div>
+      </Transition>
 
       <!-- Form -->
-      <form v-else class="auth-form" novalidate @submit.prevent="step < 4 ? nextStep() : submit()">
+      <form v-if="!success" class="auth-form" novalidate @submit.prevent="step < 4 ? nextStep() : submit()">
         <Transition name="fade">
           <div v-if="error" class="alert alert--error">
             <svg class="alert-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -399,7 +523,7 @@ const stepErrors = computed(() => {
                     :type="showPassword ? 'text' : 'password'"
                     class="input"
                     :class="{ 'input--error': stepErrors.password }"
-                    placeholder="At least 6 characters"
+                     placeholder="At least 8 characters"
                     required
                   />
                   <button type="button" class="password-toggle" @click="showPassword = !showPassword" tabindex="-1">
@@ -506,12 +630,80 @@ const stepErrors = computed(() => {
 
         <!-- Step 3: Location -->
         <div v-show="step === 3" class="auth-step-panel">
-          <div class="auth-step-panel__header">
-            <h2 class="auth-step-panel__title">Your Location</h2>
-            <p class="auth-step-panel__desc">Tell us where you're based</p>
+          <div class="auth-step-panel__header auth-step-panel__header--split">
+            <div>
+              <h2 class="auth-step-panel__title">Your Location</h2>
+              <p class="auth-step-panel__desc">Tell us where you're based</p>
+            </div>
+            <button type="button" class="auth-mini-btn" @click="openAddLocation">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              Add location
+            </button>
           </div>
 
           <div class="auth-step-panel__body auth-step-panel__body--location">
+            <Transition name="fade">
+              <div v-if="locationSuccess" class="auth-inline-success">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                {{ locationSuccess }}
+              </div>
+            </Transition>
+
+            <div v-if="showAddLocation" class="auth-add-location">
+              <div class="auth-add-location__header">
+                <span class="auth-add-location__title">Add Missing Location</span>
+                <button type="button" class="auth-icon-btn" aria-label="Close add location form" @click="closeAddLocation">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
+
+              <div class="auth-add-location__grid">
+                <label class="form-group">
+                  <span class="form-label">Country name</span>
+                  <input v-model="newLocation.countryName" class="input input--plain" type="text" placeholder="Cambodia" />
+                </label>
+
+                <label class="form-group">
+                  <span class="form-label">Country code</span>
+                  <input v-model="newLocation.countryCode" class="input input--plain" type="text" placeholder="KH" maxlength="10" />
+                </label>
+
+                <label class="form-group">
+                  <span class="form-label">Province</span>
+                  <input v-model="newLocation.provinceName" class="input input--plain" type="text" placeholder="Phnom Penh" />
+                </label>
+
+                <label class="form-group">
+                  <span class="form-label">School</span>
+                  <input v-model="newLocation.schoolName" class="input input--plain" type="text" placeholder="School name" />
+                </label>
+              </div>
+
+              <Transition name="fade">
+                <span v-if="locationError" class="field-error">{{ locationError }}</span>
+              </Transition>
+
+              <div class="auth-add-location__actions">
+                <button type="button" class="auth-btn auth-btn--secondary auth-btn--compact" :disabled="savingLocation" @click="closeAddLocation">
+                  Cancel
+                </button>
+                <button type="button" class="auth-btn auth-btn--primary auth-btn--compact" :disabled="!addLocationValid || savingLocation" @click="addLocationOption">
+                  <svg v-if="savingLocation" class="auth-spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" stroke-linecap="round" />
+                  </svg>
+                  <span>{{ savingLocation ? 'Saving...' : 'Save and select' }}</span>
+                </button>
+              </div>
+            </div>
+
             <label class="form-group">
               <span class="form-label">Country</span>
               <div class="input-wrap">
@@ -524,7 +716,7 @@ const stepErrors = computed(() => {
                   v-model="form.countryCode"
                   class="input input--select"
                   :disabled="loadingCountries"
-                  @change="form.countryName = countries.find(c => c.code === form.countryCode)?.name ?? ''; fetchProvinces()"
+                  @change="selectCountry(form.countryCode)"
                 >
                   <option value="" disabled>{{ loadingCountries ? 'Loading...' : 'Select a country' }}</option>
                   <option v-for="c in countries" :key="c.code" :value="c.code">{{ c.name }}</option>
@@ -543,15 +735,15 @@ const stepErrors = computed(() => {
                   <circle cx="12" cy="10" r="3" />
                 </svg>
                 <select
-                  v-model="form.province"
+                  v-model="form.provinceId"
                   class="input input--select"
                   :disabled="!form.countryCode || loadingProvinces"
-                  @change="fetchSchools()"
+                  @change="form.province = provinces.find(p => p.id === form.provinceId)?.name ?? ''; fetchSchools()"
                 >
-                  <option value="" disabled>
+                  <option :value="null" disabled>
                     {{ loadingProvinces ? 'Loading...' : form.countryCode ? 'Select a province' : 'Select a country first' }}
                   </option>
-                  <option v-for="p in provinces" :key="p.id" :value="p.name">{{ p.name }}</option>
+                  <option v-for="p in provinces" :key="p.id" :value="p.id">{{ p.name }}</option>
                 </select>
                 <svg v-if="loadingProvinces" class="input-spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" stroke-linecap="round" />
@@ -567,14 +759,15 @@ const stepErrors = computed(() => {
                   <path d="M6 12v5c3 3 9 3 12 0v-5" />
                 </svg>
                 <select
-                  v-model="form.schoolName"
+                  v-model="form.schoolId"
                   class="input input--select"
-                  :disabled="!form.province || loadingSchools"
+                  :disabled="!form.provinceId || loadingSchools"
+                  @change="form.schoolName = schools.find(s => s.id === form.schoolId)?.name ?? ''"
                 >
-                  <option value="" disabled>
-                    {{ loadingSchools ? 'Loading...' : form.province ? 'Select a school' : 'Select a province first' }}
+                  <option :value="null" disabled>
+                    {{ loadingSchools ? 'Loading...' : form.provinceId ? 'Select a school' : 'Select a province first' }}
                   </option>
-                  <option v-for="s in schools" :key="s.id" :value="s.name">{{ s.name }}</option>
+                  <option v-for="s in schools" :key="s.id" :value="s.id">{{ s.name }}</option>
                 </select>
                 <svg v-if="loadingSchools" class="input-spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" stroke-linecap="round" />

@@ -378,7 +378,7 @@ function getAvatarColor(id: number): string {
 
         <!-- Actions -->
         <div class="toolbar__actions">
-          <button class="toolbar__btn toolbar__btn--blue" @click="pickRandom" :disabled="isPicking || isPickingGroup || filteredStudents.length === 0" aria-label="Pick random student">
+          <button class="toolbar__btn toolbar__btn--primary" @click="pickRandom" :disabled="isPicking || isPickingGroup || filteredStudents.length === 0" aria-label="Pick random student">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="10" />
               <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
@@ -419,7 +419,10 @@ function getAvatarColor(id: number): string {
               <span>{{ isPickingGroup ? 'Picking...' : 'Group' }}</span>
             </button>
           </div>
-          <button v-if="selectedCount > 0" class="toolbar__btn toolbar__btn--outline" @click="deleteSelected" aria-label="Delete selected students">
+          <button v-if="selectedCount > 0" class="toolbar__btn toolbar__btn--ghost" @click="clearAll" aria-label="Clear selection">
+            Clear
+          </button>
+          <button v-if="selectedCount > 0" class="toolbar__btn toolbar__btn--danger" @click="deleteSelected" aria-label="Delete selected students">
             Delete Selected
           </button>
         </div>
@@ -488,8 +491,21 @@ function getAvatarColor(id: number): string {
    Header
    ═══════════════════════════════════ */
 .header {
-  background: white;
-  border-bottom: 1px solid #E5E7EB;
+  background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+  border-bottom: 1px solid #334155;
+  position: relative;
+  overflow: hidden;
+}
+
+.header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 70%);
+  pointer-events: none;
 }
 
 .header__inner {
@@ -500,20 +516,23 @@ function getAvatarColor(id: number): string {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  position: relative;
+  z-index: 1;
 }
 
 .header__title {
-  font-size: 1.35rem;
-  font-weight: 700;
-  color: #1F2937;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #F8FAFC;
   margin: 0;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
 }
 
 .header__desc {
-  margin: 0.25rem 0 0;
-  color: #9CA3AF;
-  font-size: 0.85rem;
+  margin: 0.35rem 0 0;
+  color: #94A3B8;
+  font-size: 0.9rem;
+  font-weight: 400;
 }
 
 .header__actions {
@@ -523,25 +542,26 @@ function getAvatarColor(id: number): string {
 .header__counter {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.35rem 0.75rem;
-  background: #EFF6FF;
-  border: 1px solid #BFDBFE;
+  gap: 0.5rem;
+  padding: 0.4rem 0.85rem;
+  background: rgba(59,130,246,0.15);
+  border: 1px solid rgba(59,130,246,0.3);
   border-radius: 999px;
+  backdrop-filter: blur(8px);
 }
 
 .header__count {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-weight: 700;
-  color: #3B82F6;
+  color: #60A5FA;
   font-variant-numeric: tabular-nums;
   line-height: 1;
 }
 
 .header__count-label {
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 500;
-  color: #6B7280;
+  color: #CBD5E1;
 }
 
 /* ═══════════════════════════════════
@@ -553,12 +573,13 @@ function getAvatarColor(id: number): string {
   position: sticky;
   top: 64px;
   z-index: 20;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 
 .toolbar__inner {
   max-width: 80rem;
   margin: 0 auto;
-  padding: 0.65rem 2rem;
+  padding: 0.75rem 2rem;
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -574,20 +595,22 @@ function getAvatarColor(id: number): string {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.4rem 0.75rem;
+  padding: 0.5rem 0.85rem;
   border: 1px solid #E5E7EB;
-  border-radius: 8px;
+  border-radius: 10px;
   background: white;
   color: #1F2937;
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;
-  transition: border-color 0.15s;
+  transition: all 0.15s;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
 }
 
 .toolbar__dropdown-btn:hover {
   border-color: #3B82F6;
+  box-shadow: 0 2px 4px rgba(59,130,246,0.1);
 }
 
 .toolbar__chevron {
@@ -601,15 +624,15 @@ function getAvatarColor(id: number): string {
 
 .toolbar__menu {
   position: absolute;
-  top: calc(100% + 4px);
+  top: calc(100% + 6px);
   left: 0;
   min-width: 100%;
   width: max-content;
   background: white;
   border: 1px solid #E5E7EB;
-  border-radius: 8px;
-  padding: 4px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  border-radius: 10px;
+  padding: 5px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
   z-index: 30;
 }
 
@@ -622,16 +645,16 @@ function getAvatarColor(id: number): string {
   display: block;
   width: 100%;
   text-align: left;
-  padding: 0.4rem 0.75rem;
+  padding: 0.45rem 0.85rem;
   border: none;
-  border-radius: 6px;
+  border-radius: 7px;
   background: transparent;
   color: #4B5563;
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;
-  transition: background 0.12s;
+  transition: all 0.12s;
 }
 
 .toolbar__menu-item:hover {
@@ -648,12 +671,12 @@ function getAvatarColor(id: number): string {
 .toolbar__search {
   position: relative;
   flex: 1;
-  max-width: 16rem;
+  max-width: 18rem;
 }
 
 .toolbar__search-icon {
   position: absolute;
-  left: 0.65rem;
+  left: 0.7rem;
   top: 50%;
   transform: translateY(-50%);
   color: #9CA3AF;
@@ -662,10 +685,10 @@ function getAvatarColor(id: number): string {
 
 .toolbar__input {
   width: 100%;
-  padding: 0.4rem 1.8rem 0.4rem 2rem;
+  padding: 0.5rem 1.8rem 0.5rem 2.15rem;
   border: 1px solid #E5E7EB;
-  border-radius: 8px;
-  font-size: 0.82rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
   font-family: inherit;
   background: #F9FAFB;
   color: #1F2937;
@@ -680,36 +703,37 @@ function getAvatarColor(id: number): string {
 .toolbar__input:focus {
   border-color: #3B82F6;
   background: white;
-  box-shadow: 0 0 0 3px rgba(59,130,246,0.08);
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
 }
 
 .toolbar__clear {
   position: absolute;
-  right: 0.35rem;
+  right: 0.4rem;
   top: 50%;
   transform: translateY(-50%);
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 1.2rem;
-  height: 1.2rem;
+  width: 1.3rem;
+  height: 1.3rem;
   border: none;
   background: #E5E7EB;
   border-radius: 50%;
   color: #6B7280;
   cursor: pointer;
-  transition: background 0.12s;
+  transition: all 0.12s;
 }
 
 .toolbar__clear:hover {
   background: #D1D5DB;
+  color: #1F2937;
 }
 
 /* ── Actions ── */
 .toolbar__actions {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.4rem;
   margin-left: auto;
   flex-shrink: 0;
 }
@@ -717,11 +741,11 @@ function getAvatarColor(id: number): string {
 .toolbar__btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.4rem 0.75rem;
+  gap: 0.4rem;
+  padding: 0.5rem 0.9rem;
   border: none;
-  border-radius: 8px;
-  font-size: 0.82rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
@@ -733,25 +757,29 @@ function getAvatarColor(id: number): string {
   transform: scale(0.97);
 }
 
-.toolbar__btn--blue {
-  background: #3B82F6;
+.toolbar__btn--primary {
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
   color: white;
+  box-shadow: 0 2px 8px rgba(59,130,246,0.3);
 }
 
-.toolbar__btn--blue:hover:not(:disabled) {
-  background: #2563EB;
+.toolbar__btn--primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+  box-shadow: 0 4px 12px rgba(59,130,246,0.4);
+  transform: translateY(-1px);
 }
 
-.toolbar__btn--blue:disabled {
-  opacity: 0.45;
+.toolbar__btn--primary:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
+  transform: none;
 }
 
 .toolbar__btn--outline {
   background: white;
   color: #3B82F6;
   border: 1px solid #3B82F6;
-  border-radius: 0 8px 8px 0;
+  border-radius: 0 10px 10px 0;
 }
 
 .toolbar__btn--outline:hover:not(:disabled) {
@@ -764,6 +792,29 @@ function getAvatarColor(id: number): string {
 .toolbar__btn--outline:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+}
+
+.toolbar__btn--ghost {
+  background: #F3F4F6;
+  color: #4B5563;
+  border: 1px solid #E5E7EB;
+}
+
+.toolbar__btn--ghost:hover:not(:disabled) {
+  background: #E5E7EB;
+  color: #1F2937;
+}
+
+.toolbar__btn--danger {
+  background: #FEF2F2;
+  color: #DC2626;
+  border: 1px solid #FECACA;
+}
+
+.toolbar__btn--danger:hover:not(:disabled) {
+  background: #FEE2E2;
+  border-color: #FCA5A5;
+  color: #B91C1C;
 }
 
 /* ── Group size ── */
@@ -779,18 +830,18 @@ function getAvatarColor(id: number): string {
 .toolbar__group-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.4rem 0.5rem;
+  gap: 0.3rem;
+  padding: 0.5rem 0.6rem;
   border: 1px solid #3B82F6;
   border-right: none;
-  border-radius: 8px 0 0 8px;
+  border-radius: 10px 0 0 10px;
   background: white;
   color: #1F2937;
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;
-  transition: background 0.12s;
+  transition: all 0.12s;
 }
 
 .toolbar__group-btn:hover:not(:disabled) {
@@ -803,12 +854,12 @@ function getAvatarColor(id: number): string {
 }
 
 .toolbar__group-val {
-  min-width: 1.1rem;
+  min-width: 1.2rem;
   text-align: center;
   font-weight: 700;
   color: #3B82F6;
   font-variant-numeric: tabular-nums;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
 }
 
 /* ═══════════════════════════════════
@@ -822,8 +873,8 @@ function getAvatarColor(id: number): string {
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 0.85rem;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 1rem;
 }
 
 @media (min-width: 1024px) {
@@ -833,7 +884,7 @@ function getAvatarColor(id: number): string {
   .grid { grid-template-columns: repeat(3, 1fr); }
 }
 @media (max-width: 639px) {
-  .grid { grid-template-columns: repeat(2, 1fr); gap: 0.65rem; }
+  .grid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
 }
 
 /* ═══════════════════════════════════
@@ -844,133 +895,137 @@ function getAvatarColor(id: number): string {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.65rem;
-  padding: 1.25rem 0.85rem 0.85rem;
+  gap: 0.7rem;
+  padding: 1.4rem 0.9rem 0.9rem;
   background: white;
   border: 1px solid #E5E7EB;
-  border-radius: 14px;
+  border-radius: 16px;
   cursor: pointer;
   font-family: inherit;
-  transition: all 0.2s;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   outline: none;
   text-align: center;
-  min-height: 150px;
+  min-height: 155px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
 }
 
 .card:hover {
   border-color: #D1D5DB;
-  transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.08), 0 4px 8px rgba(0,0,0,0.04);
 }
 
 .card:active {
-  transform: translateY(-1px) scale(0.98);
+  transform: translateY(-2px) scale(0.98);
 }
 
 /* Selected */
 .card--sel {
   border-color: #3B82F6;
-  background: #EFF6FF;
-  box-shadow: 0 0 0 1px rgba(59,130,246,0.12), 0 6px 16px rgba(59,130,246,0.08);
-  transform: translateY(-3px);
+  background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+  box-shadow: 0 0 0 1px rgba(59,130,246,0.15), 0 8px 20px rgba(59,130,246,0.12);
+  transform: translateY(-4px);
 }
 
 .card--sel:hover {
   border-color: #2563EB;
-  box-shadow: 0 0 0 2px rgba(59,130,246,0.15), 0 8px 20px rgba(59,130,246,0.1);
+  box-shadow: 0 0 0 2px rgba(59,130,246,0.2), 0 12px 28px rgba(59,130,246,0.15);
 }
 
 /* Picked (single) */
 .card--pick {
   border-color: #3B82F6 !important;
-  background: #DBEAFE !important;
-  box-shadow: 0 0 0 3px rgba(59,130,246,0.2), 0 8px 24px rgba(59,130,246,0.15) !important;
-  transform: translateY(-5px) scale(1.03) !important;
-  animation: pop-in 0.45s cubic-bezier(0.34,1.56,0.64,1);
+  background: linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%) !important;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.25), 0 12px 28px rgba(59,130,246,0.2) !important;
+  transform: translateY(-6px) scale(1.04) !important;
+  animation: pop-in 0.5s cubic-bezier(0.34,1.56,0.64,1);
   will-change: transform;
 }
 
 @keyframes pop-in {
-  0% { transform: translateY(-3px) scale(1); }
-  40% { transform: translateY(-7px) scale(1.05); }
-  100% { transform: translateY(-5px) scale(1.03); }
+  0% { transform: translateY(-4px) scale(1); }
+  40% { transform: translateY(-8px) scale(1.06); }
+  100% { transform: translateY(-6px) scale(1.04); }
 }
 
 /* Picked (group) */
 .card--group {
   border-color: #3B82F6 !important;
-  background: #DBEAFE !important;
-  box-shadow: 0 0 0 3px rgba(59,130,246,0.2), 0 8px 24px rgba(59,130,246,0.15) !important;
-  transform: translateY(-5px) scale(1.03) !important;
-  animation: group-pop 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  background: linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%) !important;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.25), 0 12px 28px rgba(59,130,246,0.2) !important;
+  transform: translateY(-6px) scale(1.04) !important;
+  animation: group-pop 0.4s cubic-bezier(0.34,1.56,0.64,1);
   will-change: transform;
 }
 
 @keyframes group-pop {
-  0% { transform: translateY(-3px) scale(1); opacity: 0.7; }
-  50% { transform: translateY(-6px) scale(1.04); opacity: 1; }
-  100% { transform: translateY(-5px) scale(1.03); opacity: 1; }
+  0% { transform: translateY(-4px) scale(1); opacity: 0.7; }
+  50% { transform: translateY(-8px) scale(1.06); opacity: 1; }
+  100% { transform: translateY(-6px) scale(1.04); opacity: 1; }
 }
 
 /* Check icon */
 .card__check {
   position: absolute;
-  top: 0.4rem;
-  right: 0.4rem;
-  width: 1.35rem;
-  height: 1.35rem;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 1.4rem;
+  height: 1.4rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #22C55E;
+  background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%);
   border-radius: 50%;
-  animation: check-pop 0.25s cubic-bezier(0.34,1.56,0.64,1);
+  animation: check-pop 0.3s cubic-bezier(0.34,1.56,0.64,1);
   z-index: 2;
-  box-shadow: 0 2px 6px rgba(34,197,94,0.3);
+  box-shadow: 0 3px 8px rgba(34,197,94,0.35);
 }
 
 @keyframes check-pop {
   0% { transform: scale(0); opacity: 0; }
-  50% { transform: scale(1.2); }
+  50% { transform: scale(1.25); }
   100% { transform: scale(1); opacity: 1; }
 }
 
 /* Avatar */
 .card__avatar {
-  width: 2.75rem;
-  height: 2.75rem;
+  width: 3rem;
+  height: 3rem;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  transition: transform 0.2s;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
 }
 
 .card--sel .card__avatar,
 .card--pick .card__avatar,
 .card--group .card__avatar {
-  transform: scale(1.08);
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.18);
 }
 
 .card__initials {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 700;
   color: white;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.15);
 }
 
 .card__info {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.15rem;
+  gap: 0.2rem;
   min-width: 0;
   width: 100%;
 }
 
 .card__name {
   margin: 0;
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: #1F2937;
   max-width: 100%;
@@ -986,7 +1041,7 @@ function getAvatarColor(id: number): string {
 }
 
 .card__id {
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   font-weight: 500;
   color: #9CA3AF;
   font-variant-numeric: tabular-nums;
@@ -999,31 +1054,32 @@ function getAvatarColor(id: number): string {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.65rem;
-  padding: 4rem 2rem;
+  gap: 0.75rem;
+  padding: 5rem 2rem;
   text-align: center;
 }
 
 .empty__icon {
-  width: 3rem;
-  height: 3rem;
+  width: 3.5rem;
+  height: 3.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
   background: white;
-  border-radius: 12px;
+  border-radius: 14px;
   border: 1px solid #E5E7EB;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
 }
 
 .empty__title {
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 600;
   color: #4B5563;
   margin: 0;
 }
 
 .empty__text {
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   color: #9CA3AF;
   margin: 0;
 }
@@ -1046,59 +1102,60 @@ function getAvatarColor(id: number): string {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.75rem 1.15rem;
+  padding: 0.85rem 1.25rem;
   background: white;
   border: 1px solid #E5E7EB;
-  border-radius: 12px;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.08);
-  animation: bar-in 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.12), 0 8px 16px rgba(0,0,0,0.06);
+  animation: bar-in 0.35s cubic-bezier(0.34,1.56,0.64,1);
 }
 
 @keyframes bar-in {
-  0% { opacity: 0; transform: scale(0.96) translateY(8px); }
+  0% { opacity: 0; transform: scale(0.95) translateY(12px); }
   100% { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 .bar__left {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.7rem;
 }
 
 .bar__num {
-  width: 2rem;
-  height: 2rem;
+  width: 2.2rem;
+  height: 2.2rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #3B82F6;
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
   color: white;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-weight: 700;
-  border-radius: 8px;
+  border-radius: 10px;
   flex-shrink: 0;
+  box-shadow: 0 3px 8px rgba(59,130,246,0.3);
 }
 
 .bar__label {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: #1F2937;
 }
 
 .bar__right {
   display: flex;
-  gap: 0.4rem;
+  gap: 0.45rem;
   flex-shrink: 0;
 }
 
 .bar__btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.45rem 0.85rem;
+  gap: 0.4rem;
+  padding: 0.5rem 0.95rem;
   border: none;
-  border-radius: 8px;
-  font-size: 0.82rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
@@ -1113,6 +1170,7 @@ function getAvatarColor(id: number): string {
 .bar__btn--ghost {
   background: #F3F4F6;
   color: #4B5563;
+  border: 1px solid #E5E7EB;
 }
 
 .bar__btn--ghost:hover {
@@ -1132,13 +1190,14 @@ function getAvatarColor(id: number): string {
 }
 
 .bar__btn--solid {
-  background: #3B82F6;
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
   color: white;
-  box-shadow: 0 2px 6px rgba(59,130,246,0.25);
+  box-shadow: 0 3px 10px rgba(59,130,246,0.3);
 }
 
 .bar__btn--solid:hover {
-  background: #2563EB;
+  background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+  box-shadow: 0 4px 14px rgba(59,130,246,0.4);
 }
 
 /* ═══════════════════════════════════
@@ -1187,19 +1246,20 @@ function getAvatarColor(id: number): string {
    ═══════════════════════════════════ */
 @media (max-width: 639px) {
   .header__inner {
-    padding: 1.25rem 1rem;
+    padding: 1.5rem 1.25rem;
+    flex-wrap: wrap;
   }
   .header__title {
-    font-size: 1.15rem;
+    font-size: 1.25rem;
   }
   .header__desc {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
   }
 
   .toolbar__inner {
-    padding: 0.55rem 1rem;
+    padding: 0.65rem 1.25rem;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: 0.6rem;
   }
   .toolbar__search {
     max-width: 100%;
@@ -1208,36 +1268,38 @@ function getAvatarColor(id: number): string {
   }
   .toolbar__actions {
     margin-left: 0;
+    width: 100%;
+    justify-content: flex-end;
   }
 
   .main {
-    padding: 0.75rem 1rem 6rem;
+    padding: 1rem 1.25rem 6rem;
   }
 
   .card {
-    min-height: 135px;
-    padding: 1.1rem 0.65rem 0.75rem;
-    border-radius: 12px;
+    min-height: 140px;
+    padding: 1.2rem 0.7rem 0.8rem;
+    border-radius: 14px;
   }
   .card__avatar {
-    width: 2.5rem;
-    height: 2.5rem;
+    width: 2.6rem;
+    height: 2.6rem;
   }
   .card__initials {
-    font-size: 0.75rem;
+    font-size: 0.78rem;
   }
   .card__name {
-    font-size: 0.78rem;
+    font-size: 0.8rem;
   }
 
   .bar {
     bottom: 1rem;
-    width: calc(100% - 1.25rem);
+    width: calc(100% - 1.5rem);
   }
   .bar__inner {
     flex-direction: column;
-    gap: 0.65rem;
-    padding: 0.65rem 1rem;
+    gap: 0.7rem;
+    padding: 0.75rem 1rem;
   }
   .bar__right {
     width: 100%;
@@ -1250,18 +1312,18 @@ function getAvatarColor(id: number): string {
 
 @media (max-width: 380px) {
   .grid {
-    gap: 0.5rem;
+    gap: 0.6rem;
   }
   .card {
     min-height: 125px;
-    padding: 1rem 0.55rem 0.65rem;
+    padding: 1rem 0.6rem 0.7rem;
   }
   .card__avatar {
-    width: 2.25rem;
-    height: 2.25rem;
+    width: 2.3rem;
+    height: 2.3rem;
   }
   .card__initials {
-    font-size: 0.7rem;
+    font-size: 0.72rem;
   }
   .card__name {
     font-size: 0.75rem;
