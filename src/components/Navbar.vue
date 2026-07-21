@@ -48,9 +48,8 @@ async function handleLogout() {
   await router.replace('/')
 }
 
-onMounted(async () => {
+onMounted(() => {
   window.addEventListener('scroll', handleScroll)
-  await auth.fetchUser()
 })
 
 onUnmounted(() => {
