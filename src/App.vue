@@ -45,7 +45,4 @@ html {
 body {
   font-family: inherit;
 }
-
-.main-content {
-}
 </style>
