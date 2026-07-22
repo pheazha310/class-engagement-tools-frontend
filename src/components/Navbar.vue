@@ -82,6 +82,7 @@ onUnmounted(() => {
             <RouterLink to="/tools/category/quiz" class="dropdown-item" @click="closeMobileMenu">Quiz &amp; Assessment</RouterLink>
             <RouterLink to="/tools/category/classroom" class="dropdown-item" @click="closeMobileMenu">Classroom Control</RouterLink>
             <RouterLink to="/tools/category/games" class="dropdown-item" @click="closeMobileMenu">Games</RouterLink>
+            <RouterLink to="/games/history" class="dropdown-item" @click="closeMobileMenu">Game History</RouterLink>
             <RouterLink to="/tools/category/engagement" class="dropdown-item" @click="closeMobileMenu">Engagement</RouterLink>
             <RouterLink to="/tools/category/fun" class="dropdown-item" @click="closeMobileMenu">Fun Activities</RouterLink>
           </div>
