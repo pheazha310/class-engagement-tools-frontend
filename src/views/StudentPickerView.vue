@@ -43,10 +43,12 @@ const features: FeatureCard[] = [
   },
   {
     title: 'Card Picker',
-    description: 'Flip animated cards to reveal selected students with a game-like feel.',
+    description: 'Flip through student cards with a visually interactive picker — tap to select.',
     gradient: 'linear-gradient(135deg, #14b8a6, #06b6d4)',
     icon: 'card',
-    actionLabel: 'Flip Card',
+    actionLabel: 'Pick Cards',
+    route: '/card-picker',
+    isLive: true,
   },
   {
     title: 'Image Picker',

@@ -4,6 +4,7 @@ import { useRoute, RouterLink } from 'vue-router'
 import { allTools } from '@/data/toolsData'
 import Navbar from '@/components/Navbar.vue'
 import TimerCountdown from '@/components/TimerCountdown.vue'
+import Stopwatch from '@/components/Stopwatch.vue'
 
 const route = useRoute()
 
@@ -17,24 +18,25 @@ const relatedTools = computed(() => {
 
 <template>
    <div class="tool-page" v-if="tool">
-    <section class="tool-hero">
+    <section v-if="tool.slug !== 'timer' && tool.slug !== 'stopwatch'" class="tool-hero" :class="{ 'tool-hero-compact': tool.slug === 'timer' }">
       <div class="container">
         <div class="tool-hero-content">
-          <div class="tool-icon">{{ tool.icon }}</div>
-          <h1 class="tool-hero-title">{{ tool.title }}</h1>
-          <p class="tool-hero-category">{{ tool.category }}</p>
+          <div v-if="tool.slug !== 'timer' && tool.slug !== 'stopwatch'" class="tool-icon">{{ tool.icon }}</div>
+          <h1 v-if="tool.slug !== 'timer' && tool.slug !== 'stopwatch'" class="tool-hero-title">{{ tool.title }}</h1>
+          <p v-if="tool.slug !== 'timer' && tool.slug !== 'stopwatch'" class="tool-hero-category">{{ tool.category }}</p>
         </div>
       </div>
     </section>
 
     <section class="tool-content">
       <div class="container">
-        <div class="tool-card">
+        <div class="tool-card" v-if="tool.slug !== 'timer' && tool.slug !== 'stopwatch'">
           <h2 class="tool-section-title">About this tool</h2>
           <p class="tool-description">{{ tool.description }}</p>
         </div>
 
         <TimerCountdown v-if="tool.slug === 'timer'" />
+        <Stopwatch v-if="tool.slug === 'stopwatch'" />
 
         <div class="tool-card" v-if="relatedTools.length">
           <h2 class="tool-section-title">Related tools</h2>
@@ -100,6 +102,16 @@ const relatedTools = computed(() => {
 .tool-hero-category {
   font-size: 18px;
   opacity: 0.9;
+}
+
+.tool-hero-compact {
+  padding: 24px 20px 16px;
+}
+
+.tool-hero-compact .tool-hero-title {
+  font-size: 36px;
+  margin-bottom: 0;
+  text-align: center;
 }
 
 .tool-content {

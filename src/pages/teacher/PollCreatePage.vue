@@ -83,7 +83,7 @@ async function handleCreate() {
       <div class="pcp-header">
         <div>
           <h1 class="pcp-title">Create New Poll</h1>
-          <p class="pcp-subtitle">Create a live voting session for your class</p>
+          <p class="pcp-subtitle">Create a new poll for your class</p>
         </div>
         <router-link :to="{ name: 'teacher-polls' }" class="btn btn-ghost">Back</router-link>
       </div>

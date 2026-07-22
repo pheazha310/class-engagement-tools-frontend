@@ -244,9 +244,9 @@ function goBackToQuiz() {
 }
 
 .btn-back-icon:hover {
-  border-color: #14b8a6;
-  color: #0d9488;
-  background: #f0fdfa;
+  border-color: #3b82f6;
+  color: #2563eb;
+  background: #eff6ff;
 }
 
 .report-header-icon {
@@ -256,8 +256,8 @@ function goBackToQuiz() {
   width: 52px;
   height: 52px;
   border-radius: 14px;
-  background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
-  box-shadow: 0 8px 24px rgba(13, 148, 136, 0.25);
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.25);
   flex-shrink: 0;
 }
 
@@ -311,14 +311,14 @@ function goBackToQuiz() {
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: #f0fdfa;
+  background: #eff6ff;
   flex-shrink: 0;
 }
 
 .report-card-header-icon svg {
   width: 18px;
   height: 18px;
-  color: #0d9488;
+  color: #2563eb;
 }
 
 .report-card-title {

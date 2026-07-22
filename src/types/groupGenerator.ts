@@ -8,7 +8,6 @@ export interface Group {
   id: string
   name: string
   students: Student[]
-  color: string
 }
 
 export type GenerationMethod = 'random' | 'balanced' | 'gender'

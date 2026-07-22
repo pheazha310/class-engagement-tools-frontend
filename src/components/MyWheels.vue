@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import { ref, watch, onBeforeUnmount } from 'vue'
+import { ref, watch, onBeforeUnmount, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import type { SavedWheel, WheelTheme } from '@/types/wheel'
 import { getThemeById, defaultThemeId } from '@/types/wheel'
 import { listSavedWheels, deleteSavedWheel } from '@/services/wheel'
+import { useAuthStore } from '@/stores/auth'
+
+const auth = useAuthStore()
 
 const props = defineProps<{
   modelValue: boolean
@@ -22,6 +25,11 @@ const error = ref<string | null>(null)
 const deletingId = ref<string | null>(null)
 const deleteConfirmId = ref<string | null>(null)
 
+const shouldShowLoginPrompt = computed(() => {
+  // Only show login prompt if user is not authenticated
+  return !auth.isAuthenticated
+})
+
 async function loadWheels() {
   loading.value = true
   error.value = null
@@ -30,7 +38,11 @@ async function loadWheels() {
   try {
     wheels.value = await listSavedWheels()
   } catch (err) {
-    error.value = err instanceof Error ? err.message : 'Failed to load saved wheels'
+    if (err instanceof Error && err.name === 'AuthenticationError') {
+      error.value = 'Please log in to view your saved wheels'
+    } else {
+      error.value = err instanceof Error ? err.message : 'Failed to load saved wheels'
+    }
   } finally {
     loading.value = false
   }
@@ -38,7 +50,7 @@ async function loadWheels() {
 
 watch(() => props.modelValue, (open) => {
   if (open) {
-    if (props.isAuthenticated) {
+    if (auth.isAuthenticated) {
       loadWheels()
     }
   } else {
@@ -128,7 +140,7 @@ onBeforeUnmount(() => {
           {{ error }}
         </div>
 
-        <div v-if="!props.isAuthenticated" class="auth-prompt">
+        <div v-if="shouldShowLoginPrompt" class="auth-prompt">
           <p class="auth-prompt-text">
             <strong>Please login first</strong> to view your saved wheels.
           </p>

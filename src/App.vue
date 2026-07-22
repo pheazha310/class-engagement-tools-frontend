@@ -1,19 +1,16 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
-import { useAuthStore } from '@/stores/auth'
+import { RouterView, useRoute } from 'vue-router'
+import Navbar from './components/Navbar.vue';
+import { computed } from 'vue';
 
-const authStore = useAuthStore()
-
-onMounted(() => {
-  authStore.fetchUser()
-})
+const route = useRoute();
+const hideNavbar = computed(() => route.meta?.hideNavbar || false);
 </script>
 
 <template>
-  <div class="min-h-screen bg-white">
-    <main>
-      <router-view />
-    </main>
+  <Navbar v-if="!hideNavbar" />
+  <div class="main-content">
+    <RouterView />
   </div>
 </template>
 
@@ -40,5 +37,8 @@ html {
 
 body {
   font-family: inherit;
+}
+
+.main-content {
 }
 </style>

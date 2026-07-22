@@ -77,7 +77,7 @@ onMounted(async () => {
   try {
     const data = await pollStore.apiCall<{ data: Poll }>(`/api/polls/${pollId.value}`)
     pollStore.currentPoll = data.data
-  } catch (err) {
+  } catch (error) {
     localError.value = 'Failed to load poll.'
   }
 })
@@ -91,8 +91,8 @@ onUnmounted(() => {
   <div class="poll-vote-page">
     <div v-if="localError" class="error-state">
       <p>{{ localError }}</p>
-      <button class="btn btn-primary" @click="router.push({ name: 'live-voting' })">
-        Back to live polls
+      <button class="btn btn-primary" @click="router.push({ name: 'teacher-polls' })">
+        Back to polls
       </button>
     </div>
 
