@@ -118,6 +118,14 @@ const stats = [
                 >
                   See Results
                 </RouterLink>
+                <RouterLink
+                  v-else-if="activity.id === 4"
+                  to="/tools/icebreakers/random-challenge-generator"
+                  class="launch-btn"
+                  :style="{ backgroundColor: activity.color }"
+                >
+                  Launch
+                </RouterLink>
                 <button
                   v-else
                   class="launch-btn"

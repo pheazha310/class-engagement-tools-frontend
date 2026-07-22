@@ -12,6 +12,7 @@ import TwoTruthsOneLie from '@/views/TwoTruthsOneLie.vue'
 import WouldYouRather from '@/views/WouldYouRather.vue'
 import SpinTheQuestion from '@/views/SpinTheQuestion.vue'
 import SpinTheQuestionResults from '@/views/SpinTheQuestionResults.vue'
+import RandomChallengeGenerator from '@/views/RandomChallengeGenerator.vue'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -178,6 +179,10 @@ const routes: RouteRecordRaw[] = [
     component: GroupGeneratorView,
   },
   {
+    path: '/tools/icebreakers',
+    redirect: '/icebreakers',
+  },
+  {
     path: '/live-voting',
     name: 'live-voting',
     component: () => import('@/pages/LiveVotingPage.vue'),
@@ -236,6 +241,11 @@ const routes: RouteRecordRaw[] = [
     path: '/tools/icebreakers/spin-the-question/results',
     name: 'spin-the-question-results',
     component: SpinTheQuestionResults,
+  },
+  {
+    path: '/tools/icebreakers/random-challenge-generator',
+    name: 'random-challenge-generator',
+    component: RandomChallengeGenerator,
   },
 ]
 

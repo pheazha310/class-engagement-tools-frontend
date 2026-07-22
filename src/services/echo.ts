@@ -1,5 +1,5 @@
 import Echo from 'laravel-echo'
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 import Pusher from 'pusher-js'
 
 window.Pusher = Pusher
