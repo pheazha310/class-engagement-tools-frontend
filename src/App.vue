@@ -40,5 +40,6 @@ body {
 }
 
 .main-content {
+  padding-top: 64px;
 }
 </style>

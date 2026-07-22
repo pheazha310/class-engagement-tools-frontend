@@ -264,7 +264,7 @@ function getTotalQuestions(quizId: string): number {
 .classroom-page {
   position: relative;
   min-height: 100vh;
-  padding: 7rem 1rem 4rem;
+  padding: 2rem 1rem 4rem;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 

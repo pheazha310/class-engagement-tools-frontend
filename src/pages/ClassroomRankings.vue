@@ -211,7 +211,7 @@ function getRankIcon(rank: number) {
 .rankings-page {
   position: relative;
   min-height: 100vh;
-  padding: 7rem 1rem 4rem;
+  padding: 3rem 1rem 4rem;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
@@ -240,7 +240,7 @@ function getRankIcon(rank: number) {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 2.5rem;
+  margin-bottom: 1.75rem;
   padding: 0 0.25rem;
   flex-wrap: wrap;
 }
@@ -400,7 +400,7 @@ function getRankIcon(rank: number) {
 
 .search-wrapper {
   position: relative;
-  max-width: 400px;
+  max-width: 500px;
 }
 
 .search-icon {
