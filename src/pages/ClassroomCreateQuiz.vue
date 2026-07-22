@@ -154,19 +154,24 @@ function cancel() {
     <div class="create-container">
       <!-- Header -->
       <header class="create-header">
-        <button class="btn-back-icon" @click="cancel" title="Back">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" />
-          </svg>
-        </button>
-        <div class="create-header-icon">
-          <svg class="create-header-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 5v14" /><path d="M5 12h14" />
-          </svg>
+        <div class="create-header-left">
+          <div class="create-header-icon">
+            <svg class="create-header-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 5v14" /><path d="M5 12h14" />
+            </svg>
+          </div>
+          <div>
+            <h1 class="create-header-title">Create Your Own Quiz</h1>
+            <p class="create-header-subtitle">Design a custom quiz for your classroom</p>
+          </div>
         </div>
-        <div>
-          <h1 class="create-header-title">Create Your Own Quiz</h1>
-          <p class="create-header-subtitle">Design a custom quiz for your classroom</p>
+        <div class="create-header-right">
+          <button class="btn btn-back-text" @click="cancel">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-arrow">
+              <line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" />
+            </svg>
+            Back
+          </button>
         </div>
       </header>
 
@@ -374,7 +379,7 @@ function cancel() {
 .create-page {
   position: relative;
   min-height: 100vh;
-  padding: 7rem 1rem 4rem;
+  padding: 3rem 1rem 4rem;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
@@ -401,41 +406,25 @@ function cancel() {
 .create-header {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
-  margin-bottom: 1.5rem;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
   padding: 0 0.25rem;
+  flex-wrap: wrap;
 }
 
-.btn-back-icon {
+.create-header-left {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  border: 1px solid #cbd5e1;
-  background: #ffffff;
-  color: #64748b;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  padding: 0;
-  flex-shrink: 0;
-}
-
-.btn-back-icon svg { width: 20px; height: 20px; }
-
-.btn-back-icon:hover {
-  border-color: #3b82f6;
-  color: #2563eb;
-  background: #eff6ff;
+  gap: 1rem;
 }
 
 .create-header-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   border-radius: 14px;
   background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
   box-shadow: 0 8px 24px rgba(37, 99, 235, 0.25);
@@ -443,13 +432,13 @@ function cancel() {
 }
 
 .create-header-svg {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   color: #fff;
 }
 
 .create-header-title {
-  font-size: 1.4rem;
+  font-size: 1.625rem;
   font-weight: 700;
   color: #1e293b;
   margin: 0;
@@ -457,10 +446,40 @@ function cancel() {
 }
 
 .create-header-subtitle {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   color: #64748b;
-  margin: 0.15rem 0 0;
+  margin: 0.2rem 0 0;
+  line-height: 1.4;
 }
+
+.create-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.btn-back-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.9rem;
+  background: #ffffff;
+  color: #475569;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.btn-back-text:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.btn-arrow { width: 16px; height: 16px; }
 
 /* ============================================================
    STEPS BAR
