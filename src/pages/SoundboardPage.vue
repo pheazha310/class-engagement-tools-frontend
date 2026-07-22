@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { fetchSounds, playSound, fetchPlayHistory, type Sound, type SoundPlayHistory } from '@/services/sound'
-import { playSynthSound, stopAll, setVolume, getVolume } from '@/utils/soundSynthesizer'
+import { playSynthSound, stopAll, fadeOutAndStop, setVolume, getVolume, getAnalyserLevel, setPerSoundVolume, getPerSoundVolume, deletePerSoundVolume } from '@/utils/soundSynthesizer'
+import { getEcho } from '@/services/echo'
+import type { Channel } from 'laravel-echo'
 import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
@@ -13,12 +15,54 @@ const error = ref<string | null>(null)
 const showHistory = ref(false)
 const historyLoading = ref(false)
 
+// Search bar
+const searchQuery = ref('')
+const searchInputRef = ref<HTMLInputElement | null>(null)
+
+const filteredSounds = computed(() => {
+  const q = searchQuery.value.toLowerCase().trim()
+  if (!q) return sounds.value
+  return sounds.value.filter(s => {
+    const name = (s.name || '').toLowerCase()
+    const category = (s.category || '').toLowerCase()
+    return name.includes(q) || category.includes(q)
+  })
+})
+
 // Playback state
 const currentSound = ref<Sound | null>(null)
 const isPlaying = ref(false)
 const volume = ref(getVolume())
 const volumeBeforeMute = ref(0.5)
 const progress = ref(0)
+const completedSoundId = ref<string | null>(null)
+const audioLevel = ref(0)
+let levelFrame: number | null = null
+
+function startLevelMeter() {
+  if (levelFrame !== null) cancelAnimationFrame(levelFrame)
+
+  function tickMeter() {
+    audioLevel.value = getAnalyserLevel()
+    levelFrame = requestAnimationFrame(tickMeter)
+  }
+
+  levelFrame = requestAnimationFrame(tickMeter)
+}
+
+function stopLevelMeter() {
+  if (levelFrame !== null) {
+    cancelAnimationFrame(levelFrame)
+    levelFrame = null
+  }
+  audioLevel.value = 0
+}
+
+function triggerHaptic() {
+  if ('vibrate' in navigator) {
+    navigator.vibrate(20)
+  }
+}
 
 // Local play count for favorites (tracked even without history API)
 const localPlayCount = ref<Map<string, number>>(new Map())
@@ -40,11 +84,11 @@ function isPinned(soundId: string): boolean {
   return pinnedIds.value.has(soundId)
 }
 
-let progressInterval: ReturnType<typeof setInterval> | null = null
+let progressFrame: number | null = null
 
 const categories = computed(() => {
   const map = new Map<string, Sound[]>()
-  for (const sound of sounds.value) {
+  for (const sound of filteredSounds.value) {
     const cat = sound.category || 'Uncategorized'
     if (!map.has(cat)) map.set(cat, [])
     map.get(cat)!.push(sound)
@@ -216,48 +260,147 @@ const currentCategoryColor = computed(() => {
 async function loadSounds() {
   loading.value = true
   error.value = null
+  console.debug('Soundboard: loading sounds...')
   try {
-    sounds.value = await fetchSounds()
-    // Also fetch recent play history for favorites calculation
-    try {
-      const result = await fetchPlayHistory(1, 100)
-      history.value = result.data
-    } catch {
-      // History is optional — favorites will just be empty
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error('Request timed out')), 10000)
+    })
+    sounds.value = await Promise.race([fetchSounds(), timeoutPromise])
+    console.debug('Soundboard: sounds loaded', sounds.value.length)
+    if (authStore.user) {
+      try {
+        const result = await fetchPlayHistory(1, 100)
+        history.value = result.data
+      } catch {
+        // History is optional — favorites will just be empty
+      }
     }
   } catch (e) {
+    console.error('Soundboard: failed to load sounds', e)
     error.value = 'Failed to load sounds. Please try again.'
-    console.error(e)
   } finally {
     loading.value = false
   }
 }
 
-onMounted(loadSounds)
+let soundboardChannel: Channel | null = null
+
+// Guard against re-playing our own broadcast
+let lastLocalPlayedAt = 0
+let lastLocalPlayedSoundId: string | null = null
+
+function listenForBroadcasts() {
+  try {
+    const echo = getEcho()
+    soundboardChannel = echo.channel('soundboard')
+    soundboardChannel.listen('.SoundPlayed', async (data: {
+      soundId: string
+      soundName: string
+      audioUrl: string
+      category?: string | null
+      icon?: string | null
+      durationSeconds?: number | null
+    }) => {
+      // Skip if this is our own broadcast (played locally within last 2 seconds)
+      if (data.soundId === lastLocalPlayedSoundId && Date.now() - lastLocalPlayedAt < 2000) {
+        console.debug('Soundboard: skipping self-broadcast', data.soundName)
+        return
+      }
+
+      console.debug('Soundboard: received broadcast', data.soundName)
+      // Find the sound in the current list
+      const sound = sounds.value.find(s => s.id === data.soundId)
+      if (sound) {
+        // Play the broadcasted sound locally (no fade needed for remote broadcasts)
+        const { duration } = await playSynthSound(sound.name).catch(() => ({ duration: 1000 }))
+
+        // Track in local play count
+        const newMap = new Map(localPlayCount.value)
+        newMap.set(sound.id, (newMap.get(sound.id) || 0) + 1)
+        localPlayCount.value = newMap
+
+        // Update UI
+        currentSound.value = sound
+        isPlaying.value = true
+        startProgress(duration)
+      }
+    })
+  } catch (e) {
+    console.debug('Soundboard: broadcast listener not available', e)
+  }
+}
+
+function stopListeningForBroadcasts() {
+  if (soundboardChannel) {
+    try {
+      const echo = getEcho()
+      echo.leaveChannel('soundboard')
+    } catch {
+      // ignore
+    }
+    soundboardChannel = null
+  }
+}
+
+function focusSearch(e: KeyboardEvent) {
+  if (e.key === '/' && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+    e.preventDefault()
+    searchInputRef.value?.focus()
+  }
+}
+
+onMounted(() => {
+  loadSounds()
+  listenForBroadcasts()
+  window.addEventListener('keydown', focusSearch)
+})
 
 onUnmounted(() => {
   stopAll()
-  if (progressInterval) clearInterval(progressInterval)
+  stopListeningForBroadcasts()
+  stopLevelMeter()
+  if (progressFrame !== null) cancelAnimationFrame(progressFrame)
+  window.removeEventListener('keydown', focusSearch)
 })
 
 function startProgress(durationMs: number) {
   const start = Date.now()
-  if (progressInterval) clearInterval(progressInterval)
+  if (progressFrame !== null) cancelAnimationFrame(progressFrame)
   progress.value = 0
-  progressInterval = setInterval(() => {
+
+  function tick() {
     const elapsed = Date.now() - start
     progress.value = Math.min(100, (elapsed / durationMs) * 100)
+
     if (progress.value >= 100) {
-      if (progressInterval) clearInterval(progressInterval)
-      progressInterval = null
+      progressFrame = null
+
+      const completedId = currentSound.value?.id || null
+      completedSoundId.value = completedId
+      triggerHaptic()
+
+      setTimeout(() => {
+        if (completedSoundId.value === currentSound.value?.id) {
+          completedSoundId.value = null
+          isPlaying.value = false
+          stopProgress()
+          stopLevelMeter()
+        } else {
+          completedSoundId.value = null
+        }
+      }, 400)
+    } else {
+      progressFrame = requestAnimationFrame(tick)
     }
-  }, 30)
+  }
+
+  progressFrame = requestAnimationFrame(tick)
 }
 
 function stopProgress() {
-  if (progressInterval) {
-    clearInterval(progressInterval)
-    progressInterval = null
+  if (progressFrame !== null) {
+    cancelAnimationFrame(progressFrame)
+    progressFrame = null
   }
   progress.value = 0
 }
@@ -265,31 +408,45 @@ function stopProgress() {
 async function handlePlay(sound: Sound) {
   if (isPlaying.value && currentSound.value?.id === sound.id) return
 
-  // 1. Play locally via synthesized sound
-  const { duration } = playSynthSound(sound.name)
+  // 1. Check if we're switching sounds (fade out current, fade in new)
+  const isSwitching = isPlaying.value && currentSound.value?.id !== sound.id
 
-  // 2. Broadcast to classroom via API
-  try {
-    await playSound(sound.id)
-  } catch (e) {
-    console.error('Failed to trigger sound broadcast:', e)
+  // 2. Play locally via synthesized sound (with fade transition when switching)
+  const { duration } = await playSynthSound(sound.name, isSwitching ? 150 : 0)
+
+  // Start the level meter for visual feedback
+  startLevelMeter()
+
+  // 3. Record this as our own broadcast FIRST (before API, to guard against echo)
+  lastLocalPlayedAt = Date.now()
+  lastLocalPlayedSoundId = sound.id
+
+  // 4. Broadcast to classroom via API
+  if (authStore.user) {
+    try {
+      await playSound(sound.id)
+    } catch (e) {
+      console.error('Failed to trigger sound broadcast:', e)
+    }
   }
 
-  // 3. Track local play for favorites
+  // 5. Track local play for favorites
   const newMap = new Map(localPlayCount.value)
   newMap.set(sound.id, (newMap.get(sound.id) || 0) + 1)
   localPlayCount.value = newMap
 
-  // 4. Update UI state
+  // 6. Update UI state
   currentSound.value = sound
   isPlaying.value = true
   startProgress(duration)
 }
 
 function handleStop() {
-  stopAll()
+  // Fade out quickly when user presses stop
+  fadeOutAndStop(80)
   isPlaying.value = false
   stopProgress()
+  stopLevelMeter()
   // Keep currentSound visible so users can replay
 }
 
@@ -316,8 +473,55 @@ function toggleMute() {
   }
 }
 
+// Per-sound volume state (a reactive Map<string, number> synced with local storage)
+const perSoundVolumes = ref<Record<string, number>>({})
+
+function getPerSoundVol(soundName: string): number {
+  return perSoundVolumes.value[soundName] ?? getPerSoundVolume(soundName)
+}
+
+function handlePerSoundVolumeChange(soundName: string, event: Event) {
+  const input = event.target as HTMLInputElement
+  const val = parseFloat(input.value)
+  perSoundVolumes.value = { ...perSoundVolumes.value, [soundName]: val }
+  setPerSoundVolume(soundName, val)
+}
+
+function handleResetPerSoundVolume(soundName: string) {
+  perSoundVolumes.value = { ...perSoundVolumes.value }
+  delete perSoundVolumes.value[soundName]
+  deletePerSoundVolume(soundName)
+}
+
 function isSoundPlaying(soundId: string): boolean {
   return isPlaying.value && currentSound.value?.id === soundId
+}
+
+function getSoundTimeDisplay(sound: Sound): string {
+  if (!sound.duration_seconds) return ''
+  if (isPlaying.value && currentSound.value?.id === sound.id) {
+    const remaining = Math.ceil(sound.duration_seconds * (1 - progress.value / 100))
+    if (remaining > 0) {
+      return `${remaining}s left`
+    }
+  }
+  return `${sound.duration_seconds}s`
+}
+
+function getElapsedTime(sound: Sound): string {
+  if (!sound.duration_seconds) return ''
+  const elapsed = Math.floor(sound.duration_seconds * (progress.value / 100))
+  return `${elapsed}s`
+}
+
+function getNowPlayingTime(): string {
+  const sound = currentSound.value
+  if (!sound?.duration_seconds) return ''
+  const total = sound.duration_seconds
+  const elapsed = Math.floor(total * (progress.value / 100))
+  const remaining = Math.ceil(total * (1 - progress.value / 100))
+  if (progress.value >= 99) return `${total}s`
+  return `${elapsed}s / ${total}s`
 }
 
 function getCategoryEmoji(category: string): string {
@@ -346,7 +550,7 @@ function getCategoryColor(category: string): string {
 
 async function toggleHistory() {
   showHistory.value = !showHistory.value
-  if (showHistory.value && history.value.length === 0) {
+  if (showHistory.value && history.value.length === 0 && authStore.user) {
     historyLoading.value = true
     try {
       const result = await fetchPlayHistory()
@@ -436,10 +640,64 @@ async function toggleHistory() {
         <button class="sb-btn sb-btn--primary" @click="loadSounds()">Try Again</button>
       </div>
 
+      <!-- Empty state -->
+      <div v-else-if="sounds.length === 0" class="sb-empty">
+        <div class="sb-empty__icon">🔊</div>
+        <h3 class="sb-empty__title">No sounds available</h3>
+        <p class="sb-empty__text">Check back later or contact your administrator.</p>
+        <button class="sb-btn sb-btn--primary" @click="loadSounds()">Try Again</button>
+      </div>
+
       <!-- Sound grid -->
       <div v-else class="sb-content">
-        <!-- Favorites section (top of page) — drag-and-drop reorderable -->
-        <div v-if="orderedFavorites.length > 0" class="sb-favorites">
+        <!-- Search bar -->
+        <div class="sb-search">
+          <div class="sb-search__inner">
+            <svg class="sb-search__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              ref="searchInputRef"
+              v-model="searchQuery"
+              class="sb-search__input"
+              type="text"
+              placeholder="Search sounds by name or category..."
+              aria-label="Search sounds"
+            />
+            <Transition name="fade">
+              <button
+                v-if="searchQuery.length > 0"
+                class="sb-search__clear"
+                @click="searchQuery = ''"
+                aria-label="Clear search"
+                title="Clear search"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </Transition>
+          </div>
+          <!-- Results count -->
+          <Transition name="fade">
+            <span v-if="searchQuery.length > 0" class="sb-search__count">
+              {{ filteredSounds.length }} {{ filteredSounds.length === 1 ? 'sound' : 'sounds' }} found
+            </span>
+          </Transition>
+        </div>
+
+        <!-- No results state (search with no matches) -->
+        <div v-if="filteredSounds.length === 0 && searchQuery.length > 0" class="sb-search__empty">
+          <div class="sb-search__empty-icon">🔍</div>
+          <p class="sb-search__empty-text">No sounds match "{{ searchQuery }}"</p>
+          <p class="sb-search__empty-hint">Try a different search term or browse categories</p>
+          <button class="sb-btn sb-btn--ghost" @click="searchQuery = ''">Clear search</button>
+        </div>
+        <template v-else>
+          <!-- Favorites section (top of page) — drag-and-drop reorderable -->
+          <div v-if="orderedFavorites.length > 0" class="sb-favorites">
           <div class="sb-favorites__header">
             <h2 class="sb-favorites__title">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none" class="sb-favorites__star">
@@ -480,7 +738,6 @@ async function toggleHistory() {
               @touchstart.passive="onTouchStart($event, index)"
               @touchmove="onTouchMove($event)"
               @touchend="onTouchEnd"
-              :disabled="isPlaying && currentSound?.id !== sound.id"
               :aria-label="'Play ' + sound.name"
             >
               <!-- Drag handle -->
@@ -515,8 +772,51 @@ async function toggleHistory() {
               </div>
               <span class="sb-sound-btn__name">{{ sound.name }}</span>
               <span v-if="sound.duration_seconds" class="sb-sound-btn__duration">
-                {{ sound.duration_seconds }}s
+                {{ getSoundTimeDisplay(sound) }}
               </span>
+
+              <!-- Per-sound volume slider -->
+              <div class="sb-per-vol" :class="{ 'sb-per-vol--active': isSoundPlaying(sound.id) }" @click.stop>
+                <input
+                  type="range"
+                  class="sb-per-vol__slider"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  :value="getPerSoundVol(sound.name)"
+                  @input="handlePerSoundVolumeChange(sound.name, $event)"
+                  :style="{ '--accent': getCategoryColor(sound.category || '') }"
+                  :aria-label="'Volume for ' + sound.name"
+                  :title="'Volume: ' + sound.name + ' (' + Math.round(getPerSoundVol(sound.name) * 100) + '%)'"
+                />
+                <span class="sb-per-vol__label">{{ Math.round(getPerSoundVol(sound.name) * 100) }}</span>
+                <!-- Reset button (only visible when volume is not 100%) -->
+                <button
+                  v-if="getPerSoundVol(sound.name) < 1"
+                  class="sb-per-vol__reset"
+                  @click.stop="handleResetPerSoundVolume(sound.name)"
+                  title="Reset to 100%"
+                  :aria-label="'Reset volume for ' + sound.name + ' to 100%'"
+                >
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="1 4 1 10 7 10" />
+                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Stop button with waveform animation (only visible when this sound is playing) -->
+              <Transition name="fade">
+                <button
+                  v-if="isSoundPlaying(sound.id)"
+                  class="sb-stop-btn"
+                  @click.stop="handleStop"
+                  title="Stop"
+                  aria-label="Stop"
+                >
+                  <span class="sb-stop-btn__bar" /><span class="sb-stop-btn__bar" /><span class="sb-stop-btn__bar" />
+                </button>
+              </Transition>
 
               <!-- Playing overlay -->
               <Transition name="fade">
@@ -527,55 +827,48 @@ async function toggleHistory() {
                   <span>Playing...</span>
                 </div>
               </Transition>
+
+              <!-- Completion flash -->
+              <Transition name="fade">
+                <div v-if="completedSoundId === sound.id" class="sb-sound-btn__complete">
+                  <svg class="sb-sound-btn__check" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  <span>Done!</span>
+                </div>
+              </Transition>
+
+              <!-- Progress bar with elapsed time (only visible when this sound is playing) -->
+              <div
+                v-if="isSoundPlaying(sound.id)"
+                class="sb-sound-btn__progress"
+                :style="{ '--progress-pct': progress + '%' }"
+              >
+                <span class="sb-sound-btn__elapsed">{{ getElapsedTime(sound) }}</span>
+              </div>
             </button>
           </div>
         </div>
 
-        <div
-          v-for="[category, categorySounds] in categories"
-          :key="category"
-          class="sb-category"
-          :class="{ 'sb-category--now-playing': currentSound && categorySounds.some(s => s.id === currentSound?.id) }"
-        >
+        <!-- Categories -->
+        <div v-for="[category, categorySounds] in categories" :key="category" class="sb-category">
           <div class="sb-category__header">
-            <h2 class="sb-category__title">
+            <h3 class="sb-category__title">
               <span class="sb-category__emoji">{{ getCategoryEmoji(category) }}</span>
               {{ category }}
-            </h2>
-            <span class="sb-category__count">{{ categorySounds.length }} sound{{ categorySounds.length !== 1 ? 's' : '' }}</span>
+            </h3>
+            <span class="sb-category__count">{{ categorySounds.length }} sounds</span>
           </div>
-
           <div class="sb-grid">
             <button
               v-for="sound in categorySounds"
               :key="sound.id"
               class="sb-sound-btn"
-              :class="{
-                'sb-sound-btn--playing': isSoundPlaying(sound.id),
-                'sb-sound-btn--was-playing': !isPlaying && currentSound?.id === sound.id,
-              }"
+              :class="{ 'sb-sound-btn--playing': isSoundPlaying(sound.id) }"
               :style="{ '--accent': getCategoryColor(category) }"
               @click="handlePlay(sound)"
-              :disabled="isPlaying && currentSound?.id !== sound.id"
               :aria-label="'Play ' + sound.name"
             >
-              <!-- Pin button (uses span with role=button to avoid nested <button> DOM) -->
-              <span
-                class="sb-pin-btn"
-                :class="{ 'sb-pin-btn--pinned': isPinned(sound.id) }"
-                role="button"
-                tabindex="0"
-                @click.stop="togglePin(sound.id)"
-                @keydown.enter.prevent="togglePin(sound.id)"
-                @keydown.space.prevent="togglePin(sound.id)"
-                :title="isPinned(sound.id) ? 'Unpin from favorites' : 'Pin to favorites'"
-                :aria-label="isPinned(sound.id) ? 'Unpin from favorites' : 'Pin to favorites'"
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z" />
-                </svg>
-              </span>
-
               <div class="sb-sound-btn__icon-wrap">
                 <span class="sb-sound-btn__icon">{{ sound.icon || '🔊' }}</span>
                 <div v-if="isSoundPlaying(sound.id)" class="sb-sound-btn__wave">
@@ -584,8 +877,51 @@ async function toggleHistory() {
               </div>
               <span class="sb-sound-btn__name">{{ sound.name }}</span>
               <span v-if="sound.duration_seconds" class="sb-sound-btn__duration">
-                {{ sound.duration_seconds }}s
+                {{ getSoundTimeDisplay(sound) }}
               </span>
+
+              <!-- Per-sound volume slider -->
+              <div class="sb-per-vol" :class="{ 'sb-per-vol--active': isSoundPlaying(sound.id) }" @click.stop>
+                <input
+                  type="range"
+                  class="sb-per-vol__slider"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  :value="getPerSoundVol(sound.name)"
+                  @input="handlePerSoundVolumeChange(sound.name, $event)"
+                  :style="{ '--accent': getCategoryColor(category) }"
+                  :aria-label="'Volume for ' + sound.name"
+                  :title="'Volume: ' + sound.name + ' (' + Math.round(getPerSoundVol(sound.name) * 100) + '%)'"
+                />
+                <span class="sb-per-vol__label">{{ Math.round(getPerSoundVol(sound.name) * 100) }}</span>
+                <!-- Reset button (only visible when volume is not 100%) -->
+                <button
+                  v-if="getPerSoundVol(sound.name) < 1"
+                  class="sb-per-vol__reset"
+                  @click.stop="handleResetPerSoundVolume(sound.name)"
+                  title="Reset to 100%"
+                  :aria-label="'Reset volume for ' + sound.name + ' to 100%'"
+                >
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="1 4 1 10 7 10" />
+                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Stop button with waveform animation (only visible when this sound is playing) -->
+              <Transition name="fade">
+                <button
+                  v-if="isSoundPlaying(sound.id)"
+                  class="sb-stop-btn"
+                  @click.stop="handleStop"
+                  title="Stop"
+                  aria-label="Stop"
+                >
+                  <span class="sb-stop-btn__bar" /><span class="sb-stop-btn__bar" /><span class="sb-stop-btn__bar" />
+                </button>
+              </Transition>
 
               <!-- Playing overlay -->
               <Transition name="fade">
@@ -596,6 +932,25 @@ async function toggleHistory() {
                   <span>Playing...</span>
                 </div>
               </Transition>
+
+              <!-- Completion flash -->
+              <Transition name="fade">
+                <div v-if="completedSoundId === sound.id" class="sb-sound-btn__complete">
+                  <svg class="sb-sound-btn__check" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  <span>Done!</span>
+                </div>
+              </Transition>
+
+              <!-- Progress bar with elapsed time (only visible when this sound is playing) -->
+              <div
+                v-if="isSoundPlaying(sound.id)"
+                class="sb-sound-btn__progress"
+                :style="{ '--progress-pct': progress + '%' }"
+              >
+                <span class="sb-sound-btn__elapsed">{{ getElapsedTime(sound) }}</span>
+              </div>
             </button>
           </div>
         </div>
@@ -606,6 +961,7 @@ async function toggleHistory() {
           <h3 class="sb-empty__title">No sounds available</h3>
           <p class="sb-empty__text">Sounds will appear here once they are added to the system.</p>
         </div>
+        </template>
       </div>
     </main>
 
@@ -631,6 +987,54 @@ async function toggleHistory() {
                 {{ isPlaying ? 'Now Playing' : 'Ready' }}
               </span>
             </div>
+          </div>
+
+          <!-- Time display -->
+          <div class="sb-now-playing__time">
+            {{ getNowPlayingTime() }}
+          </div>
+
+          <!-- Volume level meter -->
+          <div class="sb-level-meter" :class="{ 'sb-level-meter--active': isPlaying }" :title="'Audio level: ' + Math.round(audioLevel * 100) + '%'">
+            <span
+              v-for="i in 8"
+              :key="i"
+              class="sb-level-meter__bar"
+              :class="{
+                'sb-level-meter__bar--on': audioLevel > (i - 1) / 8,
+                'sb-level-meter__bar--hot': audioLevel > (i - 1) / 6 && i > 5,
+              }"
+              :style="{ '--bar-delay': (i * 0.04) + 's' }"
+            />
+          </div>
+
+          <!-- Per-sound volume slider (Now Playing) -->
+          <div class="sb-np-volume">
+            <input
+              type="range"
+              class="sb-np-volume__slider"
+              min="0"
+              max="1"
+              step="0.01"
+              :value="getPerSoundVol(currentSound.name)"
+              @input="handlePerSoundVolumeChange(currentSound.name, $event)"
+              :style="{ '--accent': currentCategoryColor }"
+              :aria-label="'Volume for ' + currentSound.name"
+              :title="'Volume: ' + currentSound.name + ' (' + Math.round(getPerSoundVol(currentSound.name) * 100) + '%)'"
+            />
+            <span class="sb-np-volume__label">{{ Math.round(getPerSoundVol(currentSound.name) * 100) }}</span>
+            <button
+              v-if="getPerSoundVol(currentSound.name) < 1"
+              class="sb-np-volume__reset"
+              @click.stop="handleResetPerSoundVolume(currentSound.name)"
+              title="Reset to 100%"
+              :aria-label="'Reset volume for ' + currentSound.name + ' to 100%'"
+            >
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="1 4 1 10 7 10" />
+                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+              </svg>
+            </button>
           </div>
 
           <!-- Controls -->
@@ -947,6 +1351,94 @@ async function toggleHistory() {
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ═══════════════════════════════════
+   Search Bar
+   ═══════════════════════════════════ */
+.sb-search {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.sb-search__inner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 0.1rem 0.1rem 0.1rem 0.85rem;
+  transition: all 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.sb-search__inner:focus-within {
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.15), 0 2px 6px rgba(0,0,0,0.06);
+}
+
+.sb-search__icon {
+  flex-shrink: 0;
+  color: #9CA3AF;
+  transition: color 0.2s;
+}
+
+.sb-search__inner:focus-within .sb-search__icon {
+  color: #3B82F6;
+}
+
+.sb-search__input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 0.65rem 0;
+  font-size: clamp(0.85rem, 1.5vw, 0.92rem);
+  font-weight: 500;
+  color: #1F2937;
+  font-family: inherit;
+  outline: none;
+  min-width: 0;
+}
+
+.sb-search__input::placeholder {
+  color: #9CA3AF;
+  font-weight: 400;
+}
+
+.sb-search__clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #9CA3AF;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.sb-search__clear:hover {
+  background: #F3F4F6;
+  color: #6B7280;
+}
+
+.sb-search__clear:active {
+  transform: scale(0.92);
+}
+
+.sb-search__count {
+  font-size: clamp(0.72rem, 1.2vw, 0.8rem);
+  font-weight: 500;
+  color: #9CA3AF;
+  padding: 0 0.2rem;
+}
+
+/* ═══════════════════════════════════
    Category Section
    ═══════════════════════════════════ */
 .sb-content { display: flex; flex-direction: column; gap: clamp(1.25rem, 3vw, 2rem); }
@@ -1165,6 +1657,215 @@ async function toggleHistory() {
 
 .sb-sound-btn--playing .sb-sound-btn__duration { background: var(--accent, #3B82F6); color: white; }
 
+/* ═══════════════════════════════════
+   Per-sound Volume Slider
+   ═══════════════════════════════════ */
+.sb-per-vol {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  width: 100%;
+  padding: 0 0.25rem;
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  transition: opacity 0.2s, max-height 0.2s, margin 0.2s;
+  margin: 0;
+  pointer-events: none;
+}
+
+.sb-per-vol--active {
+  opacity: 1;
+  max-height: 24px;
+  margin: 0 0 0.15rem;
+  pointer-events: auto;
+}
+
+@media (hover: hover) {
+  .sb-sound-btn:hover .sb-per-vol:not(.sb-per-vol--active) {
+    opacity: 0.6;
+    max-height: 24px;
+    margin: 0 0 0.15rem;
+    pointer-events: auto;
+  }
+}
+
+.sb-per-vol__slider {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(0,0,0,0.08);
+  outline: none;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.sb-per-vol__slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent, #3B82F6);
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.sb-per-vol__slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.sb-per-vol__slider::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent, #3B82F6);
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  cursor: pointer;
+}
+
+.sb-per-vol__slider::-moz-range-track {
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(0,0,0,0.08);
+}
+
+.sb-per-vol__slider:focus-visible {
+  box-shadow: 0 0 0 2px var(--accent, #3B82F6);
+}
+
+.sb-per-vol__label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--accent, #3B82F6);
+  font-variant-numeric: tabular-nums;
+  min-width: 1.6em;
+  text-align: right;
+  line-height: 1;
+}
+
+.sb-sound-btn--playing .sb-per-vol__label {
+  color: white;
+}
+
+.sb-sound-btn--playing .sb-per-vol__slider {
+  background: rgba(255,255,255,0.25);
+}
+
+.sb-sound-btn--playing .sb-per-vol__slider::-webkit-slider-thumb {
+  border-color: var(--accent, #3B82F6);
+  background: white;
+}
+
+.sb-sound-btn--playing .sb-per-vol__slider::-moz-range-thumb {
+  border-color: var(--accent, #3B82F6);
+  background: white;
+}
+
+.sb-sound-btn--playing .sb-per-vol__slider::-moz-range-track {
+  background: rgba(255,255,255,0.25);
+}
+
+/* ── Reset button ── */
+.sb-per-vol__reset {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.08);
+  color: #6B7280;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.sb-per-vol__reset:hover {
+  background: rgba(0,0,0,0.15);
+  color: #374151;
+  transform: scale(1.15);
+}
+
+.sb-per-vol__reset:active {
+  transform: scale(0.9);
+}
+
+.sb-sound-btn--playing .sb-per-vol__reset {
+  background: rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.8);
+}
+
+.sb-sound-btn--playing .sb-per-vol__reset:hover {
+  background: rgba(255,255,255,0.3);
+  color: white;
+}
+
+/* Card progress bar */
+.sb-sound-btn__progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  width: var(--progress-pct, 0%);
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--accent, #3B82F6) 60%, white),
+    color-mix(in srgb, var(--accent, #3B82F6) 85%, white),
+    var(--accent, #3B82F6)
+  );
+  border-radius: 0 2px 0 0;
+  pointer-events: none;
+  z-index: 15;
+}
+
+.sb-sound-btn--playing .sb-sound-btn__progress {
+  box-shadow: 0 0 8px var(--accent, #3B82F6), 0 0 3px rgba(255,255,255,0.25) inset;
+}
+
+/* Leading edge highlight with throbber */
+.sb-sound-btn__progress::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 16px;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55));
+  border-radius: 0 2px 0 0;
+  animation: progress-throb 1s ease-in-out infinite;
+}
+
+@keyframes progress-throb {
+  0%, 100% { opacity: 0.5; width: 12px; }
+  50% { opacity: 1; width: 20px; }
+}
+
+/* Elapsed time label on progress bar */
+.sb-sound-btn__elapsed {
+  position: absolute;
+  right: 4px;
+  bottom: 5px;
+  font-size: 0.55rem;
+  font-weight: 800;
+  line-height: 1;
+  color: white;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  opacity: 0.9;
+  z-index: 1;
+}
+
 /* Playing overlay */
 .sb-sound-btn__overlay {
   position: absolute;
@@ -1188,6 +1889,39 @@ async function toggleHistory() {
 @keyframes pulse-icon {
   0%, 100% { transform: scale(1); opacity: 1; }
   50% { transform: scale(1.2); opacity: 0.7; }
+}
+
+/* Completion flash */
+.sb-sound-btn__complete {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  background: rgba(34, 197, 94, 0.95);
+  border-radius: inherit;
+  font-size: clamp(0.7rem, 1.3vw, 0.75rem);
+  font-weight: 700;
+  color: white;
+  animation: complete-in 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 20;
+}
+
+.sb-sound-btn__check {
+  animation: check-bounce 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes complete-in {
+  0% { transform: scale(0.8); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes check-bounce {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.25); }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 /* ═══════════════════════════════════
@@ -1392,6 +2126,123 @@ async function toggleHistory() {
   transform: scale(1.1);
 }
 
+/* ═══════════════════════════════════
+   Stop Button (on sound cards) - animated waveform
+   ═══════════════════════════════════ */
+.sb-stop-btn {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 1.8rem;
+  height: 1.8rem;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--accent, #EF4444);
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  animation: stop-in 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes stop-in {
+  0% { transform: scale(0); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.sb-stop-btn__bar {
+  width: 2.5px;
+  border-radius: 2px;
+  background: currentColor;
+  animation: stop-wave 0.6s ease-in-out infinite;
+}
+
+.sb-stop-btn__bar:nth-child(1) {
+  height: 7px;
+  animation-delay: 0s;
+}
+
+.sb-stop-btn__bar:nth-child(2) {
+  height: 11px;
+  animation-delay: 0.15s;
+}
+
+.sb-stop-btn__bar:nth-child(3) {
+  height: 5px;
+  animation-delay: 0.3s;
+}
+
+@keyframes stop-wave {
+  0%, 100% { transform: scaleY(0.6); opacity: 0.6; }
+  50% { transform: scaleY(1.3); opacity: 1; }
+}
+
+.sb-stop-btn::after {
+  content: 'Stop';
+  position: absolute;
+  top: calc(100% + 5px);
+  right: 50%;
+  transform: translateX(50%) scale(0.85);
+  padding: 2px 7px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  font-family: inherit;
+  color: white;
+  background: rgba(0,0,0,0.75);
+  border-radius: 5px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  letter-spacing: 0.02em;
+}
+
+.sb-stop-btn:hover {
+  transform: scale(1.12);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+  filter: brightness(1.15);
+}
+
+.sb-stop-btn:hover::after {
+  opacity: 1;
+  transform: translateX(50%) scale(1);
+}
+
+.sb-stop-btn:active {
+  transform: scale(0.85);
+}
+
+.sb-stop-btn:active::after {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  .sb-stop-btn {
+    background: var(--accent, #DC2626);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  }
+
+  .sb-stop-btn::after {
+    background: rgba(30, 41, 59, 0.9);
+  }
+
+  .sb-stop-btn:hover {
+    filter: brightness(1.2);
+  }
+}
+
 /* Pin indicator on favorite buttons */
 .sb-pin-indicator {
   position: absolute;
@@ -1539,16 +2390,108 @@ async function toggleHistory() {
   top: 0;
   left: 0;
   right: 0;
-  height: 3px;
+  height: 4px;
   background: rgba(255,255,255,0.08);
   overflow: hidden;
 }
 
 .sb-now-playing__progress-fill {
   height: 100%;
-  background: var(--accent, #3B82F6);
-  transition: width 0.03s linear;
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--accent, #3B82F6) 60%, white),
+    color-mix(in srgb, var(--accent, #3B82F6) 85%, white),
+    var(--accent, #3B82F6)
+  );
   border-radius: 0 2px 2px 0;
+  position: relative;
+  box-shadow: 0 0 10px var(--accent, #3B82F6);
+}
+
+.sb-now-playing__progress-fill::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 16px;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4));
+  border-radius: 0 2px 2px 0;
+}
+
+.sb-now-playing__time {
+  font-size: clamp(0.75rem, 1.5vw, 0.85rem);
+  font-weight: 700;
+  color: rgba(255,255,255,0.6);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+  .sb-now-playing__time {
+    display: none;
+  }
+  .sb-np-volume {
+    display: none;
+  }
+}
+
+/* ═══════════════════════════════════
+   Level Meter
+   ═══════════════════════════════════ */
+.sb-level-meter {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 20px;
+  padding: 0 2px;
+  opacity: 0.35;
+  transition: opacity 0.3s;
+}
+
+.sb-level-meter--active {
+  opacity: 1;
+}
+
+.sb-level-meter__bar {
+  display: block;
+  width: 3px;
+  border-radius: 1px;
+  background: rgba(255, 255, 255, 0.12);
+  transition: background 0.08s linear, transform 0.08s linear;
+}
+
+/* Each bar has a different height for a natural EQ look */
+.sb-level-meter__bar:nth-child(1) { height: 4px; }
+.sb-level-meter__bar:nth-child(2) { height: 6px; }
+.sb-level-meter__bar:nth-child(3) { height: 9px; }
+.sb-level-meter__bar:nth-child(4) { height: 12px; }
+.sb-level-meter__bar:nth-child(5) { height: 15px; }
+.sb-level-meter__bar:nth-child(6) { height: 17px; }
+.sb-level-meter__bar:nth-child(7) { height: 19px; }
+.sb-level-meter__bar:nth-child(8) { height: 20px; }
+
+/* Lit state: green gradient for low-mid, amber for high */
+.sb-level-meter__bar--on {
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--accent, #3B82F6) 80%, #22C55E),
+    color-mix(in srgb, var(--accent, #3B82F6) 60%, #22C55E)
+  );
+  box-shadow: 0 0 4px color-mix(in srgb, var(--accent, #3B82F6) 50%, #22C55E);
+  transform: scaleY(1.05);
+}
+
+/* Hot state (near clipping): amber/red glow */
+.sb-level-meter__bar--hot {
+  background: linear-gradient(180deg, #F97316, #EF4444) !important;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.6) !important;
+  animation: level-hot 0.3s ease-in-out infinite;
+}
+
+@keyframes level-hot {
+  0%, 100% { transform: scaleY(1.05); }
+  50% { transform: scaleY(1.15); opacity: 0.9; }
 }
 
 .sb-now-playing__inner {
@@ -1607,6 +2550,103 @@ async function toggleHistory() {
   align-items: center;
   gap: clamp(0.25rem, 0.7vw, 0.4rem);
   flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════
+   Now Playing Per-Sound Volume
+   ═══════════════════════════════════ */
+.sb-np-volume {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+
+.sb-np-volume__slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 48px;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.12);
+  outline: none;
+  cursor: pointer;
+}
+
+.sb-np-volume__slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent, #3B82F6);
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.sb-np-volume__slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.sb-np-volume__slider::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent, #3B82F6);
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  cursor: pointer;
+}
+
+.sb-np-volume__slider::-moz-range-track {
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.12);
+}
+
+.sb-np-volume__slider:focus-visible {
+  box-shadow: 0 0 0 2px var(--accent, #3B82F6);
+}
+
+.sb-np-volume__label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.7);
+  font-variant-numeric: tabular-nums;
+  min-width: 1.6em;
+  text-align: right;
+  line-height: 1;
+}
+
+.sb-np-volume__reset {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.6);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.sb-np-volume__reset:hover {
+  background: rgba(255,255,255,0.2);
+  color: white;
+  transform: scale(1.15);
+}
+
+.sb-np-volume__reset:active {
+  transform: scale(0.9);
 }
 
 .sb-ctrl-btn {
