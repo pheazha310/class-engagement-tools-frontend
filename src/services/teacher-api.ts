@@ -67,8 +67,8 @@ export interface CreateActivityRequest {
 }
 
 class TeacherDashboardAPIService {
-  private maxRetries = 3
-  private baseTimeout = 10000
+  private retryCount = 0
+  private maxRetries = 2
 
   private getAuthHeaders() {
     const authStore = useAuthStore()
@@ -78,36 +78,30 @@ class TeacherDashboardAPIService {
     }
   }
 
-  private async handleRequest<T>(promise: Promise<T>): Promise<T> {
+  private async request<T>(promise: Promise<T>): Promise<T> {
+    this.retryCount = 0
+    return this.executeWithRetry(promise)
+  }
+
+  private async executeWithRetry<T>(promise: Promise<T>): Promise<T> {
     try {
       return await promise
     } catch (error: any) {
-      const err = error as any
-
-      if (err.response?.status === 401 && this.retryCount < this.maxRetries) {
+      if (error?.response?.status === 401 && this.retryCount < this.maxRetries) {
+        this.retryCount++
         try {
           await this.refreshToken()
-          this.retryCount++
-
-          const retryPromise = this.createAuthenticatedRequest<T>()
-          return await retryPromise
-        } catch (refreshError) {
+          return await this.executeWithRetry(promise)
+        } catch {
           const authStore = useAuthStore()
           authStore.clearUser()
-          throw refreshError
+          throw error
         }
       }
-
       this.handleApiError(error)
       throw error
     }
   }
-
-  private createAuthenticatedRequest<T>(): Promise<T> {
-    return new Promise(() => {})
-  }
-
-  private retryCount = 0
 
   private async refreshToken(): Promise<void> {
     const authStore = useAuthStore()
@@ -121,7 +115,6 @@ class TeacherDashboardAPIService {
 
   private handleApiError(error: any): void {
     let message = 'An unexpected error occurred'
-
     if (error?.response?.status === 401) {
       message = 'Authentication failed. Please log in again.'
     } else if (error?.response?.status === 403) {
@@ -135,48 +128,43 @@ class TeacherDashboardAPIService {
     } else {
       message = error?.response?.data?.message || error?.response?.data?.error || error.message || message
     }
-
     showNotification(message, 'error')
   }
 
   async getClassConfigurations(): Promise<ApiResponse<ClassConfiguration[]>> {
-    return this.handleRequest(api.get('/api/teacher/class-configurations'))
+    return this.request(api.get('/api/teacher/class-configurations'))
   }
 
   async createClassConfiguration(data: CreateClassConfigurationRequest): Promise<ApiResponse<ClassConfiguration>> {
-    return this.handleRequest(api.post('/api/teacher/class-configurations', data))
+    return this.request(api.post('/api/teacher/class-configurations', data))
   }
 
   async updateClassConfiguration(id: number, data: UpdateClassConfigurationRequest): Promise<ApiResponse<ClassConfiguration>> {
-    return this.handleRequest(api.put(`/api/teacher/class-configurations/${id}`, data))
+    return this.request(api.put(`/api/teacher/class-configurations/${id}`, data))
   }
 
   async deleteClassConfiguration(id: number): Promise<ApiResponse<void>> {
-    return this.handleRequest(api.delete(`/api/teacher/class-configurations/${id}`))
+    return this.request(api.delete(`/api/teacher/class-configurations/${id}`))
   }
 
   async getActivityHistory(params: ActivityHistoryParams): Promise<ApiResponse<ActivityHistoryResponse>> {
-    return this.handleRequest(api.get('/api/teacher/activity-history', { params }))
+    return this.request(api.get('/api/teacher/activity-history', { params }))
   }
 
   async createActivity(data: CreateActivityRequest): Promise<ApiResponse<TeacherActivity>> {
-    return this.handleRequest(api.post('/api/teacher/activities', data))
+    return this.request(api.post('/api/teacher/activities', data))
   }
 
   async getDashboardStats(params?: DashboardStatsParams): Promise<ApiResponse<DashboardStats>> {
-    return this.handleRequest(api.get('/api/teacher/dashboard-stats', { params }))
+    return this.request(api.get('/api/teacher/dashboard-stats', { params }))
   }
 
   async getRecentActivities(): Promise<ApiResponse<TeacherActivity[]>> {
-    return this.handleRequest(api.get('/api/teacher/recent-activities'))
+    return this.request(api.get('/api/teacher/recent-activities'))
   }
 
   async getTopQuizzes(): Promise<ApiResponse<any[]>> {
-    return this.handleRequest(api.get('/api/teacher/top-quizzes'))
-  }
-
-  private resetRetryCount(): void {
-    this.retryCount = 0
+    return this.request(api.get('/api/teacher/top-quizzes'))
   }
 }
 

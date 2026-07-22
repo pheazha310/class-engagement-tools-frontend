@@ -44,12 +44,42 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/pages/teacher/ClassesPage.vue'),
     meta: { requiresAuth: true, role: 'teacher' },
   },
+  {
+    path: '/teacher/students',
+    name: 'teacher-students',
+    component: () => import('@/pages/teacher/StudentsPage.vue'),
+    meta: { requiresAuth: true, role: 'teacher' },
+  },
+  {
+    path: '/teacher/tools',
+    name: 'teacher-tools',
+    component: () => import('@/pages/teacher/TeacherToolsPage.vue'),
+    meta: { requiresAuth: true, role: 'teacher' },
+  },
+  {
+    path: '/teacher/activity-history',
+    name: 'teacher-activity-history',
+    component: () => import('@/pages/teacher/ActivityHistoryPage.vue'),
+    meta: { requiresAuth: true, role: 'teacher' },
+  },
+  {
+    path: '/teacher/settings',
+    name: 'teacher-settings',
+    component: () => import('@/pages/teacher/SettingsPage.vue'),
+    meta: { requiresAuth: true, role: 'teacher' },
+  },
+  {
+    path: '/teacher/organize-tools',
+    name: 'teacher-organize-tools',
+    component: () => import('@/pages/teacher/ToolOrganizerPage.vue'),
+    meta: { requiresAuth: true, role: 'teacher' },
+  },
 
   // Student
   {
     path: '/student/dashboard',
     name: 'student-dashboard',
-    component: () => import('@/pages/public/ActivePolls.vue'),
+    component: () => import('@/pages/student/StudentDashboard.vue'),
     meta: { requiresAuth: true, role: 'student' },
   },
 
@@ -244,6 +274,47 @@ const routes: RouteRecordRaw[] = [
     path: '/stopwatch',
     name: 'stopwatch',
     component: () => import('@/views/StopwatchView.vue'),
+  },
+  // Tools pages (individual)
+  {
+    path: '/tools/exit-ticket',
+    name: 'tool-exit-ticket',
+    component: () => import('@/pages/tools/ExitTicketTool.vue'),
+  },
+  {
+    path: '/tools/soundboard',
+    name: 'tool-soundboard',
+    component: () => import('@/pages/tools/SoundboardTool.vue'),
+  },
+  {
+    path: '/tools/mood-check',
+    name: 'tool-mood-check',
+    component: () => import('@/pages/tools/MoodCheckTool.vue'),
+  },
+  {
+    path: '/tools/word-cloud',
+    name: 'tool-word-cloud',
+    component: () => import('@/pages/tools/WordCloudTool.vue'),
+  },
+  {
+    path: '/tools/leaderboard',
+    name: 'tool-leaderboard',
+    component: () => import('@/pages/tools/LeaderboardTool.vue'),
+  },
+  {
+    path: '/tools/icebreakers',
+    name: 'tool-icebreakers',
+    component: () => import('@/views/Icebreakers.vue'),
+  },
+  {
+    path: '/tools/bingo-generator',
+    name: 'tool-bingo-generator',
+    component: () => import('@/pages/tools/BingoGeneratorTool.vue'),
+  },
+  {
+    path: '/tools/flashcards',
+    name: 'tool-flashcards',
+    component: () => import('@/pages/tools/FlashcardsTool.vue'),
   },
   {
     path: '/tools/:slug',

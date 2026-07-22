@@ -33,7 +33,7 @@ export const categories: Category[] = [
     tools: [
       { title: 'Classroom Quiz', slug: 'classroom-quiz', icon: '📝', description: 'Create quizzes with multiple formats and display live rankings.', category: 'Quiz & Assessment', route: '/quizzes' },
       { title: 'Live Voting', slug: 'live-voting', icon: '🗳️', description: 'Collect instant feedback with polls that work on any device.', category: 'Quiz & Assessment', route: '/polls/active' },
-      { title: 'Exit Ticket', slug: 'exit-ticket', icon: '🎫', description: 'Quick formative assessments to check student understanding.', category: 'Quiz & Assessment' },
+      { title: 'Exit Ticket', slug: 'exit-ticket', icon: '🎫', description: 'Quick formative assessments to check student understanding.', category: 'Quiz & Assessment', route: '/tools/exit-ticket' },
     ]
   },
   {
@@ -41,9 +41,9 @@ export const categories: Category[] = [
     icon: '⏱️',
     slug: 'classroom',
     tools: [
-      { title: 'Timer', slug: 'timer', icon: '⏱️', description: 'Run countdowns, stopwatches, and Pomodoro sessions with alerts.', category: 'Classroom Control' },
+      { title: 'Timer', slug: 'timer', icon: '⏱️', description: 'Run countdowns, stopwatches, and Pomodoro sessions with alerts.', category: 'Classroom Control', route: '/timer' },
       { title: 'Stopwatch', slug: 'stopwatch', icon: '⏱️', description: 'Measure activity duration with an easy-start stopwatch.', category: 'Classroom Control', route: '/stopwatch' },
-      { title: 'Soundboard', slug: 'soundboard', icon: '🔊', description: 'Bring excitement to lessons with applause, countdown, and success sounds.', category: 'Classroom Control' },
+      { title: 'Soundboard', slug: 'soundboard', icon: '🔊', description: 'Bring excitement to lessons with applause, countdown, and success sounds.', category: 'Classroom Control', route: '/tools/soundboard' },
     ]
   },
   {
@@ -62,9 +62,9 @@ export const categories: Category[] = [
     icon: '📊',
     slug: 'engagement',
     tools: [
-      { title: 'Mood Check', slug: 'mood-check', icon: '😊', description: 'Check student mood and engagement levels.', category: 'Engagement' },
-      { title: 'Word Cloud', slug: 'word-cloud', icon: '☁️', description: 'Visualize word frequency and student responses.', category: 'Engagement' },
-      { title: 'Leaderboard', slug: 'leaderboard', icon: '🏆', description: 'Track and display student achievement rankings.', category: 'Engagement' },
+      { title: 'Mood Check', slug: 'mood-check', icon: '😊', description: 'Check student mood and engagement levels.', category: 'Engagement', route: '/tools/mood-check' },
+      { title: 'Word Cloud', slug: 'word-cloud', icon: '☁️', description: 'Visualize word frequency and student responses.', category: 'Engagement', route: '/tools/word-cloud' },
+      { title: 'Leaderboard', slug: 'leaderboard', icon: '🏆', description: 'Track and display student achievement rankings.', category: 'Engagement', route: '/tools/leaderboard' },
     ]
   },
   {
@@ -72,9 +72,9 @@ export const categories: Category[] = [
     icon: '🎉',
     slug: 'fun',
     tools: [
-      { title: 'Icebreakers', slug: 'icebreakers', icon: '✨', description: 'Warm up your class with energizing prompts and team-building games.', category: 'Fun Activities' },
-      { title: 'Bingo Generator', slug: 'bingo-generator', icon: '🎱', description: 'Create custom bingo games for any subject.', category: 'Fun Activities' },
-      { title: 'Flashcards', slug: 'flashcards', icon: '📖', description: 'Interactive flashcards for vocabulary and concept review.', category: 'Fun Activities' },
+      { title: 'Icebreakers', slug: 'icebreakers', icon: '✨', description: 'Warm up your class with energizing prompts and team-building games.', category: 'Fun Activities', route: '/tools/icebreakers' },
+      { title: 'Bingo Generator', slug: 'bingo-generator', icon: '🎱', description: 'Create custom bingo games for any subject.', category: 'Fun Activities', route: '/tools/bingo-generator' },
+      { title: 'Flashcards', slug: 'flashcards', icon: '📖', description: 'Interactive flashcards for vocabulary and concept review.', category: 'Fun Activities', route: '/tools/flashcards' },
     ]
   },
 ]

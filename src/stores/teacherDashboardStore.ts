@@ -7,7 +7,7 @@ import type {
   UpdateClassConfigurationRequest,
   TeacherActivity,
   CreateActivityRequest,
-  DashboardStatsResponse,
+  DashboardStats,
   DashboardStatsParams,
   ActivityHistoryParams,
   ActivityHistoryResponse,
@@ -21,9 +21,24 @@ export const useTeacherDashboardStore = defineStore('teacherDashboard', () => {
 
   const classConfigs = ref<ClassConfiguration[]>([])
   const activities = ref<TeacherActivity[]>([])
-  const dashboardStats = ref<DashboardStatsResponse | null>(null)
+  const dashboardStats = ref<DashboardStats | null>(null)
   const recentActivities = ref<TeacherActivity[]>([])
   const topQuizzes = ref<any[]>([])
+
+  const pagination = ref({
+    classConfigurations: {
+      page: 1,
+      perPage: 10,
+      total: 0,
+      lastPage: 1,
+    },
+    activityHistory: {
+      page: 1,
+      perPage: 10,
+      total: 0,
+      lastPage: 1,
+    },
+  })
 
   // Actions
   const fetchClassConfigurations = async () => {
@@ -31,7 +46,7 @@ export const useTeacherDashboardStore = defineStore('teacherDashboard', () => {
     error.value = null
     try {
       const response = await teacherDashboardService.getClassConfigurations()
-      classConfigs.value = response.data.data || []
+      classConfigs.value = response.data || []
       success.value = 'Class configurations loaded successfully'
       setTimeout(() => (success.value = null), 3000)
     } catch (err) {
@@ -50,9 +65,49 @@ export const useTeacherDashboardStore = defineStore('teacherDashboard', () => {
       classConfigs.value.unshift(response.data)
       success.value = 'Class configuration created successfully'
       setTimeout(() => (success.value = null), 3000)
+      return response.data
     } catch (err) {
       error.value = 'Failed to create class configuration'
       setTimeout(() => (error.value = null), 5000)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const updateConfig = async (id: number, data: UpdateClassConfigurationRequest) => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await teacherDashboardService.updateClassConfiguration(id, data)
+      const index = classConfigs.value.findIndex((c) => c.id === id)
+      if (index !== -1) {
+        classConfigs.value[index] = response.data
+      }
+      success.value = 'Class configuration updated successfully'
+      setTimeout(() => (success.value = null), 3000)
+      return response.data
+    } catch (err) {
+      error.value = 'Failed to update class configuration'
+      setTimeout(() => (error.value = null), 5000)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const deleteConfig = async (id: number) => {
+    loading.value = true
+    error.value = null
+    try {
+      await teacherDashboardService.deleteClassConfiguration(id)
+      classConfigs.value = classConfigs.value.filter((c) => c.id !== id)
+      success.value = 'Class configuration deleted successfully'
+      setTimeout(() => (success.value = null), 3000)
+    } catch (err) {
+      error.value = 'Failed to delete class configuration'
+      setTimeout(() => (error.value = null), 5000)
+      throw err
     } finally {
       loading.value = false
     }
@@ -138,8 +193,10 @@ export const useTeacherDashboardStore = defineStore('teacherDashboard', () => {
 
   // Computed properties
   const isLoading = computed(() => loading.value)
-  const totalActivities = computed(() => dashboardStats.value?.data.total_activities || 0)
-  const uniqueStudents = computed(() => dashboardStats.value?.data.unique_students || 0)
+  const totalActivities = computed(() => dashboardStats.value?.total_activities || 0)
+  const uniqueStudents = computed(() => dashboardStats.value?.unique_students || 0)
+  const activeQuizzes = computed(() => dashboardStats.value?.active_quizzes || 0)
+  const totalClasses = computed(() => dashboardStats.value?.total_classes || 0)
 
   return {
     // State
@@ -151,15 +208,20 @@ export const useTeacherDashboardStore = defineStore('teacherDashboard', () => {
     dashboardStats,
     recentActivities,
     topQuizzes,
+    pagination,
 
     // Computed
     isLoading,
     totalActivities,
     uniqueStudents,
+    activeQuizzes,
+    totalClasses,
 
     // Actions
     fetchClassConfigurations,
     createConfig,
+    updateConfig,
+    deleteConfig,
     fetchDashboardStats,
     createActivity,
     fetchRecentActivities,
