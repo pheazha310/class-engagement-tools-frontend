@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { categories } from '@/data/toolsData'
 import ProfileDropdown from '@/components/ProfileDropdown.vue'
 
 defineOptions({
@@ -15,6 +16,29 @@ const auth = useAuthStore()
 const mobileMenuOpen = ref(false)
 const isScrolled = ref(false)
 const activeDropdown = ref(false)
+
+// Track which categories are expanded in the dropdown
+const expandedCategories = ref<Set<string>>(new Set())
+
+function toggleCategory(slug: string) {
+  const s = expandedCategories.value
+  if (s.has(slug)) {
+    s.delete(slug)
+  } else {
+    s.add(slug)
+  }
+  // Trigger reactivity by replacing the Set
+  expandedCategories.value = new Set(s)
+}
+
+function isCategoryExpanded(slug: string): boolean {
+  return expandedCategories.value.has(slug)
+}
+
+// Close all categories when dropdown closes
+function closeAllCategories() {
+  expandedCategories.value = new Set()
+}
 
 const handleScroll = () => {
   isScrolled.value = window.scrollY > 50
@@ -56,7 +80,10 @@ onUnmounted(() => {
     <div class="nav-container">
       <!-- Logo -->
       <RouterLink to="/" class="nav-logo">
-        <img src="@/assets/photo_logo.jpg" alt="Classroom Tools" class="nav-logo-img" />
+        <div class="nav-logo-mark">
+          <img src="@/assets/photo_logo.jpg" alt="Classroom Tools" class="nav-logo-img" />
+        </div>
+        <span class="nav-logo-text">EduPulse</span>
       </RouterLink>
 
       <!-- Navigation Links -->
@@ -92,7 +119,7 @@ onUnmounted(() => {
 
           <div class="dropdown-menu" :class="{ active: activeDropdown }">
             <!-- Overview -->
-            <RouterLink to="/tools" class="dropdown-item dropdown-item--hero" @click="closeMobileMenu">
+            <RouterLink to="/tools" class="dropdown-item dropdown-item--hero" @click="closeMobileMenu(); closeAllCategories()">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
               <span class="dropdown-item-label">
                 <span class="dropdown-item-title">All Tools</span>
@@ -102,41 +129,49 @@ onUnmounted(() => {
 
             <div class="dropdown-divider" />
 
-            <!-- Category: Random & Selection -->
-            <span class="dropdown-group-label">Random &amp; Selection</span>
-            <RouterLink to="/tools/category/random" class="dropdown-item" @click="closeMobileMenu">Random Tools</RouterLink>
-            <RouterLink to="/single-student-picker" class="dropdown-item" @click="closeMobileMenu">Student Picker</RouterLink>
-            <RouterLink to="/group-generator" class="dropdown-item" @click="closeMobileMenu">Group Generator</RouterLink>
-            <RouterLink to="/lucky-draw" class="dropdown-item" @click="closeMobileMenu">Lucky Draw</RouterLink>
+            <!-- ===== Dynamic Category Sections (collapsible) ===== -->
+            <div v-for="cat in categories" :key="cat.slug" class="dropdown-category">
+              <button
+                class="dropdown-category-btn"
+                type="button"
+                @click="toggleCategory(cat.slug)"
+              >
+                <span class="dropdown-category-label">
+                  <span class="dropdown-category-icon">{{ cat.icon }}</span>
+                  <span>{{ cat.name }}</span>
+                </span>
+                <svg
+                  class="dropdown-category-chevron"
+                  :class="{ expanded: isCategoryExpanded(cat.slug) }"
+                  width="12" height="12" viewBox="0 0 24 24"
+                  fill="none" stroke="currentColor" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round"
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
+
+              <!-- Sub-items (tools) inside this category -->
+              <div class="dropdown-submenu" :class="{ open: isCategoryExpanded(cat.slug) }">
+                <RouterLink
+                  v-for="tool in cat.tools"
+                  :key="tool.slug"
+                  :to="tool.route || '/tools/' + tool.slug"
+                  class="dropdown-submenu-item"
+                  @click="closeMobileMenu"
+                >
+                  <span class="dropdown-submenu-icon">{{ tool.icon }}</span>
+                  <span class="dropdown-submenu-label">
+                    <span class="dropdown-submenu-title">{{ tool.title }}</span>
+                    <span class="dropdown-submenu-desc">{{ tool.description }}</span>
+                  </span>
+                </RouterLink>
+              </div>
+            </div>
 
             <div class="dropdown-divider" />
 
-            <!-- Category: Quiz & Assessment -->
-            <span class="dropdown-group-label">Quiz &amp; Assessment</span>
-            <RouterLink to="/tools/category/quiz" class="dropdown-item" @click="closeMobileMenu">Quiz Tools</RouterLink>
-            <RouterLink to="/tools/flashcards" class="dropdown-item" @click="closeMobileMenu">Flashcards</RouterLink>
-            <RouterLink to="/tools/bingo-generator" class="dropdown-item" @click="closeMobileMenu">Bingo Generator</RouterLink>
-
-            <div class="dropdown-divider" />
-
-            <!-- Category: Classroom Control -->
-            <span class="dropdown-group-label">Classroom Control</span>
-            <RouterLink to="/timer" class="dropdown-item" @click="closeMobileMenu">Timer</RouterLink>
-            <RouterLink to="/stopwatch" class="dropdown-item" @click="closeMobileMenu">Stopwatch</RouterLink>
-            <RouterLink to="/soundboard" class="dropdown-item" @click="closeMobileMenu">Soundboard</RouterLink>
-
-            <div class="dropdown-divider" />
-
-            <!-- Category: Icebreakers & Fun -->
-            <span class="dropdown-group-label">Icebreakers &amp; Fun</span>
-            <RouterLink to="/tools/icebreakers" class="dropdown-item" @click="closeMobileMenu">Icebreakers</RouterLink>
-            <RouterLink to="/tools/category/engagement" class="dropdown-item" @click="closeMobileMenu">Engagement Tools</RouterLink>
-            <RouterLink to="/wheel" class="dropdown-item" @click="closeMobileMenu">Spin the Wheel</RouterLink>
-            <RouterLink to="/tools/category/games" class="dropdown-item" @click="closeMobileMenu">Games</RouterLink>
-
-            <div class="dropdown-divider" />
-
-            <!-- Voting & Polls -->
+            <!-- Voting & Polls (always visible) -->
             <span class="dropdown-group-label">Polls &amp; Voting</span>
             <RouterLink to="/live-voting" class="dropdown-item" @click="closeMobileMenu">Live Voting</RouterLink>
             <RouterLink to="/vote/live" class="dropdown-item dropdown-item--vote" @click="closeMobileMenu">
@@ -204,25 +239,37 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   z-index: 1000;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-bottom: 1px solid transparent;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  height: 64px;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  height: 68px;
 }
 
 .navbar.scrolled {
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-  background: rgba(255, 255, 255, 0.95);
-  border-bottom-color: #f1f5f9;
+  box-shadow: 0 4px 28px rgba(0, 0, 0, 0.07);
+  background: rgba(255, 255, 255, 0.92);
+  border-bottom-color: rgba(0, 31, 158, 0.08);
+}
+
+/* Gradient border glow on scroll */
+.navbar.scrolled::before {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 31, 158, 0.15), rgba(45, 78, 196, 0.25), rgba(0, 31, 158, 0.15), transparent);
+  pointer-events: none;
 }
 
 .nav-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 24px;
-  height: 64px;
+  padding: 0 28px;
+  height: 68px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -235,19 +282,59 @@ onUnmounted(() => {
   text-decoration: none;
   flex-shrink: 0;
   z-index: 1001;
+  gap: 12px;
+}
+
+.nav-logo-mark {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  padding: 2px;
+  background: linear-gradient(135deg, #001f9e15, #2d4ec415);
+  box-shadow: 0 2px 8px rgba(0, 31, 158, 0.08);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nav-logo:hover .nav-logo-mark {
+  box-shadow: 0 4px 16px rgba(0, 31, 158, 0.18);
+  transform: scale(1.03);
 }
 
 .nav-logo-img {
-  height: 52px;
+  height: 44px;
   width: auto;
   object-fit: contain;
   border-radius: 10px;
+  display: block;
+}
+
+.nav-logo-text {
+  font-size: 18px;
+  font-weight: 800;
+  color: #0b1020;
+  letter-spacing: -0.02em;
+  transition: color 0.2s ease;
+}
+
+.nav-logo:hover .nav-logo-text {
+  color: #001f9e;
+}
+
+@media (max-width: 768px) {
+  .nav-logo-text {
+    display: none;
+  }
 }
 
 /* Larger logo on desktop */
 @media (min-width: 1024px) {
   .nav-logo-img {
-    height: 56px;
+    height: 48px;
+  }
+  .nav-logo-text {
+    font-size: 20px;
   }
 }
 
@@ -256,7 +343,7 @@ onUnmounted(() => {
   display: flex;
   list-style: none;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   margin: 0;
   padding: 0;
 }
@@ -280,9 +367,30 @@ onUnmounted(() => {
   white-space: nowrap;
 }
 
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  width: 0;
+  height: 2.5px;
+  border-radius: 999px;
+  background: #001f9e;
+  transform: translateX(-50%);
+  transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  opacity: 0;
+}
+
+.nav-link:hover::after,
+.nav-link.active::after {
+  width: 60%;
+  opacity: 1;
+}
+
 .nav-link svg {
   flex-shrink: 0;
   opacity: 0.7;
+  transition: opacity 0.2s;
 }
 
 .nav-link:hover {
@@ -323,18 +431,20 @@ onUnmounted(() => {
 
 .dropdown-menu {
   position: absolute;
-  top: calc(100% + 10px);
+  top: calc(100% + 12px);
   left: 50%;
-  transform: translateX(-50%) translateY(8px) scale(0.96);
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
+  transform: translateX(-50%) translateY(10px) scale(0.95);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(226, 232, 240, 0.7);
+  border-radius: 16px;
   padding: 8px;
-  min-width: 240px;
+  min-width: 250px;
   opacity: 0;
   visibility: hidden;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 31, 158, 0.04);
   z-index: 1002;
 }
 
@@ -384,15 +494,16 @@ onUnmounted(() => {
 /* Hero item (All Tools) */
 .dropdown-item--hero {
   padding: 10px 14px;
-  background: #f8faff;
-  border: 1px solid #eef3ff;
+  background: linear-gradient(135deg, #f8faff, #f0f5ff);
+  border: 1px solid #e8edf8;
   border-radius: 10px;
   margin-bottom: 2px;
 }
 
 .dropdown-item--hero:hover {
-  background: #eef3ff;
-  border-color: #d0d9f0;
+  background: #eef3ff !important;
+  border-color: #c8d4f0;
+  padding-left: 14px !important;
 }
 
 .dropdown-item--hero .dropdown-item-title {
@@ -433,6 +544,117 @@ onUnmounted(() => {
 .dropdown-item--vote:hover {
   background: rgba(220, 252, 231, 0.5) !important;
   color: #15803d !important;
+}
+
+/* ────────────── Category Sections (collapsible) ────────────── */
+.dropdown-category {
+  padding: 1px 8px;
+}
+
+.dropdown-category-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+  text-align: left;
+}
+
+.dropdown-category-btn:hover {
+  background: rgba(0, 31, 158, 0.05);
+  color: #001f9e;
+}
+
+.dropdown-category-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.dropdown-category-icon {
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.dropdown-category-chevron {
+  flex-shrink: 0;
+  color: #94a3b8;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dropdown-category-chevron.expanded {
+  transform: rotate(180deg);
+  color: #001f9e;
+}
+
+.dropdown-submenu {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dropdown-submenu.open {
+  max-height: 280px;
+}
+
+.dropdown-submenu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px 7px 34px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.dropdown-submenu-item:hover {
+  background: rgba(0, 31, 158, 0.05);
+  color: #001f9e;
+}
+
+.dropdown-submenu-icon {
+  font-size: 14px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.dropdown-submenu-label {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.dropdown-submenu-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.dropdown-submenu-item:hover .dropdown-submenu-title {
+  color: #001f9e;
+}
+
+.dropdown-submenu-desc {
+  font-size: 10px;
+  color: #94a3b8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ────────────── Divider ────────────── */
@@ -534,15 +756,25 @@ onUnmounted(() => {
   cursor: pointer;
   padding: 8px;
   z-index: 1001;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.mobile-menu-toggle:hover {
+  background: rgba(0, 31, 158, 0.06);
 }
 
 .mobile-menu-toggle span {
   display: block;
   width: 22px;
-  height: 2px;
-  background: #64748b;
-  transition: all 0.3s ease;
+  height: 2.5px;
+  background: #475569;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 2px;
+}
+
+.mobile-menu-toggle.active span {
+  background: #001f9e;
 }
 
 .mobile-menu-toggle.active span:nth-child(1) {
@@ -599,26 +831,28 @@ onUnmounted(() => {
 @media (max-width: 768px) {
   .nav-menu {
     position: fixed;
-    top: 64px;
+    top: 68px;
     left: 0;
     right: 0;
     bottom: 0;
-    background: white;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     flex-direction: column;
-    padding: 16px 20px 24px;
+    padding: 20px 24px 24px;
     gap: 2px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
     overflow-y: auto;
     max-height: 0;
     opacity: 0;
     visibility: hidden;
-    transform: translateY(-8px);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateY(-12px);
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     z-index: 999;
   }
 
   .nav-menu.active {
-    max-height: calc(100vh - 64px);
+    max-height: calc(100vh - 68px);
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
@@ -626,9 +860,10 @@ onUnmounted(() => {
 
   .nav-link {
     width: 100%;
-    padding: 12px 16px;
+    padding: 14px 16px;
     justify-content: flex-start;
     font-size: 15px;
+    border-radius: 10px;
   }
 
   .nav-link::after {
@@ -692,15 +927,14 @@ onUnmounted(() => {
   .nav-buttons .btn-login,
   .nav-buttons .btn-register,
   .nav-buttons .btn-vote,
-  .nav-buttons .btn-logout,
-  .nav-buttons .profile-dropdown-wrapper {
+  .nav-buttons .btn-logout {
     display: none;
   }
 }
 
 @media (max-width: 480px) {
   .nav-logo-img {
-    height: 44px;
+    height: 38px;
   }
 
   .nav-container {
