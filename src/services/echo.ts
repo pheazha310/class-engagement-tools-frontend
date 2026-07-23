@@ -14,7 +14,16 @@ let echo: Echo<any> | null = null
 export function getEcho(): Echo<any> {
   if (echo) return echo
 
-  echo = new Echo({
+  const originalError = console.error.bind(console)
+  console.error = (...args: unknown[]) => {
+    const message = args[0]
+    if (typeof message === 'string' && message.includes('WebSocket connection to')) {
+      return
+    }
+    originalError(...args)
+  }
+
+  const instance = new Echo({
     broadcaster: 'pusher',
     key: import.meta.env.VITE_PUSHER_APP_KEY ?? 'app-key',
     cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER ?? 'mt1',
@@ -27,6 +36,15 @@ export function getEcho(): Echo<any> {
     enabledTransports: ['ws', 'wss'],
   })
 
+  console.error = originalError
+
+  instance.connector.pusher.connection.bind('error', (err: any) => {
+    if (err && err.error && err.error.type === 'WebSocketConnectionFailed') {
+      console.debug('Broadcast WS unavailable; local playback still works.')
+    }
+  })
+
+  echo = instance
   return echo
 }
 
