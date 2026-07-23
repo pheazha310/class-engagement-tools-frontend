@@ -9,6 +9,13 @@ import HomepageView from '@/views/Homepage.vue'
 import ToolsPage from '@/pages/ToolsPage.vue'
 import ToolDetailPage from '@/pages/ToolDetailPage.vue'
 import GroupGeneratorView from '@/views/GroupGeneratorView.vue'
+import Icebreakers from '@/views/Icebreakers.vue'
+import TwoTruthsOneLie from '@/views/TwoTruthsOneLie.vue'
+import WouldYouRather from '@/views/WouldYouRather.vue'
+import SpinTheQuestion from '@/views/SpinTheQuestion.vue'
+import SpinTheQuestionResults from '@/views/SpinTheQuestionResults.vue'
+import RandomChallengeGenerator from '@/views/RandomChallengeGenerator.vue'
+import MysteryBox from '@/views/MysteryBox.vue'
 import CreateGamePage from '@/pages/CreateGamePage.vue'
 import JoinGamePage from '@/pages/JoinGamePage.vue'
 import GamePlayPage from '@/pages/GamePlayPage.vue'
@@ -261,6 +268,45 @@ const routes: RouteRecordRaw[] = [
     path: '/results',
     name: 'results',
     component: () => import('@/pages/ResultsPage.vue'),
+  },
+  {
+    path: '/tools/icebreakers',
+    redirect: '/icebreakers',
+  },
+  {
+    path: '/icebreakers',
+    name: 'icebreakers',
+    component: Icebreakers,
+  },
+  {
+    path: '/tools/icebreakers/two-truths-one-lie',
+    name: 'two-truths-one-lie',
+    component: TwoTruthsOneLie,
+  },
+  {
+    path: '/tools/icebreakers/would-you-rather',
+    name: 'would-you-rather',
+    component: WouldYouRather,
+  },
+  {
+    path: '/tools/icebreakers/spin-the-question',
+    name: 'spin-the-question',
+    component: SpinTheQuestion,
+  },
+  {
+    path: '/tools/icebreakers/spin-the-question/results',
+    name: 'spin-the-question-results',
+    component: SpinTheQuestionResults,
+  },
+  {
+    path: '/tools/icebreakers/random-challenge-generator',
+    name: 'random-challenge-generator',
+    component: RandomChallengeGenerator,
+  },
+  {
+    path: '/tools/icebreakers/mystery-box',
+    name: 'mystery-box',
+    component: MysteryBox,
   },
   {
     path: '/create-voting-poll',
