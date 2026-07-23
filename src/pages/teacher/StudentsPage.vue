@@ -471,6 +471,28 @@ function closeDeleteModal() {
 
 // ── Export ──
 const exporting = ref(false)
+const exportDropdownOpen = ref(false)
+
+function toggleExportDropdown() {
+  exportDropdownOpen.value = !exportDropdownOpen.value
+}
+
+function closeExportDropdown() {
+  exportDropdownOpen.value = false
+}
+
+function handleExport(handler: () => Promise<void>) {
+  closeExportDropdown()
+  handler()
+}
+
+// Click outside to close export dropdown
+function onDocumentClick(e: MouseEvent) {
+  const target = e.target as HTMLElement
+  if (!target.closest('.export-dropdown-trigger')) {
+    closeExportDropdown()
+  }
+}
 
 function getExportData(source?: Student[]) {
   const list = source ?? students.value
@@ -598,6 +620,7 @@ onMounted(() => {
     // Fall back to demo data so the page isn't empty
     students.value = generateDemoStudents()
   }
+  document.addEventListener('click', onDocumentClick)
 })
 </script>
 
@@ -606,42 +629,7 @@ onMounted(() => {
     sidebar-active="students"
     page-title="Students"
     page-subtitle="Manage your students across all classes."
-    v-model:search-value="searchQuery"
-    search-placeholder="Search students..."
   >
-    <template #actions>
-      <div class="export-group">
-        <button class="outline-button" type="button" :disabled="exporting || students.length === 0" @click="exportAllXLSX">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-            <polyline points="7 10 12 15 17 10" />
-            <line x1="12" y1="15" x2="12" y2="3" />
-          </svg>
-          <span>{{ exporting ? 'Exporting...' : 'Excel' }}</span>
-        </button>
-        <button class="outline-button" type="button" :disabled="exporting || students.length === 0" @click="exportAllCSV">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-            <polyline points="7 10 12 15 17 10" />
-            <line x1="12" y1="15" x2="12" y2="3" />
-          </svg>
-          <span>CSV</span>
-        </button>
-      </div>
-      <button class="primary-button" type="button" @click="openImportModal">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-          <polyline points="17 8 12 3 7 8" />
-          <line x1="12" y1="3" x2="12" y2="15" />
-        </svg>
-        <span>Import</span>
-      </button>
-      <button class="primary-button" type="button" @click="openInviteModal">
-        <TeacherIcon icon="plus" :size="18" />
-        <span>Invite</span>
-      </button>
-    </template>
-
     <!-- Stats -->
     <section class="stats-grid" aria-label="Student stats">
       <article class="stat-card tone-blue">
@@ -662,25 +650,87 @@ onMounted(() => {
       </article>
     </section>
 
-    <!-- Filter -->
+    <!-- Filter & Actions Bar -->
     <section class="filter-bar">
-      <div class="filter-group">
-        <label class="filter-label">Class</label>
-        <select v-model="selectedClassFilter" class="form-select" style="min-height:36px;min-width:200px;font-size:13px;">
-          <option value="all">All Classes</option>
-          <option v-for="cls in classOptions.filter(c => c !== 'all')" :key="cls" :value="cls">{{ cls }}</option>
-        </select>
-      </div>
-      <div class="filter-group">
-        <label class="filter-label">Status</label>
-        <div class="filter-chips">
-          <button class="chip" :class="{ active: selectedStatusFilter === 'all' }" type="button" @click="selectedStatusFilter = 'all'">All</button>
-          <button class="chip chip-green" :class="{ active: selectedStatusFilter === 'active' }" type="button" @click="selectedStatusFilter = 'active'">Active</button>
-          <button class="chip chip-gray" :class="{ active: selectedStatusFilter === 'inactive' }" type="button" @click="selectedStatusFilter = 'inactive'">Inactive</button>
+      <div class="filter-bar-row">
+        <!-- Search -->
+        <label class="search-field" aria-label="Search students">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input v-model="searchQuery" type="search" placeholder="Search students..." />
+        </label>
+
+        <!-- Actions -->
+        <div class="filter-actions">
+          <!-- Export Dropdown -->
+          <div class="export-dropdown-trigger">
+            <button
+              class="outline-button"
+              type="button"
+              :disabled="exporting || students.length === 0"
+              @click="toggleExportDropdown"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              <span>{{ exporting ? 'Exporting...' : 'Export' }}</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.6;transition:transform .2s;" :style="{ transform: exportDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)' }"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <Transition name="dropdown">
+              <div v-if="exportDropdownOpen" class="export-dropdown-menu">
+                <button class="export-dropdown-item" type="button" :disabled="exporting" @click="handleExport(exportAllXLSX)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  <span class="export-dd-label">
+                    <span class="export-dd-title">Excel (.xlsx)</span>
+                    <span class="export-dd-desc">Spreadsheet with all columns</span>
+                  </span>
+                </button>
+                <button class="export-dropdown-item" type="button" :disabled="exporting" @click="handleExport(exportAllCSV)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                  <span class="export-dd-label">
+                    <span class="export-dd-title">CSV (.csv)</span>
+                    <span class="export-dd-desc">Comma-separated values</span>
+                  </span>
+                </button>
+              </div>
+            </Transition>
+          </div>
+          <button class="primary-button" type="button" @click="openImportModal">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            <span>Import</span>
+          </button>
+          <button class="primary-button" type="button" @click="openInviteModal">
+            <TeacherIcon icon="plus" :size="18" />
+            <span>Invite</span>
+          </button>
         </div>
       </div>
-      <div class="filter-info">
-        <span class="result-count">{{ filteredStudents.length }} student{{ filteredStudents.length !== 1 ? 's' : '' }}</span>
+
+      <!-- Filters Row -->
+      <div class="filter-bar-row filters-row">
+        <div class="filter-group">
+          <label class="filter-label">Class</label>
+          <select v-model="selectedClassFilter" class="form-select" style="min-height:36px;min-width:200px;font-size:13px;">
+            <option value="all">All Classes</option>
+            <option v-for="cls in classOptions.filter(c => c !== 'all')" :key="cls" :value="cls">{{ cls }}</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Status</label>
+          <div class="filter-chips">
+            <button class="chip" :class="{ active: selectedStatusFilter === 'all' }" type="button" @click="selectedStatusFilter = 'all'">All</button>
+            <button class="chip chip-green" :class="{ active: selectedStatusFilter === 'active' }" type="button" @click="selectedStatusFilter = 'active'">Active</button>
+            <button class="chip chip-gray" :class="{ active: selectedStatusFilter === 'inactive' }" type="button" @click="selectedStatusFilter = 'inactive'">Inactive</button>
+          </div>
+        </div>
+        <div class="filter-info">
+          <span class="result-count">{{ filteredStudents.length }} student{{ filteredStudents.length !== 1 ? 's' : '' }}</span>
+        </div>
       </div>
     </section>
 
@@ -762,13 +812,13 @@ onMounted(() => {
           <span>Showing {{ filteredStudents.length }} of {{ students.length }} students</span>
         </div>
         <div class="footer-right">
-          <div v-if="students.length > 0 && filteredStudents.length < students.length" class="export-group footer-export">
+          <div v-if="students.length > 0 && filteredStudents.length < students.length" class="footer-export-group">
             <button class="footer-export-btn" type="button" :disabled="exporting || filteredStudents.length === 0" @click="exportFilteredXLSX" title="Export visible students as Excel">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              <span>Excel</span>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <span>XLSX</span>
             </button>
             <button class="footer-export-btn" type="button" :disabled="exporting || filteredStudents.length === 0" @click="exportFilteredCSV" title="Export visible students as CSV">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
               <span>CSV</span>
             </button>
           </div>
@@ -1074,10 +1124,101 @@ onMounted(() => {
 .engagement-value { font-size: 12px; font-weight: 700; white-space: nowrap; }
 .col-score strong { font-size: 14px; }
 
-/* ── Export Group ── */
-.export-group { display: flex; gap: 6px; }
-.export-group .outline-button { font-size: 12px; min-height: 34px; padding: 0 12px; white-space: nowrap; }
-.export-group .outline-button:disabled { opacity: 0.5; cursor: not-allowed; }
+/* ── Filter Bar ── */
+.filter-bar { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; padding: 16px 20px; border-radius: 10px; background: #fff; border: 1px solid #c5cbdd; }
+.filter-bar-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.filters-row { padding-top: 12px; border-top: 1px solid #e8ecf4; }
+.search-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 200px;
+  max-width: 360px;
+  height: 38px;
+  border: 1px solid #d0d6e8;
+  border-radius: 8px;
+  background: #f5f7ff;
+  color: #4e586b;
+  padding: 0 14px;
+}
+.search-field input {
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 14px;
+}
+.search-field input::placeholder { color: #8a92a5; }
+.search-field svg { flex-shrink: 0; opacity: .5; }
+.filter-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.filter-group { display: flex; align-items: center; gap: 12px; }
+.filter-label { font-size: 11px; font-weight: 800; text-transform: uppercase; color: #697082; white-space: nowrap; }
+.filter-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.filter-info { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+.result-count { font-size: 13px; color: #697082; font-weight: 600; white-space: nowrap; }
+
+/* ── Export Dropdown ── */
+.export-dropdown-trigger { position: relative; }
+.export-dropdown-trigger .outline-button { font-size: 12px; min-height: 34px; padding: 0 14px; white-space: nowrap; gap: 6px; }
+.export-dropdown-trigger .outline-button:disabled { opacity: 0.5; cursor: not-allowed; }
+.export-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 100;
+  min-width: 220px;
+  background: #fff;
+  border: 1px solid #c5cbdd;
+  border-radius: 10px;
+  padding: 6px;
+  box-shadow: 0 12px 32px rgba(0,0,0,.12);
+}
+.export-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #1a2030;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+  font-family: inherit;
+}
+.export-dropdown-item:hover:not(:disabled) {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+.export-dropdown-item:disabled { opacity: .4; cursor: not-allowed; }
+.export-dropdown-item svg { flex-shrink: 0; color: var(--muted); }
+.export-dropdown-item:hover:not(:disabled) svg { color: var(--primary); }
+.export-dd-label { display: flex; flex-direction: column; gap: 1px; }
+.export-dd-title { font-size: 13px; font-weight: 600; color: inherit; }
+.export-dd-desc { font-size: 11px; color: var(--muted); font-weight: 500; }
+.export-dropdown-item:hover .export-dd-desc { color: #5a6580; }
+
+/* Dropdown transition */
+.dropdown-enter-active { animation: dropIn .18s cubic-bezier(.16,1,.3,1) forwards; }
+.dropdown-leave-active { animation: dropOut .12s ease forwards; }
+@keyframes dropIn {
+  from { opacity: 0; transform: translateY(-4px) scale(.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes dropOut {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(-4px) scale(.97); }
+}
+
+.filter-actions .primary-button { min-height: 34px; font-size: 12px; padding: 0 14px; }
+.filter-actions .primary-button svg { width: 16px; height: 16px; }
 
 /* ── Action Buttons ── */
 .action-buttons { display: flex; gap: 4px; }

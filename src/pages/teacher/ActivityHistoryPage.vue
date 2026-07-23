@@ -53,7 +53,7 @@ onMounted(() => { activities.value = generateDemoActivities() })
 </script>
 
 <template>
-  <TeacherLayout sidebar-active="history" page-title="Activity History" page-subtitle="Track all classroom activities and student engagement." v-model:search-value="searchQuery" search-placeholder="Search activities...">
+  <TeacherLayout sidebar-active="history" page-title="Activity History" page-subtitle="Track all classroom activities and student engagement.">
     <template #actions>
       <button class="outline-button" type="button" @click="() => { searchQuery = ''; typeFilter = 'all'; dateRange = 'all'; currentPage = 1 }"><TeacherIcon icon="refresh" :size="16" /><span>Reset</span></button>
     </template>
@@ -66,24 +66,33 @@ onMounted(() => { activities.value = generateDemoActivities() })
     </section>
 
     <section class="filter-bar">
-      <div class="filter-group">
-        <label class="filter-label">Type</label>
-        <div class="filter-chips">
-          <button class="chip" :class="{ active: typeFilter === 'all' }" type="button" @click="typeFilter = 'all'; currentPage = 1">All</button>
-          <button class="chip chip-primary" :class="{ active: typeFilter === 'quiz' }" type="button" @click="typeFilter = 'quiz'; currentPage = 1">Quizzes</button>
-          <button class="chip chip-green" :class="{ active: typeFilter === 'poll' }" type="button" @click="typeFilter = 'poll'; currentPage = 1">Polls</button>
-          <button class="chip chip-orange" :class="{ active: typeFilter === 'timer' }" type="button" @click="typeFilter = 'timer'; currentPage = 1">Timers</button>
-          <button class="chip chip-violet" :class="{ active: typeFilter === 'game' }" type="button" @click="typeFilter = 'game'; currentPage = 1">Games</button>
-        </div>
+      <div class="filter-bar-row">
+        <label class="search-field" aria-label="Search activities">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input v-model="searchQuery" type="search" placeholder="Search activities..." />
+        </label>
       </div>
-      <div class="filter-group">
-        <label class="filter-label">Period</label>
-        <div class="filter-chips">
-          <button class="chip" :class="{ active: dateRange === 'all' }" type="button" @click="dateRange = 'all'; currentPage = 1">All</button>
-          <button class="chip" :class="{ active: dateRange === 'today' }" type="button" @click="dateRange = 'today'; currentPage = 1">Today</button>
-          <button class="chip" :class="{ active: dateRange === 'week' }" type="button" @click="dateRange = 'week'; currentPage = 1">This Week</button>
-          <button class="chip" :class="{ active: dateRange === 'month' }" type="button" @click="dateRange = 'month'; currentPage = 1">This Month</button>
+      <div class="filter-bar-row filters-row">
+        <div class="filter-group">
+          <label class="filter-label">Type</label>
+          <div class="filter-chips">
+            <button class="chip" :class="{ active: typeFilter === 'all' }" type="button" @click="typeFilter = 'all'; currentPage = 1">All</button>
+            <button class="chip chip-primary" :class="{ active: typeFilter === 'quiz' }" type="button" @click="typeFilter = 'quiz'; currentPage = 1">Quizzes</button>
+            <button class="chip chip-green" :class="{ active: typeFilter === 'poll' }" type="button" @click="typeFilter = 'poll'; currentPage = 1">Polls</button>
+            <button class="chip chip-orange" :class="{ active: typeFilter === 'timer' }" type="button" @click="typeFilter = 'timer'; currentPage = 1">Timers</button>
+            <button class="chip chip-violet" :class="{ active: typeFilter === 'game' }" type="button" @click="typeFilter = 'game'; currentPage = 1">Games</button>
+          </div>
         </div>
+        <div class="filter-group">
+          <label class="filter-label">Period</label>
+          <div class="filter-chips">
+            <button class="chip" :class="{ active: dateRange === 'all' }" type="button" @click="dateRange = 'all'; currentPage = 1">All</button>
+            <button class="chip" :class="{ active: dateRange === 'today' }" type="button" @click="dateRange = 'today'; currentPage = 1">Today</button>
+            <button class="chip" :class="{ active: dateRange === 'week' }" type="button" @click="dateRange = 'week'; currentPage = 1">This Week</button>
+            <button class="chip" :class="{ active: dateRange === 'month' }" type="button" @click="dateRange = 'month'; currentPage = 1">This Month</button>
+          </div>
+        </div>
+        <div class="filter-info"><span class="result-count">{{ filteredActivities.length }} activit{{ filteredActivities.length !== 1 ? 'ies' : 'y' }}</span></div>
       </div>
     </section>
 

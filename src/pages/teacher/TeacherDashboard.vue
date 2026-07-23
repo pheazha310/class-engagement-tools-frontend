@@ -165,8 +165,6 @@ const navigateTo = (route?: string) => {
   if (route) router.push(route)
 }
 
-const searchValue = ref('')
-
 // ── Tone map for tools ───────────────────────────────────────
 const toneMap: Record<string, string> = {
   'Random Tools': 'cyan',
@@ -256,8 +254,6 @@ function closeManageModal() {
   <TeacherLayout
     sidebar-active="dashboard"
     page-subtitle="Your engagement is up 12% this week."
-    v-model:search-value="searchValue"
-    search-placeholder="Search activities..."
   >
     <template #greeting>
       <h1>{{ getGreeting() }}, {{ teacherName }}</h1>
