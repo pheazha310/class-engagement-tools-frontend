@@ -6,7 +6,6 @@ import SingleStudentPickerView from '@/views/SingleStudentPickerView.vue'
 import MultipleStudentPickerView from '@/views/MultipleStudentPickerView.vue'
 import LuckyDrawView from '@/views/LuckyDrawView.vue'
 import HomepageView from '@/views/Homepage.vue'
-import ToolsPage from '@/pages/ToolsPage.vue'
 import ToolDetailPage from '@/pages/ToolDetailPage.vue'
 import GroupGeneratorView from '@/views/GroupGeneratorView.vue'
 import Icebreakers from '@/views/Icebreakers.vue'
@@ -235,7 +234,12 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/tools',
     name: 'tools',
-    component: ToolsPage,
+    component: () => import('@/pages/AllToolsPage.vue'),
+  },
+  {
+    path: '/tools/fun-activities',
+    name: 'fun-activities',
+    component: () => import('@/pages/ToolsPage.vue'),
   },
   {
     path: '/tools/category/:slug',

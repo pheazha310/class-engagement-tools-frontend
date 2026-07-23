@@ -68,17 +68,13 @@ export const categories: Category[] = [
     ]
   },
   {
-    name: 'Icebreakers',
-    icon: '✨',
-    slug: 'icebreakers',
+    name: 'Fun Activities',
+    icon: '🎉',
+    slug: 'fun-activities',
     tools: [
-      { title: 'Two Truths One Lie', slug: 'two-truths-one-lie', icon: '🃏', description: 'Students share two truths and one lie — classmates guess the lie!', category: 'Icebreakers', route: '/tools/icebreakers/two-truths-one-lie' },
-      { title: 'Would You Rather', slug: 'would-you-rather', icon: '🤔', description: 'Pose fun "Would You Rather" questions and let students vote.', category: 'Icebreakers', route: '/tools/icebreakers/would-you-rather' },
-      { title: 'Spin the Question', slug: 'spin-the-question', icon: '🎰', description: 'Spin a wheel to randomly select a question for the class.', category: 'Icebreakers', route: '/tools/icebreakers/spin-the-question' },
-      { title: 'Random Challenge', slug: 'random-challenge', icon: '🎲', description: 'Generate random challenges for students to complete.', category: 'Icebreakers', route: '/tools/icebreakers/random-challenge-generator' },
-      { title: 'Mystery Box', slug: 'mystery-box', icon: '🎁', description: 'Open mystery boxes with random hidden challenges and rewards.', category: 'Icebreakers', route: '/tools/icebreakers/mystery-box' },
-      { title: 'Bingo Generator', slug: 'bingo-generator', icon: '🎱', description: 'Create custom bingo games for any subject.', category: 'Icebreakers' },
-      { title: 'Flashcards', slug: 'flashcards', icon: '📖', description: 'Interactive flashcards for vocabulary and concept review.', category: 'Icebreakers' },
+      { title: 'Icebreakers', slug: 'icebreakers', icon: '✨', description: 'Warm up your class with energizing prompts and team-building exercises.', category: 'Fun Activities', route: '/icebreakers' },
+      { title: 'Bingo Generator', slug: 'bingo-generator', icon: '🎱', description: 'Create custom bingo games for any subject.', category: 'Fun Activities' },
+      { title: 'Flashcards', slug: 'flashcards', icon: '📖', description: 'Interactive flashcards for vocabulary and concept review.', category: 'Fun Activities' },
     ]
   },
 ]

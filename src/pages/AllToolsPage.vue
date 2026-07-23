@@ -3,18 +3,16 @@ import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { categories } from '@/data/toolsData'
 
-const funActivities = computed(() => {
-  return categories.find(c => c.slug === 'fun-activities')
-})
+const groupedTools = computed(() => categories)
 </script>
 
 <template>
-  <div class="tools-page" v-if="funActivities">
+  <div class="all-tools-page">
     <section class="tools-hero" style="padding-top: 120px;">
       <div class="container">
-        <h1 class="tools-hero-title">{{ funActivities.icon }} {{ funActivities.name }}</h1>
+        <h1 class="tools-hero-title">All Tools</h1>
         <p class="tools-hero-subtitle">
-          {{ funActivities.tools.length }} engaging activities to make learning fun and interactive.
+          Explore our complete collection of classroom engagement tools designed to enhance student participation and learning outcomes.
         </p>
       </div>
     </section>
@@ -22,11 +20,11 @@ const funActivities = computed(() => {
     <section class="tools-content">
       <div class="container">
         <div class="categories-grid">
-          <div class="category-card" :key="funActivities.name">
-            <h3 class="category-title">{{ funActivities.icon }} {{ funActivities.name }}</h3>
+          <div class="category-card" v-for="category in groupedTools" :key="category.name">
+            <h3 class="category-title">{{ category.icon }} {{ category.name }}</h3>
             <div class="category-tools">
               <RouterLink
-                v-for="tool in funActivities.tools"
+                v-for="tool in category.tools"
                 :key="tool.title"
                 :to="tool.route || `/tools/${tool.slug}`"
                 class="category-tool-link"
@@ -46,7 +44,7 @@ const funActivities = computed(() => {
 </template>
 
 <style scoped>
-.tools-page {
+.all-tools-page {
   min-height: 100vh;
 }
 
@@ -166,7 +164,7 @@ const funActivities = computed(() => {
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  -webkit-orient: vertical;
   overflow: hidden;
 }
 
