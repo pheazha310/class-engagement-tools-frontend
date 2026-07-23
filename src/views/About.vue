@@ -280,8 +280,8 @@ import SiteFooter from '@/components/SiteFooter.vue'
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #2563eb;
-  background: #eff6ff;
+  color: #001f9e;
+  background: #eaf0ff;
   padding: 6px 14px;
   border-radius: 999px;
   margin-bottom: 16px;
@@ -319,14 +319,14 @@ import SiteFooter from '@/components/SiteFooter.vue'
 
 .btn-primary {
   background: white;
-  color: #2563eb;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+  color: #001f9e;
+  box-shadow: 0 4px 14px rgba(0, 31, 158, 0.25);
 }
 
 .btn-primary:hover {
   background: #f8faff;
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.35);
+  box-shadow: 0 8px 24px rgba(0, 31, 158, 0.35);
 }
 
 .btn-secondary {
@@ -337,7 +337,7 @@ import SiteFooter from '@/components/SiteFooter.vue'
 
 .btn-secondary:hover {
   background: white;
-  color: #2563eb;
+  color: #001f9e;
   transform: translateY(-2px);
 }
 
@@ -349,7 +349,7 @@ import SiteFooter from '@/components/SiteFooter.vue'
 
 /* Hero Section */
 .hero {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #001f9e 0%, #2d4ec4 100%);
   color: white;
   padding: 140px 20px 100px;
   text-align: center;
@@ -419,7 +419,7 @@ import SiteFooter from '@/components/SiteFooter.vue'
   width: 100%;
   max-width: 420px;
   aspect-ratio: 1;
-  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, #001f9e 0%, #2d4ec4 100%);
   border-radius: 24px;
   display: flex;
   flex-direction: column;
@@ -428,7 +428,7 @@ import SiteFooter from '@/components/SiteFooter.vue'
   color: white;
   text-align: center;
   padding: 48px;
-  box-shadow: 0 24px 48px rgba(37, 99, 235, 0.25);
+  box-shadow: 0 24px 48px rgba(0, 31, 158, 0.25);
 }
 
 .placeholder-icon {
@@ -601,7 +601,7 @@ import SiteFooter from '@/components/SiteFooter.vue'
 .team-role {
   font-size: 13px;
   font-weight: 600;
-  color: #2563eb;
+  color: #001f9e;
   margin-bottom: 10px;
 }
 
@@ -614,7 +614,7 @@ import SiteFooter from '@/components/SiteFooter.vue'
 /* Stats Section */
 .stats {
   padding: 80px 20px;
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #001f9e 0%, #1d4ed8 100%);
   color: white;
 }
 
@@ -644,7 +644,7 @@ import SiteFooter from '@/components/SiteFooter.vue'
 
 /* Call-to-Action Section */
 .cta {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #001f9e 0%, #2d4ec4 100%);
   color: white;
   padding: 100px 20px;
   text-align: center;

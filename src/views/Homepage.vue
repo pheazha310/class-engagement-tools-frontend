@@ -150,13 +150,13 @@ onMounted(() => {
 
 .btn-primary {
   background: white;
-  color: #2563eb;
+  color: #001f9e;
 }
 
 .btn-primary:hover {
-  background: #f0f9ff;
+  background: #f0f5ff;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 31, 158, 0.3);
 }
 
 .btn-secondary {
@@ -167,7 +167,7 @@ onMounted(() => {
 
 .btn-secondary:hover {
   background: white;
-  color: #2563eb;
+  color: #001f9e;
 }
 
 .btn-large {
@@ -177,7 +177,7 @@ onMounted(() => {
 
 /* Hero Section */
 .hero {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #001f9e 0%, #2d4ec4 100%);
   color: white;
   padding: 160px 20px 120px;
   text-align: center;
@@ -418,7 +418,7 @@ onMounted(() => {
 .stat-number {
   font-size: 36px;
   font-weight: 800;
-  color: #2563eb;
+  color: #001f9e;
   margin-bottom: 8px;
   letter-spacing: -0.02em;
 }
@@ -431,7 +431,7 @@ onMounted(() => {
 
 /* Call-to-Action Section */
 .cta {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #001f9e 0%, #2d4ec4 100%);
   color: white;
   padding: 100px 20px;
   text-align: center;

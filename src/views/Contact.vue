@@ -237,8 +237,8 @@ const handleSubmit = () => {
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #2563eb;
-  background: #eff6ff;
+  color: #001f9e;
+  background: #eaf0ff;
   padding: 6px 14px;
   border-radius: 999px;
   margin-bottom: 16px;
@@ -276,14 +276,14 @@ const handleSubmit = () => {
 
 .btn-primary {
   background: white;
-  color: #2563eb;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+  color: #001f9e;
+  box-shadow: 0 4px 14px rgba(0, 31, 158, 0.25);
 }
 
 .btn-primary:hover {
   background: #f8faff;
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.35);
+  box-shadow: 0 8px 24px rgba(0, 31, 158, 0.35);
 }
 
 .btn-secondary {
@@ -294,7 +294,7 @@ const handleSubmit = () => {
 
 .btn-secondary:hover {
   background: white;
-  color: #2563eb;
+  color: #001f9e;
   transform: translateY(-2px);
 }
 
@@ -317,12 +317,12 @@ const handleSubmit = () => {
 
 .btn-login:hover {
   background: #f8fafc;
-  color: #2563eb;
+  color: #001f9e;
   border-color: #cbd5e1;
 }
 
 .btn-register {
-  background: #2563eb;
+  background: #001f9e;
   color: white;
   border-radius: 8px;
   padding: 8px 18px;
@@ -332,13 +332,13 @@ const handleSubmit = () => {
 }
 
 .btn-register:hover {
-  background: #1d4ed8;
+  background: #00157a;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 31, 158, 0.3);
 }
 
 .btn-submit {
-  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+  background: linear-gradient(135deg, #001f9e 0%, #2d4ec4 100%);
   color: white;
   padding: 14px 28px;
   font-size: 15px;
@@ -355,7 +355,7 @@ const handleSubmit = () => {
 
 /* Hero Section */
 .hero {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #001f9e 0%, #2d4ec4 100%);
   color: white;
   padding: 140px 20px 100px;
   text-align: center;
@@ -504,8 +504,8 @@ const handleSubmit = () => {
 .form-group input:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  border-color: #001f9e;
+  box-shadow: 0 0 0 3px rgba(0, 31, 158, 0.1);
   background: white;
 }
 
@@ -578,11 +578,11 @@ const handleSubmit = () => {
 }
 
 .social-link:hover {
-  background: #2563eb;
+  background: #001f9e;
   color: white;
-  border-color: #2563eb;
+  border-color: #001f9e;
   transform: translateY(-6px);
-  box-shadow: 0 16px 32px rgba(37, 99, 235, 0.25);
+  box-shadow: 0 16px 32px rgba(0, 31, 158, 0.25);
 }
 
 .social-icon {

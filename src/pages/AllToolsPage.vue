@@ -49,7 +49,7 @@ const groupedTools = computed(() => categories)
 }
 
 .tools-hero {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #001f9e 0%, #2d4ec4 100%);
   color: white;
   padding: 120px 20px 80px;
   text-align: center;
