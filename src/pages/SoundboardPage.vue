@@ -293,38 +293,40 @@ function listenForBroadcasts() {
   try {
     const echo = getEcho()
     soundboardChannel = echo.channel('soundboard')
-    soundboardChannel.listen('.SoundPlayed', async (data: {
-      soundId: string
-      soundName: string
-      audioUrl: string
-      category?: string | null
-      icon?: string | null
-      durationSeconds?: number | null
-    }) => {
-      // Skip if this is our own broadcast (played locally within last 2 seconds)
-      if (data.soundId === lastLocalPlayedSoundId && Date.now() - lastLocalPlayedAt < 2000) {
-        console.debug('Soundboard: skipping self-broadcast', data.soundName)
-        return
-      }
+    if (soundboardChannel) {
+      soundboardChannel.listen('.SoundPlayed', async (data: {
+        soundId: string
+        soundName: string
+        audioUrl: string
+        category?: string | null
+        icon?: string | null
+        durationSeconds?: number | null
+      }) => {
+        // Skip if this is our own broadcast (played locally within last 2 seconds)
+        if (data.soundId === lastLocalPlayedSoundId && Date.now() - lastLocalPlayedAt < 2000) {
+          console.debug('Soundboard: skipping self-broadcast', data.soundName)
+          return
+        }
 
-      console.debug('Soundboard: received broadcast', data.soundName)
-      // Find the sound in the current list
-      const sound = sounds.value.find(s => s.id === data.soundId)
-      if (sound) {
-        // Play the broadcasted sound locally (no fade needed for remote broadcasts)
-        const { duration } = await playSynthSound(sound.name).catch(() => ({ duration: 1000 }))
+        console.debug('Soundboard: received broadcast', data.soundName)
+        // Find the sound in the current list
+        const sound = sounds.value.find(s => s.id === data.soundId)
+        if (sound) {
+          // Play the broadcasted sound locally (no fade needed for remote broadcasts)
+          const { duration } = await playSynthSound(sound.name).catch(() => ({ duration: 1000 }))
 
-        // Track in local play count
-        const newMap = new Map(localPlayCount.value)
-        newMap.set(sound.id, (newMap.get(sound.id) || 0) + 1)
-        localPlayCount.value = newMap
+          // Track in local play count
+          const newMap = new Map(localPlayCount.value)
+          newMap.set(sound.id, (newMap.get(sound.id) || 0) + 1)
+          localPlayCount.value = newMap
 
-        // Update UI
-        currentSound.value = sound
-        isPlaying.value = true
-        startProgress(duration)
-      }
-    })
+          // Update UI
+          currentSound.value = sound
+          isPlaying.value = true
+          startProgress(duration)
+        }
+      })
+    }
   } catch (e) {
     console.debug('Soundboard: broadcast listener not available', e)
   }

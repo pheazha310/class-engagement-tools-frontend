@@ -1028,7 +1028,7 @@ export function getAnalyserLevel(): number {
   // Values range 0-255, with 128 = zero crossing (silence)
   let sumSquares = 0
   for (let i = 0; i < data.length; i++) {
-    const normalized = (data[i] - 128) / 128  // -1 to 1
+    const normalized = ((data[i] as number) - 128) / 128
     sumSquares += normalized * normalized
   }
   const rms = Math.sqrt(sumSquares / data.length)
