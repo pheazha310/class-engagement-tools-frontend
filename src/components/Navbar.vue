@@ -80,9 +80,7 @@ onUnmounted(() => {
     <div class="nav-container">
       <!-- Logo -->
       <RouterLink to="/" class="nav-logo">
-        <div class="nav-logo-mark">
-          <img src="@/assets/photo_logo.jpg" alt="Classroom Tools" class="nav-logo-img" />
-        </div>
+        <img src="@/assets/photo_logo.jpg" alt="Classroom Tools" class="nav-logo-img" />
         <span class="nav-logo-text">EduPulse</span>
       </RouterLink>
 
@@ -267,36 +265,25 @@ onUnmounted(() => {
   text-decoration: none;
   flex-shrink: 0;
   z-index: 1001;
-  gap: 12px;
-}
 
-.nav-logo-mark {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 12px;
-  padding: 2px;
-  background: linear-gradient(135deg, #001f9e15, #2d4ec415);
-  box-shadow: 0 2px 8px rgba(0, 31, 158, 0.08);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.nav-logo:hover .nav-logo-mark {
-  box-shadow: 0 4px 16px rgba(0, 31, 158, 0.18);
-  transform: scale(1.03);
 }
 
 .nav-logo-img {
-  height: 44px;
+  height: 64px;
   width: auto;
   object-fit: contain;
-  border-radius: 10px;
   display: block;
+  transition: opacity 0.2s ease;
+}
+
+
+.nav-logo:hover .nav-logo-img {
+  opacity: 0.85;
+
 }
 
 .nav-logo-text {
-  font-size: 18px;
+  font-size: 24px;
   font-weight: 800;
   color: #0b1020;
   letter-spacing: -0.02em;
@@ -316,7 +303,7 @@ onUnmounted(() => {
 /* Larger logo on desktop */
 @media (min-width: 1024px) {
   .nav-logo-img {
-    height: 48px;
+    height: 100px;
   }
   .nav-logo-text {
     font-size: 20px;
@@ -961,7 +948,7 @@ onUnmounted(() => {
 
 @media (max-width: 480px) {
   .nav-logo-img {
-    height: 38px;
+    height: 56px;
   }
 
   .nav-container {

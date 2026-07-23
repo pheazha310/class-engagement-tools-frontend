@@ -26,9 +26,6 @@ onMounted(() => {
     <!-- Hero Section -->
     <section class="hero">
       <div class="hero-content">
-        <div class="hero-logo-wrap">
-          <img src="@/assets/photo_logo.jpg" alt="EduPulse Logo" class="hero-logo-img" />
-        </div>
         <h1 class="hero-title">Transform Your Classroom Engagement</h1>
         <p class="hero-subtitle">
           Discover powerful tools designed for modern educators. Make learning interactive, fun, and fair for every student.
@@ -194,43 +191,6 @@ onMounted(() => {
   bottom: 0;
   background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd"><g fill="%23ffffff" fill-opacity="0.05"><path d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/></g></g></svg>');
   opacity: 0.3;
-}
-
-/* Big Hero Logo */
-.hero-logo-wrap {
-  margin: 0 auto 36px;
-  width: fit-content;
-  padding: 8px;
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.hero-logo-wrap:hover {
-  transform: scale(1.04);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.22);
-}
-
-.hero-logo-img {
-  display: block;
-  width: 140px;
-  height: auto;
-  border-radius: 16px;
-}
-
-@media (min-width: 768px) {
-  .hero-logo-img {
-    width: 180px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .hero-logo-img {
-    width: 200px;
-  }
 }
 
 .hero-content {
