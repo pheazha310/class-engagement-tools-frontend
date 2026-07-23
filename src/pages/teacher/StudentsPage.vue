@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import TeacherLayout from '@/components/teacher/TeacherLayout.vue'
@@ -53,6 +53,56 @@ const deletingStudent = ref<Student | null>(null)
 const showInviteModal = ref(false)
 const inviteEmail = ref('')
 const inviteClass = ref('')
+
+// ── LocalStorage key ──
+const STORAGE_KEY = 'teacher-students-list'
+
+function saveStudentsToStorage() {
+  try {
+    // Only persist actual data to storage; strip out generated random stats
+    // to keep the storage lean — they'll be regenerated on load.
+    const minimal = students.value.map((s) => ({
+      id: s.id,
+      name: s.name,
+      email: s.email,
+      class: s.class,
+      classCode: s.classCode,
+      status: s.status,
+      joinDate: s.joinDate,
+      lastActive: s.lastActive,
+    }))
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(minimal))
+  } catch {
+    // localStorage full or unavailable — silently ignore
+  }
+}
+
+function loadStudentsFromStorage(): Student[] | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed) || parsed.length === 0) return null
+    // Hydrate with generated stats for richer display
+    return parsed.map((s: any) => ({
+      id: s.id || Date.now() + Math.random(),
+      name: s.name || '',
+      email: s.email || s.name?.toLowerCase().replace(/ /g, '.') + '@university.edu',
+      class: s.class || '',
+      classCode: s.classCode || '',
+      status: (s.status === 'inactive' ? 'inactive' : 'active') as 'active' | 'inactive',
+      joinDate: s.joinDate || new Date().toISOString(),
+      lastActive: s.lastActive || new Date().toISOString(),
+      engagement: Math.floor(50 + Math.random() * 50),
+      totalPolls: Math.floor(Math.random() * 15),
+      totalQuizzes: Math.floor(Math.random() * 10),
+      averageScore: Math.floor(60 + Math.random() * 40),
+      avatarInitials: getInitials(s.name || ''),
+    }))
+  } catch {
+    return null
+  }
+}
 
 // ── Demo data (fallback) ──
 const DEMO_CLASSES = [
@@ -419,16 +469,135 @@ function closeDeleteModal() {
   deletingStudent.value = null
 }
 
+// ── Export ──
+const exporting = ref(false)
+
+function getExportData(source?: Student[]) {
+  const list = source ?? students.value
+  return list.map((s) => ({
+    Name: s.name,
+    Email: s.email,
+    Class: s.class,
+    'Class Code': s.classCode,
+    Status: s.status,
+    'Join Date': formatDate(s.joinDate),
+    'Last Active': formatDate(s.lastActive),
+    'Engagement (%)': s.engagement,
+    'Avg Score (%)': s.averageScore,
+    'Total Polls': s.totalPolls,
+    'Total Quizzes': s.totalQuizzes,
+  }))
+}
+
+function nameAndNotify(data: Record<string, any>[], format: string, filtered?: boolean) {
+  const prefix = filtered ? 'filtered-' : ''
+  const ext = format === 'Excel' ? 'xlsx' : format.toLowerCase()
+  const fileName = `students-${prefix}export-${new Date().toISOString().slice(0, 10)}.${ext}`
+  return { fileName, count: data.length, filtered } as const
+}
+
+function buildXLSX(data: Record<string, any>[], sheetName: string) {
+  const ws = XLSX.utils.json_to_sheet(data)
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, sheetName)
+  // Auto-fit column widths
+  const cols = Object.keys(data[0]!).map((key) => {
+    const maxLen = Math.max(
+      key.length,
+      ...data.map((row) => String(row[key as keyof typeof row] || '').length),
+    )
+    return { wch: Math.min(maxLen + 3, 40) }
+  })
+  ws['!cols'] = cols
+  return wb
+}
+
+function notifyExport({ count, filtered }: { count: number; filtered?: boolean }, format: string) {
+  const label = filtered ? `visible ${count}` : `${count}`
+  const plural = count !== 1
+  showNotification(`Exported ${label} student${plural ? 's' : ''} to ${format}`, 'success')
+}
+
+function doExportXLSX(data: Record<string, any>[], filtered?: boolean) {
+  const meta = nameAndNotify(data, 'Excel', filtered)
+  XLSX.writeFile(buildXLSX(data, 'Students'), meta.fileName)
+  notifyExport(meta, 'Excel')
+}
+
+function doExportCSV(data: Record<string, any>[], filtered?: boolean) {
+  const meta = nameAndNotify(data, 'CSV', filtered)
+  const ws = XLSX.utils.json_to_sheet(data)
+  const csv = XLSX.utils.sheet_to_csv(ws)
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.setAttribute('download', meta.fileName)
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+  notifyExport(meta, 'CSV')
+}
+
+async function exportAllXLSX() {
+  if (students.value.length === 0) { showNotification('No students to export', 'error'); return }
+  exporting.value = true
+  try { doExportXLSX(getExportData()) }
+  catch { showNotification('Failed to export Excel file', 'error') }
+  finally { exporting.value = false }
+}
+
+async function exportAllCSV() {
+  if (students.value.length === 0) { showNotification('No students to export', 'error'); return }
+  exporting.value = true
+  try { doExportCSV(getExportData()) }
+  catch { showNotification('Failed to export CSV file', 'error') }
+  finally { exporting.value = false }
+}
+
+async function exportFilteredXLSX() {
+  const list = filteredStudents.value
+  if (list.length === 0) { showNotification('No matching students to export', 'error'); return }
+  exporting.value = true
+  try { doExportXLSX(getExportData(list), true) }
+  catch { showNotification('Failed to export Excel file', 'error') }
+  finally { exporting.value = false }
+}
+
+async function exportFilteredCSV() {
+  const list = filteredStudents.value
+  if (list.length === 0) { showNotification('No matching students to export', 'error'); return }
+  exporting.value = true
+  try { doExportCSV(getExportData(list), true) }
+  catch { showNotification('Failed to export CSV file', 'error') }
+  finally { exporting.value = false }
+}
+
 // ── Bulk Actions ──
 function clearAllStudents() {
   if (students.value.length === 0) return
   students.value = []
+  try { localStorage.removeItem(STORAGE_KEY) } catch { /* ignore */ }
   showNotification('All students removed', 'success')
 }
 
+// ── Auto-save on any change ──
+watch(
+  students,
+  () => { saveStudentsToStorage() },
+  { deep: true },
+)
+
 onMounted(() => {
-  // Start with demo data so the page isn't empty
-  students.value = generateDemoStudents()
+  // Try loading saved students from localStorage first
+  const saved = loadStudentsFromStorage()
+  if (saved && saved.length > 0) {
+    students.value = saved
+  } else {
+    // Fall back to demo data so the page isn't empty
+    students.value = generateDemoStudents()
+  }
 })
 </script>
 
@@ -441,17 +610,35 @@ onMounted(() => {
     search-placeholder="Search students..."
   >
     <template #actions>
+      <div class="export-group">
+        <button class="outline-button" type="button" :disabled="exporting || students.length === 0" @click="exportAllXLSX">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          <span>{{ exporting ? 'Exporting...' : 'Excel' }}</span>
+        </button>
+        <button class="outline-button" type="button" :disabled="exporting || students.length === 0" @click="exportAllCSV">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          <span>CSV</span>
+        </button>
+      </div>
       <button class="primary-button" type="button" @click="openImportModal">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
           <polyline points="17 8 12 3 7 8" />
           <line x1="12" y1="3" x2="12" y2="15" />
         </svg>
-        <span>Import CSV</span>
+        <span>Import</span>
       </button>
       <button class="primary-button" type="button" @click="openInviteModal">
         <TeacherIcon icon="plus" :size="18" />
-        <span>Invite Student</span>
+        <span>Invite</span>
       </button>
     </template>
 
@@ -571,14 +758,28 @@ onMounted(() => {
         </div>
       </div>
       <div class="table-footer">
-        <span>Showing {{ filteredStudents.length }} of {{ students.length }} students</span>
-        <button v-if="students.length > 0" class="clear-btn" type="button" @click="clearAllStudents">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <polyline points="3 6 5 6 21 6" />
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-          </svg>
-          Clear All
-        </button>
+        <div class="footer-left">
+          <span>Showing {{ filteredStudents.length }} of {{ students.length }} students</span>
+        </div>
+        <div class="footer-right">
+          <div v-if="students.length > 0 && filteredStudents.length < students.length" class="export-group footer-export">
+            <button class="footer-export-btn" type="button" :disabled="exporting || filteredStudents.length === 0" @click="exportFilteredXLSX" title="Export visible students as Excel">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span>Excel</span>
+            </button>
+            <button class="footer-export-btn" type="button" :disabled="exporting || filteredStudents.length === 0" @click="exportFilteredCSV" title="Export visible students as CSV">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span>CSV</span>
+            </button>
+          </div>
+          <button v-if="students.length > 0" class="clear-btn" type="button" @click="clearAllStudents">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <polyline points="3 6 5 6 21 6" />
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+            </svg>
+            Clear All
+          </button>
+        </div>
       </div>
     </section>
 
@@ -873,6 +1074,11 @@ onMounted(() => {
 .engagement-value { font-size: 12px; font-weight: 700; white-space: nowrap; }
 .col-score strong { font-size: 14px; }
 
+/* ── Export Group ── */
+.export-group { display: flex; gap: 6px; }
+.export-group .outline-button { font-size: 12px; min-height: 34px; padding: 0 12px; white-space: nowrap; }
+.export-group .outline-button:disabled { opacity: 0.5; cursor: not-allowed; }
+
 /* ── Action Buttons ── */
 .action-buttons { display: flex; gap: 4px; }
 .action-btn {
@@ -894,6 +1100,25 @@ onMounted(() => {
   font-size: 12px;
   color: var(--muted);
 }
+.footer-left { min-width: 0; }
+.footer-right { display: flex; align-items: center; gap: 8px; }
+.footer-export { display: flex; gap: 4px; }
+.footer-export-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid #b8d4fe;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--primary);
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .15s;
+}
+.footer-export-btn:hover:not(:disabled) { background: var(--primary-soft); border-color: var(--primary); }
+.footer-export-btn:disabled { opacity: .4; cursor: not-allowed; }
 .clear-btn {
   display: inline-flex;
   align-items: center;
