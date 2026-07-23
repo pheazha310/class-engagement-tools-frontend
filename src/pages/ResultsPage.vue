@@ -16,7 +16,7 @@ const localError = ref<string | null>(null)
 const isPolling = ref(false)
 const showLoading = ref(true)
 let pollTimer: ReturnType<typeof setInterval> | null = null
-let pageVisibilityHandler: (() => void) | null = null
+const pageVisibilityHandler: (() => void) | null = null
 
 // ── Computed ──
 const results = computed(() => pollStore.results)

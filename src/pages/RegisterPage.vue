@@ -205,8 +205,7 @@ async function fetchSchools() {
   try {
     const { data } = await api.get(`/api/location-schools`, {
       params: {
-        province: form.value.province,
-        country: form.value.countryName || undefined,
+        province_id: form.value.provinceId,
       },
     })
     console.log('[RegisterPage] schools response', data)

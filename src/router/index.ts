@@ -228,6 +228,11 @@ const routes: RouteRecordRaw[] = [
     component: LuckyDrawView,
   },
   {
+    path: '/soundboard',
+    name: 'soundboard',
+    component: () => import('@/pages/SoundboardPage.vue'),
+  },
+  {
     path: '/tools',
     name: 'tools',
     component: ToolsPage,

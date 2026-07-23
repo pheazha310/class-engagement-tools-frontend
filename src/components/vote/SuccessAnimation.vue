@@ -49,12 +49,19 @@ onMounted(() => {
 })
 
 function generateConfetti() {
-  const pieces = []
+  const pieces: Array<{
+    id: number
+    left: string
+    color: string
+    delay: string
+    size: string
+    rotation: string
+  }> = []
   for (let i = 0; i < 40; i++) {
     pieces.push({
       id: i,
       left: `${Math.random() * 100}%`,
-      color: colors[Math.floor(Math.random() * colors.length)],
+      color: colors[Math.floor(Math.random() * colors.length)]!,
       delay: `${Math.random() * 0.5}s`,
       size: `${6 + Math.random() * 6}px`,
       rotation: `${Math.random() * 360}deg`,
