@@ -214,7 +214,6 @@ function openFeature(feature: FeatureCard) {
   min-height: 100vh;
   background: #ffffff;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  padding-top: 64px;
 }
 
 .header {

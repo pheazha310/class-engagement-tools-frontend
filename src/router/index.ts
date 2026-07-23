@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 import StudentPickerView from '@/views/StudentPickerView.vue'
@@ -384,6 +384,7 @@ const routes: RouteRecordRaw[] = [
     path: '/group-generator',
     name: 'group-generator',
     component: GroupGeneratorView,
+    meta: { hideNavbar: true },
   },
   {
     path: '/vote',
@@ -463,16 +464,19 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true, role: 'teacher' },
   },
   {
+    path: '/live-voting',
+    name: 'live-voting',
+    component: () => import('@/pages/LiveClassroomVoting.vue'),
+  },
+  {
     path: '/teacher/polls',
     name: 'teacher-polls',
     component: () => import('@/pages/teacher/PollDashboard.vue'),
-    meta: { requiresAuth: true, role: 'teacher' },
   },
   {
     path: '/teacher/polls/create',
     name: 'teacher-polls-create',
     component: () => import('@/pages/teacher/PollCreatePage.vue'),
-    meta: { requiresAuth: true, role: 'teacher' },
   },
   {
     path: '/student/polls/:id',
@@ -483,28 +487,11 @@ const routes: RouteRecordRaw[] = [
     path: '/profile',
     name: 'profile',
     component: () => import('@/pages/ProfilePage.vue'),
-    meta: { requiresAuth: true },
   },
   {
     path: '/settings',
     name: 'settings',
     component: () => import('@/pages/ProfilePage.vue'),
-    meta: { requiresAuth: true },
-  },
-  {
-    path: '/games/create',
-    name: 'create-game',
-    component: CreateGamePage,
-  },
-  {
-    path: '/join/:joinCode',
-    name: 'join-game',
-    component: JoinGamePage,
-  },
-  {
-    path: '/game/:joinCode',
-    name: 'game-play',
-    component: GamePlayPage,
   },
   {
     path: '/games/history',
@@ -523,45 +510,58 @@ const router = createRouter({
   routes,
 })
 
-router.beforeEach((to) => {
+router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
 
-  // Allow access to homepage without authentication
-  if (to.name === 'home') {
-    return true
+  // Allow access to public routes without authentication
+  const publicRoutes = ['home', 'about', 'contact', 'login', 'register', 'not-found',
+    'wheel', 'student-picker', 'single-student-picker', 'multiple-student-picker', 'tools', 'category-tools',
+    'tool-detail', 'group-generator']
+  if (publicRoutes.includes(to.name as string)) {
+    next()
+    return
   }
 
   if (to.meta.requiresAuth && !authStore.user) {
-    return '/login'
+    next('/login')
+    return
   }
 
   if (to.meta.guest && authStore.user) {
     switch (authStore.user.role) {
       case 'admin':
-        return '/admin/users'
+        next('/admin/users')
+        break
       case 'teacher':
-        return '/teacher/dashboard'
+        next('/teacher/dashboard')
+        break
       case 'student':
-        return '/student/dashboard'
+        next('/student/dashboard')
+        break
       default:
-        return '/polls'
+        next('/polls')
     }
+    return
   }
 
   if (to.meta.role && authStore.user?.role !== to.meta.role) {
     switch (authStore.user?.role) {
       case 'admin':
-        return '/admin/users'
+        next('/admin/users')
+        break
       case 'teacher':
-        return '/teacher/dashboard'
+        next('/teacher/dashboard')
+        break
       case 'student':
-        return '/student/dashboard'
+        next('/student/dashboard')
+        break
       default:
-        return '/polls'
+        next('/polls')
     }
+    return
   }
 
-  return true
+  next()
 })
 
 export default router

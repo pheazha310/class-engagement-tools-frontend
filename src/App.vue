@@ -16,9 +16,7 @@ const hideNavbar = computed(() => {
 
 <template>
   <Navbar v-if="!hideNavbar" />
-  <div class="main-content">
-    <RouterView />
-  </div>
+  <RouterView />
 </template>
 
 <style>
