@@ -239,30 +239,15 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   z-index: 1000;
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-bottom: 1px solid transparent;
+  background: #ffffff;
+  border-bottom: 1px solid #e8ecf4;
   transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   height: 68px;
 }
 
 .navbar.scrolled {
-  box-shadow: 0 4px 28px rgba(0, 0, 0, 0.07);
-  background: rgba(255, 255, 255, 0.92);
-  border-bottom-color: rgba(0, 31, 158, 0.08);
-}
-
-/* Gradient border glow on scroll */
-.navbar.scrolled::before {
-  content: '';
-  position: absolute;
-  bottom: -1px;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(0, 31, 158, 0.15), rgba(45, 78, 196, 0.25), rgba(0, 31, 158, 0.15), transparent);
-  pointer-events: none;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  border-bottom-color: #dce0ec;
 }
 
 .nav-container {
@@ -434,17 +419,15 @@ onUnmounted(() => {
   top: calc(100% + 12px);
   left: 50%;
   transform: translateX(-50%) translateY(10px) scale(0.95);
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
-  border: 1px solid rgba(226, 232, 240, 0.7);
+  background: #ffffff;
+  border: 1px solid #e0e6f0;
   border-radius: 16px;
   padding: 8px;
-  min-width: 250px;
+  min-width: 260px;
   opacity: 0;
   visibility: hidden;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 31, 158, 0.04);
+  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 31, 158, 0.04);
   z-index: 1002;
 }
 
@@ -687,29 +670,61 @@ onUnmounted(() => {
   white-space: nowrap;
 }
 
-/* Login button */
+/* Login button — premium outline */
 .btn-login {
-  background: transparent;
+  background: #ffffff;
   color: #475569;
-  border: 1px solid #e2e8f0;
+  border: 1.5px solid #d0d6e8;
+  font-weight: 600;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .btn-login:hover {
-  background: #f8fafc;
+  border-color: #001f9e;
   color: #001f9e;
-  border-color: #b0bce0;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 31, 158, 0.12);
 }
 
-/* Register button */
+.btn-login:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0, 31, 158, 0.08);
+}
+
+/* Register / Get Started button — premium gradient */
 .btn-register {
-  background: linear-gradient(135deg, #2d4ec4, #001f9e);
+  background: linear-gradient(135deg, #2d4ec4 0%, #001f9e 100%);
   color: white;
-  box-shadow: 0 2px 8px rgba(0, 31, 158, 0.25);
+  font-weight: 700;
+  padding: 10px 22px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(0, 31, 158, 0.25);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-register::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
 }
 
 .btn-register:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(0, 31, 158, 0.35);
+  box-shadow: 0 8px 24px rgba(0, 31, 158, 0.35);
+}
+
+.btn-register:hover::before {
+  opacity: 1;
+}
+
+.btn-register:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 12px rgba(0, 31, 158, 0.2);
 }
 
 /* Vote button */
@@ -793,7 +808,7 @@ onUnmounted(() => {
 .mobile-auth-links {
   display: none;
   padding: 12px 4px 4px;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid #e8ecf4;
   margin-top: auto;
   gap: 6px;
 }
@@ -805,13 +820,25 @@ onUnmounted(() => {
   font-weight: 600;
 }
 
+.mobile-login-btn {
+  border: 1.5px solid #d0d6e8;
+  color: #001f9e !important;
+  background: #fff !important;
+}
+
+.mobile-login-btn:hover {
+  border-color: #001f9e !important;
+  box-shadow: 0 4px 12px rgba(0, 31, 158, 0.1) !important;
+}
+
 .mobile-register-btn {
-  background: #001f9e;
+  background: linear-gradient(135deg, #2d4ec4, #001f9e);
   color: white !important;
+  box-shadow: 0 4px 12px rgba(0, 31, 158, 0.2);
 }
 
 .mobile-register-btn:hover {
-  background: #00157a;
+  box-shadow: 0 6px 18px rgba(0, 31, 158, 0.3);
 }
 
 .mobile-logout-btn {
