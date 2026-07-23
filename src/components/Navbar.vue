@@ -84,7 +84,7 @@ onUnmounted(() => {
             <RouterLink to="/tools/category/games" class="dropdown-item" @click="closeMobileMenu">Games</RouterLink>
             <RouterLink to="/games/history" class="dropdown-item" @click="closeMobileMenu">Game History</RouterLink>
             <RouterLink to="/tools/category/engagement" class="dropdown-item" @click="closeMobileMenu">Engagement</RouterLink>
-            <RouterLink to="/tools/category/fun" class="dropdown-item" @click="closeMobileMenu">Fun Activities</RouterLink>
+            <RouterLink to="/tools/fun-activities" class="dropdown-item" @click="closeMobileMenu">Fun Activities</RouterLink>
           </div>
         </li>
         <li class="nav-dropdown-trigger" @mouseenter="activeParticipantsDropdown = true" @mouseleave="activeParticipantsDropdown = false">
@@ -114,11 +114,11 @@ onUnmounted(() => {
       </ul>
 
       <div class="nav-buttons">
-        <template v-if="auth.initialized && auth.isAuthenticated">
+        <template v-if="auth.isAuthenticated">
           <ProfileDropdown />
           <button class="btn btn-logout" type="button" @click="handleLogout">Logout</button>
         </template>
-        <template v-else-if="auth.initialized && !auth.isAuthenticated">
+        <template v-else>
           <RouterLink to="/login" class="btn btn-login">Login</RouterLink>
           <RouterLink to="/register" class="btn btn-register">Register</RouterLink>
         </template>
