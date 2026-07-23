@@ -494,6 +494,21 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/pages/ProfilePage.vue'),
   },
   {
+    path: '/games/create',
+    name: 'create-game',
+    component: CreateGamePage,
+  },
+  {
+    path: '/games/join/:joinCode',
+    name: 'join-game',
+    component: JoinGamePage,
+  },
+  {
+    path: '/games/play/:joinCode',
+    name: 'game-play',
+    component: GamePlayPage,
+  },
+  {
     path: '/games/history',
     name: 'game-history',
     component: GameHistoryPage,

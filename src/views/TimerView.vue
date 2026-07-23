@@ -1,14 +1,17 @@
 <script setup lang="ts">
-import Navbar from '@/components/Navbar.vue'
+
 import TimerCountdown from '@/components/TimerCountdown.vue'
 </script>
 
 <template>
   <div class="timer-view">
-    <Navbar />
 
     <section class="timer-hero">
       <div class="container">
+          <RouterLink to="/teacher/dashboard" class="back-to-dashboard">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            Back to Dashboard
+          </RouterLink>
         <div class="hero-copy">
           <h1>Countdown Timer</h1>
         </div>

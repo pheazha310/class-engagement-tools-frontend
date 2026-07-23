@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
-import Navbar from '@/components/Navbar.vue'
+
 import { fetchGameHistories, fetchGameHistoryById, exportGameHistory } from '@/services/game'
 import type { GameHistory } from '@/types/game'
 import { gameTypes } from '@/types/game'
@@ -101,10 +101,13 @@ const sortedScores = computed(() => {
 
 <template>
   <div class="game-history-page">
-    <Navbar />
 
     <section class="game-history-hero">
       <div class="container">
+          <RouterLink to="/teacher/dashboard" class="back-to-dashboard">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            Back to Dashboard
+          </RouterLink>
         <div class="game-history-hero-content">
           <h1 class="game-history-hero-title">Game History</h1>
           <p class="game-history-hero-subtitle">

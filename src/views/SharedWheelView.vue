@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import WheelCanvas from '@/components/WheelCanvas.vue'
-import Navbar from '@/components/Navbar.vue'
+
 import type { Participant, WheelTheme } from '@/types/wheel'
 import { getThemeById, defaultThemeId } from '@/types/wheel'
 import { loadSharedWheel } from '@/services/wheel'
@@ -51,7 +51,6 @@ function handleSpinComplete(participant: Participant) {
 
 <template>
   <div class="page" :style="{ background: selectedTheme.backgroundColor }">
-    <Navbar />
 
     <div class="back-wrapper">
       <RouterLink to="/tools" class="btn-back">← Back to all tools</RouterLink>

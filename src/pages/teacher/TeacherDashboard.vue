@@ -6,6 +6,7 @@ import { useTeacherDashboardStore } from '@/stores/teacherDashboardStore'
 import { useToolOrganizerStore } from '@/stores/toolOrganizerStore'
 import TeacherLayout from '@/components/teacher/TeacherLayout.vue'
 import TeacherIcon from '@/components/teacher/TeacherIcon.vue'
+import { categories } from '@/data/toolsData'
 
 const router = useRouter()
 const organizer = useToolOrganizerStore()
@@ -196,14 +197,7 @@ const engageTools = computed(() => {
 // ── Manage Tools Modal ────────────────────────────────────────
 const showManageModal = ref(false)
 const searchTools = ref('')
-
-const filteredAllTools = computed(() => {
-  const q = searchTools.value.trim().toLowerCase()
-  if (!q) return organizer.allToolsWithState
-  return organizer.allToolsWithState.filter(
-    t => t.title.toLowerCase().includes(q) || t.category.toLowerCase().includes(q)
-  )
-})
+const favoritesOnly = ref(false)
 
 const categoryFilters = computed(() => {
   const cats = new Set(organizer.allToolsWithState.map(t => t.category))
@@ -212,15 +206,45 @@ const categoryFilters = computed(() => {
 
 const activeCatFilter = ref('all')
 
-function filteredByCategory() {
-  if (activeCatFilter.value === 'all') return filteredAllTools.value
-  return filteredAllTools.value.filter(t => t.category === activeCatFilter.value)
-}
+const filteredModalTools = computed(() => {
+  let list = organizer.allToolsWithState
+
+  // Filter by favorites-only toggle
+  if (favoritesOnly.value) {
+    list = list.filter(t => t.isFavorite)
+  }
+
+  // Filter by search
+  const q = searchTools.value.trim().toLowerCase()
+  if (q) {
+    list = list.filter(
+      t => t.title.toLowerCase().includes(q) || t.category.toLowerCase().includes(q)
+    )
+  }
+
+  // Filter by category
+  if (activeCatFilter.value !== 'all') {
+    list = list.filter(t => t.category === activeCatFilter.value)
+  }
+
+  return list
+})
+
+const groupedModalTools = computed(() => {
+  return categories
+    .map(cat => ({
+      category: cat.name,
+      icon: cat.icon,
+      tools: filteredModalTools.value.filter(t => t.category === cat.name),
+    }))
+    .filter(group => group.tools.length > 0)
+})
 
 function openManageModal() {
   showManageModal.value = true
   searchTools.value = ''
   activeCatFilter.value = 'all'
+  favoritesOnly.value = false
 }
 
 function closeManageModal() {
@@ -352,38 +376,57 @@ function closeManageModal() {
     </section>
 
     <!-- ========== Manage Tools Modal ========== -->
-    <Transition name="modal-fade">
+    <Transition name="modal-slide">
       <div v-if="showManageModal" class="modal-overlay" @click.self="closeManageModal">
         <div class="manage-modal">
           <!-- Modal Header -->
           <div class="manage-modal-header">
-            <div>
-              <h2>Manage Tools</h2>
-              <p>Star your favorites for quick access. Hide tools you don't need right now.</p>
+            <div class="manage-modal-header-left">
+              <div class="manage-modal-title-icon">
+                <TeacherIcon icon="picker" :size="20" />
+              </div>
+              <div>
+                <h2>Tool Manager</h2>
+                <p>Star your favorites for quick access on the dashboard. Hide tools you don't need.</p>
+              </div>
             </div>
             <button class="modal-close-btn" type="button" @click="closeManageModal" aria-label="Close">
               <TeacherIcon icon="x" :size="20" />
             </button>
           </div>
 
-          <!-- Search & Filter -->
+          <!-- Search & Filter Bar -->
           <div class="manage-modal-controls">
-            <div class="manage-search">
-              <TeacherIcon icon="search" :size="18" />
-              <input
-                v-model="searchTools"
-                type="search"
-                placeholder="Search tools..."
-                class="manage-search-input"
-              />
+            <div class="manage-modal-bar">
+              <div class="manage-search">
+                <TeacherIcon icon="search" :size="18" />
+                <input
+                  v-model="searchTools"
+                  type="search"
+                  placeholder="Search tools by name or category..."
+                  class="manage-search-input"
+                />
+              </div>
+              <div class="manage-filter-toggles">
+                <button
+                  class="manage-filter-pill"
+                  :class="{ active: activeCatFilter === 'all' }"
+                  type="button"
+                  @click="activeCatFilter = 'all'"
+                >All Tools</button>
+                <button
+                  class="manage-filter-pill"
+                  :class="{ active: favoritesOnly }"
+                  type="button"
+                  @click="favoritesOnly = !favoritesOnly"
+                >
+                  <TeacherIcon icon="star" :size="14" />
+                  Favorites
+                  <span v-if="organizer.favoriteTools.length" class="fav-pill-count">{{ organizer.favoriteTools.length }}</span>
+                </button>
+              </div>
             </div>
-            <div class="manage-categories">
-              <button
-                class="manage-cat-chip"
-                :class="{ active: activeCatFilter === 'all' }"
-                type="button"
-                @click="activeCatFilter = 'all'"
-              >All</button>
+            <div class="manage-categories-row">
               <button
                 v-for="cat in categoryFilters"
                 :key="cat"
@@ -395,55 +438,87 @@ function closeManageModal() {
             </div>
           </div>
 
-          <!-- Tools Grid -->
-          <div class="manage-tools-grid">
-            <div
-              v-for="tool in filteredByCategory()"
-              :key="tool.slug"
-              class="manage-tool-item"
-              :class="{
-                'is-favorite': tool.isFavorite,
-                'is-hidden': tool.isHidden,
-              }"
-            >
-              <span class="manage-tool-icon">{{ tool.icon }}</span>
-              <div class="manage-tool-info">
-                <strong :class="{ 'text-muted': tool.isHidden }">{{ tool.title }}</strong>
-                <span>{{ tool.category }}</span>
+          <!-- Tools List (Grouped by Category) -->
+          <div class="manage-modal-body">
+            <!-- Empty state -->
+            <div v-if="groupedModalTools.length === 0" class="manage-empty">
+              <div class="manage-empty-icon">
+                <TeacherIcon icon="search" :size="48" />
               </div>
-              <!-- Star toggle -->
-              <span
-                class="manage-tool-star"
-                :class="{ active: tool.isFavorite }"
-                role="button"
-                :title="tool.isFavorite ? 'Remove from favorites' : 'Add to favorites'"
-                tabindex="0"
-                @click="organizer.toggleFavorite(tool.slug)"
-                @keydown.enter="organizer.toggleFavorite(tool.slug)"
-                @keydown.space.prevent="organizer.toggleFavorite(tool.slug)"
-              >
-                <TeacherIcon icon="star" :size="20" />
-              </span>
-              <!-- Hide toggle -->
-              <span
-                class="manage-tool-hide"
-                :class="{ hidden: tool.isHidden }"
-                role="button"
-                :title="tool.isHidden ? 'Show tool' : 'Hide tool'"
-                tabindex="0"
-                @click="organizer.toggleHidden(tool.slug)"
-                @keydown.enter="organizer.toggleHidden(tool.slug)"
-                @keydown.space.prevent="organizer.toggleHidden(tool.slug)"
-              >
-                <TeacherIcon :icon="tool.isHidden ? 'eye' : 'eye'" :size="18" />
-              </span>
+              <h3 v-if="favoritesOnly">No favorites yet</h3>
+              <h3 v-else>No tools found</h3>
+              <p v-if="searchTools">Try a different search term or clear the filter.</p>
+              <p v-else-if="favoritesOnly">Star some tools above to add them to your favorites.</p>
+              <p v-else>All tools are accounted for!</p>
+              <button v-if="favoritesOnly || searchTools" class="ghost-button" type="button" @click="searchTools = ''; favoritesOnly = false; activeCatFilter = 'all'">
+                <TeacherIcon icon="refresh" :size="16" />
+                <span>Clear Filters</span>
+              </button>
+            </div>
+
+            <!-- Grouped Tools -->
+            <div
+              v-for="group in groupedModalTools"
+              :key="group.category"
+              class="manage-category-group"
+            >
+              <!-- Category Header -->
+              <div class="manage-category-header">
+                <span class="manage-category-icon">{{ group.icon }}</span>
+                <h3>{{ group.category }}</h3>
+                <span class="manage-category-count">{{ group.tools.length }} tool{{ group.tools.length !== 1 ? 's' : '' }}</span>
+              </div>
+
+              <!-- Tools in category -->
+              <div class="manage-tools-grid">
+                <div
+                  v-for="tool in group.tools"
+                  :key="tool.slug"
+                  class="manage-tool-item"
+                  :class="{
+                    'is-favorite': tool.isFavorite,
+                    'is-hidden': tool.isHidden,
+                  }"
+                >
+                  <span class="manage-tool-icon">{{ tool.icon }}</span>
+                  <div class="manage-tool-info">
+                    <strong :class="{ 'text-muted': tool.isHidden }">{{ tool.title }}</strong>
+                    <span class="manage-tool-desc">{{ tool.description }}</span>
+                  </div>
+
+                  <div class="manage-tool-actions">
+                    <!-- Launch button -->
+                    <button
+                      v-if="tool.route"
+                      class="manage-tool-launch"
+                      type="button"
+                      :title="`Open ${tool.title}`"
+                      @click.stop="navigateTo(tool.route)"
+                    >
+                      <TeacherIcon icon="external" :size="16" />
+                    </button>
+
+                    <!-- Star toggle -->
+                    <button
+                      class="manage-tool-star"
+                      :class="{ active: tool.isFavorite }"
+                      type="button"
+                      :title="tool.isFavorite ? 'Remove from favorites' : 'Add to favorites'"
+                      @click="organizer.toggleFavorite(tool.slug)"
+                    >
+                      <TeacherIcon icon="star" :size="18" />
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
           <!-- Footer -->
           <div class="manage-modal-footer">
             <span class="manage-count">
-              {{ organizer.favoriteTools.length }} favorite{{ organizer.favoriteTools.length !== 1 ? 's' : '' }} selected
+              <TeacherIcon icon="star" :size="14" />
+              {{ organizer.favoriteTools.length }} favorite{{ organizer.favoriteTools.length !== 1 ? 's' : '' }}
             </span>
             <button class="primary-button" type="button" @click="closeManageModal">
               <TeacherIcon icon="check" :size="16" />
@@ -964,68 +1039,476 @@ function closeManageModal() {
   transform: scale(1.08);
 }
 
-/* ── Hide toggle in manage modal ───────────────────────────── */
-.manage-tool-hide {
+/* ── Manage Tools Modal ───────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(8px);
+  padding: 24px;
+}
+
+.manage-modal {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 760px;
+  max-height: 85vh;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 32px 64px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  animation: modalScaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalScaleIn {
+  from { opacity: 0; transform: scale(0.92) translateY(16px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ── Header ─────────────────────────────────────────────────── */
+.manage-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 28px 0;
+}
+
+.manage-modal-header-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.manage-modal-title-icon {
   display: inline-grid;
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   place-items: center;
-  border-radius: 6px;
-  color: #d0d6e8;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.manage-modal-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.manage-modal-header p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.modal-close-btn {
+  display: inline-grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #94a3b8;
   cursor: pointer;
   transition: all 0.15s;
   flex-shrink: 0;
 }
 
-.manage-tool-hide:hover {
-  background: #eef3ff;
-  color: #4a5268;
+.modal-close-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
 }
 
-.manage-tool-hide.hidden {
-  color: #8a92a8;
-  opacity: 0.6;
+/* ── Controls ───────────────────────────────────────────────── */
+.manage-modal-controls {
+  padding: 20px 28px 0;
 }
 
-.manage-tool-hide.hidden:hover {
-  opacity: 1;
-  color: var(--primary);
-  background: var(--primary-soft);
+.manage-modal-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.manage-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 200px;
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #64748b;
+  transition: all 0.15s;
+}
+
+.manage-search:focus-within {
+  border-color: #6366f1;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.manage-search-input {
+  flex: 1;
+  min-height: 40px;
+  border: 0;
+  background: transparent;
+  font-size: 14px;
+  color: #0f172a;
+  outline: none;
+}
+
+.manage-search-input::placeholder {
+  color: #94a3b8;
+}
+
+.manage-filter-toggles {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.manage-filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 0 16px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 999px;
+  background: #fff;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.manage-filter-pill:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+.manage-filter-pill.active {
+  border-color: #6366f1;
+  background: #eef2ff;
+  color: #4f46e5;
+}
+
+.fav-pill-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: #6366f1;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 0 5px;
+}
+
+.manage-categories-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.manage-cat-chip {
+  min-height: 28px;
+  padding: 0 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #fff;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.manage-cat-chip:hover {
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+.manage-cat-chip.active {
+  border-color: #6366f1;
+  background: #eef2ff;
+  color: #4f46e5;
+}
+
+/* ── Body (scrollable) ──────────────────────────────────────── */
+.manage-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 28px 4px;
+}
+
+.manage-modal-body::-webkit-scrollbar {
+  width: 5px;
+}
+
+.manage-modal-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.manage-modal-body::-webkit-scrollbar-thumb {
+  background: #d0d6e8;
+  border-radius: 999px;
+}
+
+/* ── Empty state ────────────────────────────────────────────── */
+.manage-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 48px 20px;
+  text-align: center;
+  color: #94a3b8;
+}
+
+.manage-empty-icon {
+  color: #cbd5e1;
+  margin-bottom: 4px;
+}
+
+.manage-empty h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: #64748b;
+}
+
+.manage-empty p {
+  margin: 0;
+  font-size: 13px;
+  color: #94a3b8;
+  max-width: 280px;
+}
+
+.manage-empty .ghost-button {
+  margin-top: 8px;
+}
+
+/* ── Category groups ────────────────────────────────────────── */
+.manage-category-group {
+  margin-bottom: 24px;
+}
+
+.manage-category-group:last-child {
+  margin-bottom: 0;
+}
+
+.manage-category-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #f1f5f9;
+}
+
+.manage-category-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.manage-category-header h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 800;
+  color: #0f172a;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.manage-category-count {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+/* ── Tool items ─────────────────────────────────────────────── */
+.manage-tools-grid {
+  display: grid;
+  gap: 6px;
 }
 
 .manage-tool-item {
-  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 56px;
+  padding: 8px 14px;
+  border: 1px solid #f1f5f9;
+  border-radius: 10px;
+  background: #fff;
+  transition: all 0.15s;
+}
+
+.manage-tool-item:hover {
+  border-color: #e2e8f0;
+  background: #fafbff;
+}
+
+.manage-tool-item.is-favorite {
+  background: #fffbeb;
+  border-color: #fde68a;
 }
 
 .manage-tool-item.is-hidden {
-  background: #f8f8fa;
-  border-color: #e0e4ef;
+  opacity: 0.55;
   border-style: dashed;
 }
 
-.manage-tool-item.is-hidden .manage-tool-icon {
-  filter: grayscale(0.3);
+.manage-tool-icon {
+  font-size: 26px;
+  line-height: 1;
+  flex-shrink: 0;
+  width: 36px;
+  text-align: center;
 }
 
-.manage-tool-item.is-hidden::after {
-  content: 'Hidden';
-  position: absolute;
-  top: 6px;
-  left: 6px;
-  border-radius: 4px;
-  background: #e8ecf4;
-  color: #8a92a8;
-  font-size: 9px;
+.manage-tool-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.manage-tool-info strong {
+  display: block;
+  font-size: 14px;
   font-weight: 700;
-  padding: 2px 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  line-height: 1.4;
+  color: #0f172a;
+  margin-bottom: 1px;
+}
+
+.manage-tool-desc {
+  display: block;
+  font-size: 12px;
+  color: #94a3b8;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.manage-tool-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.manage-tool-launch {
+  display: inline-grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.manage-tool-launch:hover {
+  background: #eef2ff;
+  color: #6366f1;
+}
+
+.manage-tool-star {
+  display: inline-grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #d0d6e8;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.manage-tool-star:hover {
+  background: #fffbeb;
+  color: #f59e0b;
+}
+
+.manage-tool-star.active {
+  color: #f59e0b;
+}
+
+.manage-tool-star.active:hover {
+  color: #d97706;
+  background: #fef3c7;
 }
 
 .text-muted {
-  color: var(--muted);
+  color: #94a3b8;
   font-weight: 600;
+}
+
+/* ── Footer ─────────────────────────────────────────────────── */
+.manage-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 28px 20px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.manage-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.manage-count TeacherIcon {
+  color: #f59e0b;
+}
+
+/* ── Modal transition ───────────────────────────────────────── */
+.modal-slide-enter-active,
+.modal-slide-leave-active {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-slide-enter-from,
+.modal-slide-leave-to {
+  opacity: 0;
+}
+
+.modal-slide-enter-from .manage-modal,
+.modal-slide-leave-to .manage-modal {
+  transform: scale(0.92) translateY(16px);
 }
 
 /* ── Dashboard Grid ─────────────────────────────────────────── */

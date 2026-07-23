@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
-import Navbar from '@/components/Navbar.vue'
+
 import StickyBottomNav from '@/components/StickyBottomNav.vue'
 
 const router = useRouter()
@@ -62,10 +62,13 @@ onMounted(() => {
 
 <template>
   <div class="spin-the-question-page">
-    <Navbar />
 
     <section class="activity-header">
       <div class="container">
+          <RouterLink to="/teacher/dashboard" class="back-to-dashboard">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            Back to Dashboard
+          </RouterLink>
         <div class="header-content">
           
           <div class="badge">SOCIAL-EMOTIONAL LEARNING</div>
@@ -260,20 +263,6 @@ onMounted(() => {
 .header-content {
   max-width: 800px;
   margin: 0 auto;
-}
-
-.back-link {
-  display: inline-block;
-  color: rgba(255, 255, 255, 0.9);
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: 500;
-  margin-bottom: 20px;
-  transition: color 0.3s ease;
-}
-
-.back-link:hover {
-  color: white;
 }
 
 .badge {

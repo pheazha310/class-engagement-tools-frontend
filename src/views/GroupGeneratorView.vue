@@ -3,7 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import type { Student, Group, GenerationMethod } from '@/types/groupGenerator'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
-import Navbar from '@/components/Navbar.vue'
+
 
 function handleClickOutside(event: MouseEvent) {
   const target = event.target as HTMLElement
@@ -430,7 +430,6 @@ function processFile(file: File) {
 
 <template>
   <div class="group-generator">
-    <Navbar />
 
     <header class="page-header">
       <div class="page-header__inner">

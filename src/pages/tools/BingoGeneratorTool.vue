@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import Navbar from '@/components/Navbar.vue'
+
 
 const gridSize = 5
 const topic = ref('Math Vocabulary')
@@ -83,10 +83,13 @@ function printCard() {
 
 <template>
   <div class="tool-page">
-    <Navbar />
 
     <section class="tool-hero">
       <div class="container">
+          <RouterLink to="/teacher/dashboard" class="back-to-dashboard">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            Back to Dashboard
+          </RouterLink>
         <div class="tool-hero-content">
           <div class="tool-icon">🎱</div>
           <h1>Bingo Generator</h1>
@@ -231,7 +234,7 @@ function printCard() {
   .bingo-cell { font-size: 9px; }
 }
 @media print {
-  .tool-hero, .bingo-controls, .navbar { display: none !important; }
+  .tool-hero, .bingo-controls { display: none !important; }
   .bingo-card-area { border: none; box-shadow: none; }
   .bingo-card { transform: scale(1.2); transform-origin: top center; }
 }

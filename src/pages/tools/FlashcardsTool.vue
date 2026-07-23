@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import Navbar from '@/components/Navbar.vue'
+
 
 interface Flashcard {
   id: number
@@ -105,10 +105,13 @@ function resetProgress() {
 
 <template>
   <div class="tool-page">
-    <Navbar />
 
     <section class="tool-hero">
       <div class="container">
+          <RouterLink to="/teacher/dashboard" class="back-to-dashboard">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            Back to Dashboard
+          </RouterLink>
         <div class="tool-hero-content">
           <div class="tool-icon">📖</div>
           <h1>Flashcards</h1>

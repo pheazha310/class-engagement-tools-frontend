@@ -42,3 +42,26 @@
 .animate-fade-in-up {
   animation: fade-in-up 0.6s ease-out;
 }
+
+/* ── Back to Dashboard ─────────────────────────────────── */
+.back-to-dashboard {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: rgba(255,255,255,0.8);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  margin-bottom: 12px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(4px);
+  transition: all .2s;
+  width: fit-content;
+}
+.back-to-dashboard:hover {
+  color: #fff;
+  background: rgba(255,255,255,0.2);
+  transform: translateX(-2px);
+}

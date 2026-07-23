@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import Navbar from '@/components/Navbar.vue'
 import GameJoinModal from '@/components/GameJoinModal.vue'
 import { createGameSession } from '@/services/game'
 import type { GameTypeOption, GameSessionPayload, MathChallengeSettings, VocabularyRaceSettings, QuizBattleSettings, MemoryGameSettings } from '@/types/game'
@@ -182,10 +181,13 @@ async function handleSubmit() {
 
 <template>
   <div class="create-game-page">
-    <Navbar />
 
     <section class="create-game-hero">
       <div class="container">
+          <RouterLink to="/teacher/dashboard" class="back-to-dashboard">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            Back to Dashboard
+          </RouterLink>
         <div class="create-game-hero-content">
           <h1 class="create-game-hero-title">Create Educational Game</h1>
           <p class="create-game-hero-subtitle">

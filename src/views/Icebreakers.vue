@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import Navbar from '@/components/Navbar.vue'
+
 
 const activities = [
   {
@@ -60,11 +60,14 @@ const stats = [
 
 <template>
   <div class="icebreakers-page">
-    <Navbar />
 
     <!-- Module Header -->
     <section class="module-header">
       <div class="container">
+          <RouterLink to="/teacher/dashboard" class="back-to-dashboard">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            Back to Dashboard
+          </RouterLink>
         <div class="header-content">
           <div class="module-badge">
             <span class="module-number">Module 8</span>
