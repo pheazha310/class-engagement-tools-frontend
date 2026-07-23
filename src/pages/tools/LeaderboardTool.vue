@@ -76,25 +76,25 @@ function getRankMedal(rank: number) {
         <section v-if="topThree.length >= 3" class="podium-section">
           <div class="podium-grid">
             <div class="podium-item rank-2">
-              <div class="podium-avatar">{{ topThree[1].initials }}</div>
+              <div class="podium-avatar">{{ topThree[1]!.initials }}</div>
               <div class="podium-medal">{{ getRankMedal(2) }}</div>
-              <strong class="podium-name">{{ topThree[1].name }}</strong>
-              <span class="podium-score">{{ formatScore(topThree[1].score) }}</span>
+              <strong class="podium-name">{{ topThree[1]!.name }}</strong>
+              <span class="podium-score">{{ formatScore(topThree[1]!.score) }}</span>
               <div class="podium-bar bar-2">2nd</div>
             </div>
             <div class="podium-item rank-1">
               <div class="podium-crown">👑</div>
-              <div class="podium-avatar champ">{{ topThree[0].initials }}</div>
+              <div class="podium-avatar champ">{{ topThree[0]!.initials }}</div>
               <div class="podium-medal">{{ getRankMedal(1) }}</div>
-              <strong class="podium-name">{{ topThree[0].name }}</strong>
-              <span class="podium-score">{{ formatScore(topThree[0].score) }}</span>
+              <strong class="podium-name">{{ topThree[0]!.name }}</strong>
+              <span class="podium-score">{{ formatScore(topThree[0]!.score) }}</span>
               <div class="podium-bar bar-1">1st</div>
             </div>
             <div class="podium-item rank-3">
-              <div class="podium-avatar">{{ topThree[2].initials }}</div>
+              <div class="podium-avatar">{{ topThree[2]!.initials }}</div>
               <div class="podium-medal">{{ getRankMedal(3) }}</div>
-              <strong class="podium-name">{{ topThree[2].name }}</strong>
-              <span class="podium-score">{{ formatScore(topThree[2].score) }}</span>
+              <strong class="podium-name">{{ topThree[2]!.name }}</strong>
+              <span class="podium-score">{{ formatScore(topThree[2]!.score) }}</span>
               <div class="podium-bar bar-3">3rd</div>
             </div>
           </div>

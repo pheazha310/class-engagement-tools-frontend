@@ -81,12 +81,12 @@ const error = ref<string | null>(null)
 
 const studentName = computed(() => authStore.user?.name || 'Student')
 const studentEmail = computed(() => authStore.user?.email || '')
-const studentSchool = computed(() => authStore.user?.school || '')
+const studentSchool = computed(() => authStore.user?.school ?? '')
 const studentInitials = computed(() => {
   const name = studentName.value
   const parts = name.trim().split(/\s+/).filter(Boolean)
   if (parts.length === 0) return '?'
-  if (parts.length === 1) return parts[0][0].toUpperCase()
+  if (parts.length === 1) return (parts[0]?.[0] ?? '').toUpperCase()
   return ((parts[0]?.[0] ?? '') + (parts[parts.length - 1]?.[0] ?? '')).toUpperCase()
 })
 
@@ -126,6 +126,10 @@ const demoPolls: ActivePollItem[] = [
     public_token: 'demo-token-1',
     options_count: 4,
     anonymous: false,
+    duration_minutes: null,
+    started_at: new Date().toISOString(),
+    allow_multiple_votes: false,
+    created_at: new Date().toISOString(),
   },
   {
     id: '2',
@@ -135,6 +139,10 @@ const demoPolls: ActivePollItem[] = [
     public_token: 'demo-token-2',
     options_count: 2,
     anonymous: true,
+    duration_minutes: null,
+    started_at: new Date().toISOString(),
+    allow_multiple_votes: false,
+    created_at: new Date().toISOString(),
   },
   {
     id: '3',
@@ -144,6 +152,10 @@ const demoPolls: ActivePollItem[] = [
     public_token: 'demo-token-3',
     options_count: 5,
     anonymous: true,
+    duration_minutes: null,
+    started_at: new Date().toISOString(),
+    allow_multiple_votes: false,
+    created_at: new Date().toISOString(),
   },
 ]
 

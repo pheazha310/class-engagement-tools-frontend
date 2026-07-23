@@ -68,7 +68,7 @@ export const useToolOrganizerStore = defineStore('toolOrganizer', () => {
     const remaining: typeof unordered = []
     data.value.order.forEach(slug => {
       const idx = unordered.findIndex(t => t.slug === slug)
-      if (idx !== -1) ordered.push(unordered.splice(idx, 1)[0])
+      if (idx !== -1) ordered.push(unordered.splice(idx, 1)[0]!)
     })
     remaining.push(...unordered)
     return [...ordered, ...remaining]
@@ -110,14 +110,22 @@ export const useToolOrganizerStore = defineStore('toolOrganizer', () => {
   function moveUp(slug: string) {
     const idx = data.value.order.indexOf(slug)
     if (idx > 0) {
-      [data.value.order[idx - 1], data.value.order[idx]] = [data.value.order[idx], data.value.order[idx - 1]]
+      const order = data.value.order
+      const prev = order[idx - 1]!
+      const curr = order[idx]!
+      order[idx - 1] = curr
+      order[idx] = prev
     }
   }
 
   function moveDown(slug: string) {
     const idx = data.value.order.indexOf(slug)
     if (idx < data.value.order.length - 1) {
-      [data.value.order[idx], data.value.order[idx + 1]] = [data.value.order[idx + 1], data.value.order[idx]]
+      const order = data.value.order
+      const curr = order[idx]!
+      const next = order[idx + 1]!
+      order[idx] = next
+      order[idx + 1] = curr
     }
   }
 

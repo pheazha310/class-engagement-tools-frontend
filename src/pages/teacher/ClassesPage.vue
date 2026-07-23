@@ -36,10 +36,10 @@ const subjectColors: Record<string, string> = {
 }
 
 function getSubjectColor(subject: string): string {
-  for (const [key, color] of Object.entries(subjectColors)) {
-    if (subject.toLowerCase().includes(key.toLowerCase())) return color
+  for (const key of Object.keys(subjectColors)) {
+    if (subject.toLowerCase().includes(key.toLowerCase())) return subjectColors[key]!
   }
-  return subjectColors.default
+  return subjectColors.default!
 }
 
 const filteredClasses = computed(() => {
@@ -117,7 +117,7 @@ async function submitForm() {
     showModal.value = false; await fetchClasses()
   } catch {
     const now = new Date().toISOString()
-    if (isEditing.value && editingId.value) { const idx = classes.value.findIndex((c) => c.id === editingId.value); if (idx !== -1) classes.value[idx] = { ...classes.value[idx], ...data, settings, studentCount: formData.value.student_count, updated_at: now } }
+    if (isEditing.value && editingId.value) { const idx = classes.value.findIndex((c) => c.id === editingId.value); if (idx !== -1 && classes.value[idx]) classes.value[idx] = { ...classes.value[idx]!, ...data, settings, studentCount: formData.value.student_count, updated_at: now } }
     else { classes.value.unshift({ id: Date.now(), teacher_id: 1, ...data, settings, studentCount: formData.value.student_count, color: getSubjectColor(formData.value.subject), created_at: now, updated_at: now }) }
     showModal.value = false
   } finally { loading.value = false }
@@ -135,8 +135,8 @@ async function executeDelete() {
 
 function toggleActive(c: ClassItem) {
   const updated = { ...c, is_active: !c.is_active, updated_at: new Date().toISOString() }
-  const idx = classes.value.findIndex((x) => x.id === c.id); const orig = idx !== -1 ? { ...classes.value[idx] } : null
-  if (idx !== -1) classes.value[idx] = updated
+  const idx = classes.value.findIndex((x) => x.id === c.id); const orig = idx !== -1 && classes.value[idx] ? { ...classes.value[idx] } : null
+  if (idx !== -1 && classes.value[idx]) classes.value[idx] = updated
   teacherDashboardService.updateClassConfiguration(c.id, { is_active: !c.is_active }).catch(() => { if (idx !== -1 && orig) classes.value[idx] = orig })
 }
 

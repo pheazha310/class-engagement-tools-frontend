@@ -13,13 +13,21 @@ const perPage = ref(10)
 const activities = ref<ActivityLog[]>([])
 
 function generateDemoActivities(): ActivityLog[] {
-  const types = ['quiz', 'poll', 'quiz', 'poll', 'timer', 'picker', 'game', 'group', 'quiz', 'poll']
+  const types = ['quiz', 'poll', 'timer', 'picker', 'game', 'group'] as const
   const names: Record<string, string[]> = { quiz: ['Cellular Mitosis Quiz', 'Molecular Bonding Quiz', 'Genetics & Inheritance', 'Chemistry Lab Safety', 'Physics Mechanics Test'], poll: ['Supply & Demand Poll', 'Concept Check: Module 3', 'Quick Check-In', 'Course Feedback Survey', 'Topic Preference Poll'], timer: ['Class Timer - 5 min', 'Pop Quiz Timer', 'Break Timer'], picker: ['Random Student Select', 'Group Leader Pick'], game: ['Trivia Challenge', 'Speed Round', 'Team Competition'], group: ['Group Generator - Project A', 'Team Formation'] }
-  const classes = [{ name: 'Biology 101 - Section A', code: 'BIOL-101-A' }, { name: 'Advanced Chemistry', code: 'CHEM-201' }, { name: 'Introduction to Economics', code: 'ECON-101' }, { name: 'Physics for Engineers', code: 'PHYS-210' }]
+  const classesList = [{ name: 'Biology 101 - Section A', code: 'BIOL-101-A' }, { name: 'Advanced Chemistry', code: 'CHEM-201' }, { name: 'Introduction to Economics', code: 'ECON-101' }, { name: 'Physics for Engineers', code: 'PHYS-210' }] as const
   const result: ActivityLog[] = []; const now = new Date()
   for (let i = 0; i < 40; i++) {
-    const type = types[i % types.length]; const typeNames = names[type]; const cls = classes[i % classes.length]; const date = new Date(now); date.setDate(date.getDate() - Math.floor(i / 2))
-    result.push({ id: i + 1, date: date.toISOString(), type, name: typeNames ? typeNames[i % typeNames.length] : `${type} Activity ${i}`, class: cls.name, classCode: cls.code, status: i < 8 ? 'completed' : i < 12 ? 'live' : 'completed', participants: Math.floor(10 + Math.random() * 30), score: ['quiz', 'poll'].includes(type) ? `${Math.floor(65 + Math.random() * 35)}%` : undefined, duration: type === 'timer' ? `${Math.floor(3 + Math.random() * 12)} min` : undefined })
+    const type = types[i % types.length] as string
+    const typeNames = names[type]
+    if (!typeNames) continue
+    const clsRaw = classesList[i % classesList.length]
+    if (clsRaw) {
+      const cls = clsRaw
+      const date = new Date(now)
+      date.setDate(date.getDate() - Math.floor(i / 2))
+      result.push({ id: i + 1, date: date.toISOString(), type, name: typeNames[i % typeNames.length]!, class: cls.name, classCode: cls.code, status: i < 8 ? 'completed' : i < 12 ? 'live' : 'completed', participants: Math.floor(10 + Math.random() * 30), score: ['quiz', 'poll'].includes(type) ? `${Math.floor(65 + Math.random() * 35)}%` : undefined, duration: type === 'timer' ? `${Math.floor(3 + Math.random() * 12)} min` : undefined })
+    }
   }
   return result
 }

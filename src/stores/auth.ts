@@ -12,6 +12,7 @@ export interface AuthUser {
   profile_image?: string | null
   profile_image_url?: string | null
   school?: string | null
+  token?: string
 }
 
 export const useAuthStore = defineStore('auth', () => {

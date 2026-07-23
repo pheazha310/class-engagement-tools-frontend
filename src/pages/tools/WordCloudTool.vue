@@ -28,8 +28,8 @@ const wordItems = computed<WordItem[]>(() => {
     .map(([text, count]) => ({ text, count }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 60)
-  const maxCount = items.length > 0 ? items[0].count : 1
-  const minCount = items.length > 0 ? items[items.length - 1].count : 1
+  const maxCount = items.length > 0 ? items[0]!.count : 1
+  const minCount = items.length > 0 ? items[items.length - 1]!.count : 1
   return items.map(item => ({
     text: item.text,
     count: item.count,
@@ -59,7 +59,10 @@ const presetResponses = [
 ]
 
 function addPresetResponse(index: number) {
-  submittedWords.value.push(presetResponses[index])
+  const response = presetResponses[index]
+  if (response) {
+    submittedWords.value.push(response)
+  }
   showCloud.value = true
   if (submittedWords.value.length >= 8) {
     submittedWords.value = []

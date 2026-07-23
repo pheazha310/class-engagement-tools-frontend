@@ -44,7 +44,8 @@ function generateBingo() {
       if (centerFree.value && r === 2 && c === 2) {
         row.push('★ FREE ★')
       } else if (idx < shuffled.length) {
-        row.push(shuffled[idx++])
+        const w = shuffled[idx++]
+        if (w) row.push(w)
       }
     }
     board.push(row)
