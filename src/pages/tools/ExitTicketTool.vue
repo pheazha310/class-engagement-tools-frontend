@@ -82,17 +82,17 @@ function resetAll() {
 
           <!-- Question -->
           <div class="et-question">
-            <h2>{{ questions[currentQuestion].text }}</h2>
+             <h2>{{ questions[currentQuestion]!.text }}</h2>
 
             <!-- Rating -->
-            <div v-if="questions[currentQuestion].type === 'rating'" class="et-rating">
-              <button
-                v-for="opt in questions[currentQuestion].options"
-                :key="opt"
-                class="rating-btn"
-                :class="{ active: responses[currentQuestion.id] === parseInt(opt) }"
-                @click="selectRating(currentQuestion.id, opt)"
-              >
+             <div v-if="questions[currentQuestion]!.type === 'rating'" class="et-rating">
+               <button
+                  v-for="opt in questions[currentQuestion]!.options"
+                  :key="opt"
+                  class="rating-btn"
+                  :class="{ active: responses[questions[currentQuestion]!.id] === parseInt(opt) }"
+                  @click="selectRating(questions[currentQuestion]!.id, opt)"
+                >
                 {{ opt }}
               </button>
               <div class="rating-labels">
@@ -102,24 +102,24 @@ function resetAll() {
             </div>
 
             <!-- Text -->
-            <div v-if="questions[currentQuestion].type === 'text'" class="et-text">
-              <textarea
-                v-model="responses[currentQuestion.id]"
-                placeholder="Type your answer here..."
-                rows="4"
-                class="et-textarea"
-              ></textarea>
-            </div>
+             <div v-if="questions[currentQuestion]!.type === 'text'" class="et-text">
+               <textarea
+                  v-model="responses[questions[currentQuestion]!.id]"
+                 placeholder="Type your answer here..."
+                 rows="4"
+                 class="et-textarea"
+               ></textarea>
+             </div>
 
             <!-- Choice -->
-            <div v-if="questions[currentQuestion].type === 'choice'" class="et-choice">
-              <button
-                v-for="opt in questions[currentQuestion].options"
-                :key="opt"
-                class="choice-btn"
-                :class="{ active: responses[currentQuestion.id] === opt }"
-                @click="selectChoice(currentQuestion.id, opt)"
-              >
+             <div v-if="questions[currentQuestion]!.type === 'choice'" class="et-choice">
+               <button
+                 v-for="opt in questions[currentQuestion]!.options"
+                 :key="opt"
+                 class="choice-btn"
+                  :class="{ active: responses[questions[currentQuestion]!.id] === opt }"
+                  @click="selectChoice(questions[currentQuestion]!.id, opt)"
+               >
                 {{ opt }}
               </button>
             </div>

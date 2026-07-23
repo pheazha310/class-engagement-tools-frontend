@@ -107,7 +107,9 @@ class TeacherDashboardAPIService {
     const authStore = useAuthStore()
     try {
       const { data } = await api.post('/api/auth/refresh', { token: authStore.user?.token })
-      authStore.setUser({ ...authStore.user, token: data.token })
+      if (authStore.user && data.token) {
+        authStore.setUser({ ...authStore.user, token: data.token })
+      }
     } catch {
       throw new Error('Failed to refresh token')
     }

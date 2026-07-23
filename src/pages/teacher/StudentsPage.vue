@@ -26,9 +26,9 @@ function generateDemoStudents(): Student[] {
   const names = ['Emma Thompson', 'Liam Chen', 'Sophia Patel', 'Noah Williams', 'Olivia Martinez', 'Ethan Kim', 'Ava Johnson', 'Mason Brown', 'Isabella Garcia', 'Lucas Lee', 'Mia Rodriguez', 'James Wilson', 'Charlotte Anderson', 'Benjamin Taylor', 'Amelia Thomas', 'Elijah Jackson', 'Harper White', 'Alexander Harris', 'Evelyn Martin', 'Daniel Moore']
   const classes = [{ name: 'Biology 101 - Section A', code: 'BIOL-101-A' }, { name: 'Advanced Chemistry', code: 'CHEM-201' }, { name: 'Physics for Engineers', code: 'PHYS-210' }]
   return names.map((name, i) => {
-    const cls = classes[i % classes.length]
+    const cls = (classes[i % classes.length] ?? classes[0])!
     const initials = name.split(' ').map(n => n[0]).join('').toUpperCase()
-    return { id: i + 1, name, email: name.toLowerCase().replace(' ', '.') + '@university.edu', class: cls.name, classCode: cls.code, status: i < 16 ? 'active' : 'inactive', joinDate: new Date(2024, 0, 10 + i).toISOString(), lastActive: new Date(2024, 9, 20 - (i % 5)).toISOString(), engagement: Math.floor(50 + Math.random() * 50), totalPolls: Math.floor(5 + Math.random() * 20), totalQuizzes: Math.floor(3 + Math.random() * 15), averageScore: Math.floor(60 + Math.random() * 40), avatarInitials: initials }
+    return { id: i + 1, name, email: name.toLowerCase().replace(/ /g, '.') + '@university.edu', class: cls.name, classCode: cls.code, status: i < 16 ? 'active' : 'inactive', joinDate: new Date(2024, 0, 10 + i).toISOString(), lastActive: new Date(2024, 9, 20 - (i % 5)).toISOString(), engagement: Math.floor(50 + Math.random() * 50), totalPolls: Math.floor(5 + Math.random() * 20), totalQuizzes: Math.floor(3 + Math.random() * 15), averageScore: Math.floor(60 + Math.random() * 40), avatarInitials: initials }
   })
 }
 
