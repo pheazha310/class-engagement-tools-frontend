@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import TeacherIcon from './TeacherIcon.vue'
@@ -51,6 +51,44 @@ const displayTitle = computed(() => {
   return `${greeting}, ${displayName.value}`
 })
 
+// ── Profile dropdown state ────────────────────────────────────
+const profileOpen = ref(false)
+
+function toggleProfile() {
+  profileOpen.value = !profileOpen.value
+}
+
+function closeProfile() {
+  profileOpen.value = false
+}
+
+function goToProfile() {
+  closeProfile()
+  router.push('/teacher/settings')
+}
+
+async function handleLogout() {
+  closeProfile()
+  await authStore.logout()
+  router.push('/login')
+}
+
+// Close dropdown on outside click
+function onDocumentClick(e: MouseEvent) {
+  const target = e.target as HTMLElement
+  if (!target.closest('.profile-trigger')) {
+    closeProfile()
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', onDocumentClick)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', onDocumentClick)
+})
+
 const sidebarItems: Array<{ id: string; label: string; icon: string; route: string }> = [
   { id: 'dashboard', label: 'Dashboard', icon: 'grid', route: '/teacher/dashboard' },
   { id: 'classes', label: 'Classes', icon: 'cap', route: '/teacher/classes' },
@@ -83,6 +121,9 @@ function onSearchInput(e: Event) {
           <p class="brand-subtitle">Classroom Engagement</p>
         </div>
       </div>
+
+      <!-- Divider line below logo -->
+      <div class="brand-divider"></div>
 
       <nav class="sidebar-nav">
         <button
@@ -143,10 +184,63 @@ function onSearchInput(e: Event) {
 
         <div class="topbar-actions">
           <slot name="actions" />
+
+          <!-- Launch button -->
+          <button class="launch-btn" type="button" @click="navigateTo('/teacher/organize-tools')" title="Quick Launch">
+            <TeacherIcon icon="zap" :size="16" />
+            <span>Launch</span>
+          </button>
+
+          <!-- Notifications -->
           <button class="icon-button notification-button" type="button" aria-label="Notifications">
             <TeacherIcon icon="bell" :size="22" />
-            <span></span>
+            <span class="notification-dot"></span>
           </button>
+
+          <!-- Profile -->
+          <div class="profile-trigger">
+            <button
+              class="profile-btn"
+              type="button"
+              aria-label="Profile menu"
+              aria-haspopup="true"
+              :aria-expanded="profileOpen"
+              @click="toggleProfile"
+            >
+              <span class="topbar-avatar">{{ initials }}</span>
+              <span class="topbar-name">{{ displayName.split(' ')[0] }}</span>
+              <TeacherIcon icon="chevron" :size="12" />
+            </button>
+
+            <!-- Dropdown -->
+            <Transition name="dropdown">
+              <div v-if="profileOpen" class="profile-dropdown" @click.stop>
+                <div class="dropdown-header">
+                  <span class="dropdown-avatar">{{ initials }}</span>
+                  <div>
+                    <p class="dropdown-name">{{ displayName }}</p>
+                    <span class="dropdown-role">{{ authStore.user?.role || props.teacherRole || 'Teacher' }}</span>
+                    <span v-if="authStore.user?.email" class="dropdown-email">{{ authStore.user.email }}</span>
+                    <span v-if="authStore.user?.school" class="dropdown-school">{{ authStore.user.school }}</span>
+                  </div>
+                </div>
+                <div class="dropdown-divider"></div>
+                <button class="dropdown-item" type="button" @click="goToProfile">
+                  <TeacherIcon icon="settings" :size="16" />
+                  <span>Profile &amp; Settings</span>
+                </button>
+                <button class="dropdown-item" type="button" @click="navigateTo('/teacher/dashboard')">
+                  <TeacherIcon icon="grid" :size="16" />
+                  <span>Dashboard</span>
+                </button>
+                <div class="dropdown-divider"></div>
+                <button class="dropdown-item dropdown-logout" type="button" @click="handleLogout">
+                  <TeacherIcon icon="logOut" :size="16" />
+                  <span>Log Out</span>
+                </button>
+              </div>
+            </Transition>
+          </div>
         </div>
       </header>
 
@@ -243,6 +337,12 @@ button {
   text-transform: uppercase;
 }
 
+.brand-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.15);
+  margin: 0 24px 20px;
+}
+
 .sidebar-nav {
   display: grid;
   gap: 8px;
@@ -331,6 +431,8 @@ button {
   min-width: 0;
   flex: 1;
   flex-direction: column;
+  overflow-y: auto;
+  max-height: 100vh;
 }
 
 .dashboard-topbar {
@@ -342,6 +444,9 @@ button {
   border-bottom: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.96);
   padding: 0 42px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
 }
 
 .greeting-block {
@@ -399,8 +504,35 @@ button {
 .topbar-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
+}
+
+/* ── Launch Button ──────────────────────────────────────────── */
+.launch-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  border: 0;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--primary) 0%, #2d4ec4 100%);
+  color: #fff;
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 10px rgba(0, 31, 158, 0.25);
+}
+
+.launch-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 31, 158, 0.35);
+}
+
+.launch-btn:active {
+  transform: translateY(0);
 }
 
 /* ── Icon button (used in topbar only) ──────────────────────── */
@@ -408,36 +540,196 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 42px;
-  height: 42px;
+  width: 38px;
+  height: 38px;
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: #151928;
+  color: #4a5268;
+  transition: all 0.15s;
+  cursor: pointer;
+}
+
+.icon-button:hover {
+  background: #eef3ff;
+  color: var(--primary);
 }
 
 .notification-button {
   position: relative;
-  margin-left: 10px;
 }
 
-.notification-button::before {
+.notification-dot {
   position: absolute;
-  left: -10px;
-  width: 1px;
-  height: 30px;
-  background: var(--line);
-  content: '';
-}
-
-.notification-button span {
-  position: absolute;
-  top: 7px;
-  right: 8px;
+  top: 6px;
+  right: 6px;
   width: 8px;
   height: 8px;
   border-radius: 999px;
   background: var(--red);
+  border: 2px solid #fff;
+}
+
+/* ── Profile Trigger ────────────────────────────────────────── */
+.profile-trigger {
+  position: relative;
+  margin-left: 4px;
+}
+
+.profile-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #1a2030;
+  padding: 0 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font: inherit;
+}
+
+.profile-btn:hover {
+  background: #eef3ff;
+}
+
+.topbar-avatar {
+  display: inline-grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 6px;
+  background: linear-gradient(135deg, var(--primary) 0%, #2d4ec4 100%);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.topbar-name {
+  font-size: 13px;
+  font-weight: 700;
+  display: none;
+}
+
+@media (min-width: 1100px) {
+  .topbar-name {
+    display: inline;
+  }
+}
+
+/* ── Profile Dropdown ───────────────────────────────────────── */
+.profile-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 100;
+  width: 240px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.14);
+  overflow: hidden;
+}
+
+.dropdown-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 20px 14px;
+}
+
+.dropdown-avatar {
+  display: inline-grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--primary) 0%, #2d4ec4 100%);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.dropdown-name {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.dropdown-role {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  font-weight: 700;
+  display: block;
+}
+
+.dropdown-email {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #4a5268;
+  font-weight: 600;
+}
+
+.dropdown-school {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: #e8ecf4;
+  margin: 0;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 20px;
+  border: 0;
+  background: transparent;
+  color: #1a2030;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.1s;
+  text-align: left;
+}
+
+.dropdown-item:hover {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.dropdown-logout {
+  color: var(--red);
+}
+
+.dropdown-logout:hover {
+  background: var(--red-soft);
+  color: var(--red);
+}
+
+/* Dropdown transition */
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: all 0.15s ease;
+}
+
+.dropdown-enter-from,
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
 }
 
 /* ── Shared Content ─────────────────────────────────────────── */
@@ -462,6 +754,15 @@ button {
   .topbar-actions {
     flex-wrap: wrap;
   }
+}
+
+.topbar-page-label {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0 4px;
 }
 
 @media (max-width: 980px) {

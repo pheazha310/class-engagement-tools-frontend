@@ -90,7 +90,7 @@ function showSavedToast() {
 </script>
 
 <template>
-  <TeacherLayoutsidebar-active="organize" page-title="Tool Organizer"
+  <TeacherLayout sidebar-active="organize" page-title="Tool Organizer"
     page-subtitle="Drag to reorder your tools. Star your favorites for quick access."
     :show-search="false"
   >

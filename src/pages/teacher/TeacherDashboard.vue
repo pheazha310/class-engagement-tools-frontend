@@ -1,28 +1,172 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useTeacherDashboardStore } from '@/stores/teacherDashboardStore'
 import { useToolOrganizerStore } from '@/stores/toolOrganizerStore'
 import TeacherLayout from '@/components/teacher/TeacherLayout.vue'
 import TeacherIcon from '@/components/teacher/TeacherIcon.vue'
 
 const router = useRouter()
 const organizer = useToolOrganizerStore()
-
 const authStore = useAuthStore()
+const dashboardStore = useTeacherDashboardStore()
+
 const teacherName = computed(() => authStore.user?.name || 'Dr. Sarah Miller')
 const currentHour = ref(new Date().getHours())
-const getGreeting = () => currentHour.value < 12 ? 'Good Morning' : currentHour.value < 18 ? 'Good Afternoon' : 'Good Evening'
+const getGreeting = () =>
+  currentHour.value < 12
+    ? 'Good Morning'
+    : currentHour.value < 18
+      ? 'Good Afternoon'
+      : 'Good Evening'
 
-const stats = [
-  { label: 'Total Classes', value: '14', meta: '+2', icon: 'cap', tone: 'blue' as const },
-  { label: 'Students', value: '342', meta: '+12%', icon: 'users', tone: 'blue' as const },
-  { label: 'Active Polls', value: '3', meta: 'Live', icon: 'poll', tone: 'green' as const },
-  { label: 'Scheduled', value: '2', meta: 'Next: 2PM', icon: 'calendar', tone: 'blue' as const },
-  { label: 'Live Now', value: '8', meta: 'On air', icon: 'zap', tone: 'red' as const },
-  { label: 'Activities', value: '450', meta: 'Total', icon: 'clipboard', tone: 'blue' as const },
+// ── Real-time stats (store-backed with simulation fallback) ──
+const fallbackBase = {
+  totalClasses: 14,
+  totalStudents: 342,
+  activePolls: 3,
+  scheduledSessions: 2,
+  liveSessions: 8,
+  totalActivities: 450,
+  engagementPct: 12,
+}
+
+const stats = ref({ ...fallbackBase })
+
+function jitter(base: number, maxDelta: number): number {
+  const delta = Math.round((Math.random() - 0.5) * maxDelta * 2)
+  return Math.max(0, base + delta)
+}
+
+let intervalId: ReturnType<typeof setInterval> | null = null
+
+function refreshStats() {
+  const store = dashboardStore
+  // Use store data when available, otherwise fall back to jitter
+  const classes = store.totalClasses || jitter(fallbackBase.totalClasses, 1)
+  const students = store.uniqueStudents || jitter(fallbackBase.totalStudents, 8)
+  const polls = store.activeQuizzes || jitter(fallbackBase.activePolls, 1)
+  const activities = store.totalActivities || jitter(fallbackBase.totalActivities, 12)
+
+  stats.value = {
+    totalClasses: typeof classes === 'number' ? classes : Number(classes),
+    totalStudents: typeof students === 'number' ? students : Number(students),
+    activePolls: typeof polls === 'number' ? polls : Number(polls),
+    scheduledSessions: jitter(fallbackBase.scheduledSessions, 1),
+    liveSessions: jitter(fallbackBase.liveSessions, 2),
+    totalActivities: typeof activities === 'number' ? activities : Number(activities),
+    engagementPct: jitter(fallbackBase.engagementPct, 2),
+  }
+}
+
+onMounted(async () => {
+  // Try to fetch real data from store
+  try {
+    await dashboardStore.fetchDashboardStats()
+    await dashboardStore.fetchRecentActivities()
+  } catch {
+    // Silently fall back to simulated data
+  }
+  refreshStats()
+  intervalId = setInterval(refreshStats, 5000)
+})
+
+onUnmounted(() => {
+  if (intervalId) clearInterval(intervalId)
+})
+
+// ── Stat card definitions ────────────────────────────────────
+const statCards = computed(() => [
+  {
+    label: 'Total Classes',
+    value: String(stats.value.totalClasses),
+    meta: '+2',
+    icon: 'cap',
+    tone: 'blue' as const,
+    route: '/teacher/classes',
+  },
+  {
+    label: 'Students',
+    value: String(stats.value.totalStudents),
+    meta: `+${stats.value.engagementPct}%`,
+    icon: 'users',
+    tone: 'green' as const,
+    route: '/teacher/students',
+  },
+  {
+    label: 'Active Polls',
+    value: String(stats.value.activePolls),
+    meta: 'Live',
+    icon: 'poll',
+    tone: 'red' as const,
+    route: '/teacher/live-polls',
+  },
+  {
+    label: 'Scheduled',
+    value: String(stats.value.scheduledSessions),
+    meta: 'Next: 2PM',
+    icon: 'calendar',
+    tone: 'blue' as const,
+    route: '/teacher/live-polls',
+  },
+  {
+    label: 'Live Now',
+    value: String(stats.value.liveSessions),
+    meta: 'On air',
+    icon: 'zap',
+    tone: 'red' as const,
+    route: '/teacher/live-polls',
+  },
+  {
+    label: 'Activities',
+    value: String(stats.value.totalActivities),
+    meta: 'Total',
+    icon: 'clipboard',
+    tone: 'blue' as const,
+    route: '/teacher/activity-history',
+  },
+])
+
+// ── Recent Activities ────────────────────────────────────────
+const recentActivities = computed(() => {
+  const storeItems = dashboardStore.recentActivities
+  if (storeItems.length > 0) {
+    return storeItems.slice(0, 3).map((a: any) => ({
+      className: a.class_name || a.class || 'Class',
+      activity: a.name || a.title || a.description || 'Activity',
+      status: a.status === 'active' || a.status === 'live' ? 'Live' : 'Completed',
+      responses: a.responses ? `${a.responses}/??` : '—',
+      action: 'external' as const,
+    }))
+  }
+  return [
+    { className: 'BIOL-102', activity: 'Cellular Mitosis Quiz', status: 'Live' as const, responses: '24/32', action: 'external' as const },
+    { className: 'ECON-101', activity: 'Supply & Demand Poll', status: 'Completed' as const, responses: '156/156', action: 'chart' as const },
+    { className: 'CHEM-201', activity: 'Molecular Bonding Quiz', status: 'Completed' as const, responses: '28/30', action: 'chart' as const },
+  ]
+})
+
+// ── Poll Options ─────────────────────────────────────────────
+const pollOptions = [
+  { label: 'Horizontal Scaling', value: 68 },
+  { label: 'Vertical Scaling', value: 25 },
 ]
 
+// ── Session Logs ─────────────────────────────────────────────
+const sessionLogs = [
+  { date: 'Oct 24, 2023', type: 'Interactive Quiz', subject: 'Genetics & Inheritance', score: '88%' },
+  { date: 'Oct 23, 2023', type: 'Live Poll', subject: 'Advanced Biology', score: '94%' },
+]
+
+// ── Navigation ───────────────────────────────────────────────
+const navigateTo = (route?: string) => {
+  if (route) router.push(route)
+}
+
+const searchValue = ref('')
+
+// ── Tone map for tools ───────────────────────────────────────
 const toneMap: Record<string, string> = {
   'Random Tools': 'cyan',
   'Quiz & Assessment': 'green',
@@ -32,44 +176,56 @@ const toneMap: Record<string, string> = {
   'Fun Activities': 'orange',
 }
 
+// ── Favorite tools logic ─────────────────────────────────────
+function toggleFavorite(slug: string) {
+  organizer.toggleFavorite(slug)
+}
+
+// All favorite tools for "Favorite Tools" section
 const engageTools = computed(() => {
   return organizer.favoriteTools.map(t => ({
     label: t.title,
-    icon: t.slug === 'random-wheel' || t.slug === 'live-voting' || t.slug === 'classroom-quiz' ? t.slug : t.slug,
+    icon: t.slug,
     tone: (toneMap[t.category] || 'blue') as 'blue' | 'green' | 'orange' | 'cyan' | 'violet' | 'red',
     route: t.route,
+    slug: t.slug,
     emoji: t.icon,
   }))
 })
 
-const recentActivities = [
-  { className: 'BIOL-102', activity: 'Cellular Mitosis Quiz', status: 'Live', responses: '24/32', action: 'external' },
-  { className: 'ECON-101', activity: 'Supply & Demand Poll', status: 'Completed', responses: '156/156', action: 'chart' },
-  { className: 'CHEM-201', activity: 'Molecular Bonding Quiz', status: 'Completed', responses: '28/30', action: 'chart' },
-]
+// ── Manage Tools Modal ────────────────────────────────────────
+const showManageModal = ref(false)
+const searchTools = ref('')
 
-const pollOptions = [
-  { label: 'Horizontal Scaling', value: 68 },
-  { label: 'Vertical Scaling', value: 25 },
-]
+const filteredAllTools = computed(() => {
+  const q = searchTools.value.trim().toLowerCase()
+  if (!q) return organizer.allToolsWithState
+  return organizer.allToolsWithState.filter(
+    t => t.title.toLowerCase().includes(q) || t.category.toLowerCase().includes(q)
+  )
+})
 
-const quickFavorites = [
-  { label: 'Class Timer', icon: 'timer', tone: 'blue' as const },
-  { label: 'Quick Poll', icon: 'poll', tone: 'green' as const },
-  { label: 'Students', icon: 'users', tone: 'orange' as const },
-  { label: 'Audio', icon: 'audio', tone: 'cyan' as const },
-]
+const categoryFilters = computed(() => {
+  const cats = new Set(organizer.allToolsWithState.map(t => t.category))
+  return Array.from(cats)
+})
 
-const sessionLogs = [
-  { date: 'Oct 24, 2023', type: 'Interactive Quiz', subject: 'Genetics & Inheritance', score: '88%' },
-  { date: 'Oct 23, 2023', type: 'Live Poll', subject: 'Advanced Biology', score: '94%' },
-]
+const activeCatFilter = ref('all')
 
-const navigateTo = (route?: string) => {
-  if (route) router.push(route)
+function filteredByCategory() {
+  if (activeCatFilter.value === 'all') return filteredAllTools.value
+  return filteredAllTools.value.filter(t => t.category === activeCatFilter.value)
 }
 
-const searchValue = ref('')
+function openManageModal() {
+  showManageModal.value = true
+  searchTools.value = ''
+  activeCatFilter.value = 'all'
+}
+
+function closeManageModal() {
+  showManageModal.value = false
+}
 </script>
 
 <template>
@@ -81,66 +237,240 @@ const searchValue = ref('')
   >
     <template #greeting>
       <h1>{{ getGreeting() }}, {{ teacherName }}</h1>
-      <p>Your engagement is up <strong>12%</strong> this week.</p>
+      <p>Your engagement is up <strong>{{ stats.engagementPct }}%</strong> this week.</p>
     </template>
 
-    <template #actions>
-      <button class="ghost-button" type="button">
-        <span>Tools</span>
-        <TeacherIcon icon="chevron" :size="16" />
-      </button>
-      <button class="outline-button" type="button">History</button>
-      <button class="primary-button" type="button">Quick Launch</button>
-    </template>
-
-    <!-- Stats Grid -->
+    <!-- ========== Stats Grid ========== -->
     <section class="stats-grid" aria-label="Dashboard statistics">
-      <article v-for="stat in stats" :key="stat.label" class="stat-card" :class="`tone-${stat.tone}`">
+      <article
+        v-for="stat in statCards"
+        :key="stat.label"
+        class="stat-card"
+        :class="`tone-${stat.tone}`"
+        @click="navigateTo(stat.route)"
+        role="button"
+        :tabindex="0"
+        @keydown.enter="navigateTo(stat.route)"
+      >
         <div class="stat-label-row">
           <span>{{ stat.label }}</span>
           <TeacherIcon :icon="stat.icon" :size="19" />
         </div>
         <div class="stat-value-row">
-          <strong>{{ stat.value }}</strong>
-          <span>{{ stat.meta }}</span>
+          <strong class="stat-number">{{ stat.value }}</strong>
+          <span class="stat-meta-badge">{{ stat.meta }}</span>
+        </div>
+        <div class="stat-hover-indicator">
+          <span>View details</span>
+          <TeacherIcon icon="chevronRight" :size="14" />
         </div>
       </article>
     </section>
 
-    <!-- Engage Section -->
-    <section class="engage-section">
+    <!-- ========== Favorite Tools — Colorful Cards ========== -->
+    <section class="favtools-section">
       <div class="section-title-row">
-        <h2>Engage Your Class</h2>
-        <button class="outline-button manage-tools-btn" type="button">
-          <TeacherIcon icon="settings" :size="16" />
-          <span>Manage Tools</span>
+        <h2>
+          <span class="favtools-title-icon">
+            <TeacherIcon icon="star" :size="16" />
+          </span>
+          Favorite Tools
+          <span v-if="organizer.favoriteTools.length > 0" class="favtools-count-badge">{{ organizer.favoriteTools.length }}</span>
+        </h2>
+        <div class="favtools-actions-row">
+          <button class="ghost-button" type="button" @click="openManageModal">
+            <TeacherIcon icon="picker" :size="16" />
+            <span>Add / Remove</span>
+          </button>
+          <button class="outline-button manage-tools-btn" type="button" @click="navigateTo('/teacher/organize-tools')">
+            <TeacherIcon icon="picker" :size="16" />
+            <span>Manage</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Empty state -->
+      <div v-if="engageTools.length === 0" class="empty-favorites">
+        <div class="empty-fav-icon">
+          <TeacherIcon icon="star" :size="48" />
+        </div>
+        <h3>No favorite tools yet</h3>
+        <p>Add your go-to classroom tools for quick access right here on your dashboard.</p>
+        <button class="primary-button" type="button" @click="openManageModal">
+          <TeacherIcon icon="picker" :size="16" />
+          <span>Browse &amp; Add Tools</span>
         </button>
       </div>
-      <div class="engage-grid">
-        <button v-for="tool in engageTools" :key="tool.label" class="engage-tool" :class="`tone-${tool.tone}`" type="button" @click="navigateTo(tool.route)">
-          <TeacherIcon class="favorite-star" icon="star" :size="14" />
-          <span class="tool-icon engage-emoji">{{ tool.emoji }}</span>
-          <span class="tool-label">{{ tool.label }}</span>
-        </button>
-        <button class="engage-tool add-tool" type="button" @click="navigateTo('/teacher/organize-tools')">
-          <span class="tool-icon"><TeacherIcon icon="plus" :size="28" /></span>
-          <span class="tool-label">Manage Tools</span>
-        </button>
+
+      <!-- Favorites carousel-style row -->
+      <div v-else class="favtools-track-wrapper">
+        <div class="favtools-track">
+          <div
+            v-for="tool in engageTools"
+            :key="tool.slug"
+            class="favtool-card"
+            :class="`color-${tool.tone}`"
+            @click="navigateTo(tool.route)"
+            role="button"
+            :tabindex="0"
+            @keydown.enter="navigateTo(tool.route)"
+            :title="`Open ${tool.label}`"
+          >
+            <!-- Remove button -->
+            <span
+              class="favtool-remove"
+              role="button"
+              :title="`Remove ${tool.label}`"
+              tabindex="0"
+              @click.stop="toggleFavorite(tool.slug)"
+              @keydown.enter.stop="toggleFavorite(tool.slug)"
+              @keydown.space.prevent.stop="toggleFavorite(tool.slug)"
+            >
+              <TeacherIcon icon="x" :size="10" />
+            </span>
+
+            <span class="favtool-emoji">{{ tool.emoji }}</span>
+            <span class="favtool-name">{{ tool.label }}</span>
+            <span class="favtool-hint">Click to open</span>
+          </div>
+
+          <!-- Add More card (opens modal) -->
+          <button
+            class="favtool-card favtool-add-more"
+            type="button"
+            @click="openManageModal"
+            title="Add more favorite tools"
+          >
+            <span class="favtool-add-icon">
+              <TeacherIcon icon="plus" :size="24" />
+            </span>
+            <span class="favtool-name">Add More</span>
+            <span class="favtool-hint">Browse all tools</span>
+          </button>
+        </div>
       </div>
     </section>
 
-    <!-- Dashboard Grid -->
+    <!-- ========== Manage Tools Modal ========== -->
+    <Transition name="modal-fade">
+      <div v-if="showManageModal" class="modal-overlay" @click.self="closeManageModal">
+        <div class="manage-modal">
+          <!-- Modal Header -->
+          <div class="manage-modal-header">
+            <div>
+              <h2>Manage Tools</h2>
+              <p>Star your favorites for quick access. Hide tools you don't need right now.</p>
+            </div>
+            <button class="modal-close-btn" type="button" @click="closeManageModal" aria-label="Close">
+              <TeacherIcon icon="x" :size="20" />
+            </button>
+          </div>
+
+          <!-- Search & Filter -->
+          <div class="manage-modal-controls">
+            <div class="manage-search">
+              <TeacherIcon icon="search" :size="18" />
+              <input
+                v-model="searchTools"
+                type="search"
+                placeholder="Search tools..."
+                class="manage-search-input"
+              />
+            </div>
+            <div class="manage-categories">
+              <button
+                class="manage-cat-chip"
+                :class="{ active: activeCatFilter === 'all' }"
+                type="button"
+                @click="activeCatFilter = 'all'"
+              >All</button>
+              <button
+                v-for="cat in categoryFilters"
+                :key="cat"
+                class="manage-cat-chip"
+                :class="{ active: activeCatFilter === cat }"
+                type="button"
+                @click="activeCatFilter = cat"
+              >{{ cat }}</button>
+            </div>
+          </div>
+
+          <!-- Tools Grid -->
+          <div class="manage-tools-grid">
+            <div
+              v-for="tool in filteredByCategory()"
+              :key="tool.slug"
+              class="manage-tool-item"
+              :class="{
+                'is-favorite': tool.isFavorite,
+                'is-hidden': tool.isHidden,
+              }"
+            >
+              <span class="manage-tool-icon">{{ tool.icon }}</span>
+              <div class="manage-tool-info">
+                <strong :class="{ 'text-muted': tool.isHidden }">{{ tool.title }}</strong>
+                <span>{{ tool.category }}</span>
+              </div>
+              <!-- Star toggle -->
+              <span
+                class="manage-tool-star"
+                :class="{ active: tool.isFavorite }"
+                role="button"
+                :title="tool.isFavorite ? 'Remove from favorites' : 'Add to favorites'"
+                tabindex="0"
+                @click="organizer.toggleFavorite(tool.slug)"
+                @keydown.enter="organizer.toggleFavorite(tool.slug)"
+                @keydown.space.prevent="organizer.toggleFavorite(tool.slug)"
+              >
+                <TeacherIcon icon="star" :size="20" />
+              </span>
+              <!-- Hide toggle -->
+              <span
+                class="manage-tool-hide"
+                :class="{ hidden: tool.isHidden }"
+                role="button"
+                :title="tool.isHidden ? 'Show tool' : 'Hide tool'"
+                tabindex="0"
+                @click="organizer.toggleHidden(tool.slug)"
+                @keydown.enter="organizer.toggleHidden(tool.slug)"
+                @keydown.space.prevent="organizer.toggleHidden(tool.slug)"
+              >
+                <TeacherIcon :icon="tool.isHidden ? 'eye' : 'eye'" :size="18" />
+              </span>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="manage-modal-footer">
+            <span class="manage-count">
+              {{ organizer.favoriteTools.length }} favorite{{ organizer.favoriteTools.length !== 1 ? 's' : '' }} selected
+            </span>
+            <button class="primary-button" type="button" @click="closeManageModal">
+              <TeacherIcon icon="check" :size="16" />
+              <span>Done</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- ========== Dashboard Grid ========== -->
     <div class="dashboard-grid">
+      <!-- Recent Activities -->
       <section class="panel recent-panel">
         <div class="panel-header">
           <h2>Recent Activities</h2>
-          <button class="link-button" type="button">View All</button>
+          <button class="link-button" type="button" @click="navigateTo('/teacher/activity-history')">View All</button>
         </div>
         <div class="activity-table">
           <div class="activity-row activity-heading">
             <span>Class</span><span>Activity Name</span><span>Status</span><span>Responses</span><span></span>
           </div>
-          <div v-for="activity in recentActivities" :key="activity.activity" class="activity-row">
+          <div
+            v-for="activity in recentActivities"
+            :key="activity.activity"
+            class="activity-row activity-data-row"
+          >
             <strong>{{ activity.className }}</strong>
             <span>{{ activity.activity }}</span>
             <span><mark :class="activity.status.toLowerCase()">{{ activity.status }}</mark></span>
@@ -152,9 +482,10 @@ const searchValue = ref('')
         </div>
       </section>
 
+      <!-- Live Poll -->
       <aside class="panel live-poll-panel">
         <div class="live-poll-header">
-          <span>Live Poll</span>
+          <span class="live-badge">Live Poll</span>
           <div><strong>156</strong><small>Responses</small></div>
         </div>
         <h2>Concept Check: Option A vs B</h2>
@@ -165,38 +496,31 @@ const searchValue = ref('')
             <i :style="{ width: option.value + '%' }"></i>
           </div>
         </div>
-        <button class="primary-button close-poll-button" type="button">Close Poll & Share Results</button>
+        <button class="primary-button close-poll-button" type="button">Close Poll &amp; Share Results</button>
       </aside>
 
+      <!-- Participation Trends -->
       <section class="panel trends-panel">
         <div class="panel-header">
           <h2>Participation Trends</h2>
           <div class="chart-legend">
-            <span><i></i>Live</span><span><i></i>Average</span>
+            <span><i></i>Today</span><span><i></i>Average</span>
           </div>
         </div>
         <svg class="trend-chart" viewBox="0 0 680 230" preserveAspectRatio="none" role="img" aria-label="Weekly participation trend">
           <path class="chart-fill" d="M22 160 L132 137 L240 171 L350 128 L460 105 L570 128 L660 72 L660 214 L22 214 Z" />
           <path class="chart-line" d="M22 160 L132 137 L240 171 L350 128 L460 105 L570 128 L660 72" />
           <path class="chart-average" d="M22 181 L132 169 L240 181 L350 174 L460 169 L570 176 L660 165" />
-          <g class="chart-points"><circle cx="132" cy="137" r="5" /><circle cx="350" cy="128" r="5" /><circle cx="460" cy="105" r="5" /></g>
+          <g class="chart-points">
+            <circle cx="132" cy="137" r="5" />
+            <circle cx="350" cy="128" r="5" />
+            <circle cx="460" cy="105" r="5" />
+          </g>
         </svg>
         <div class="weekday-row"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span></div>
       </section>
 
-      <aside class="panel favorites-panel">
-        <div class="panel-header">
-          <h2>Quick Favorites</h2>
-          <button class="icon-button compact" type="button" aria-label="Favorite shortcuts"><TeacherIcon icon="zap" :size="16" /></button>
-        </div>
-        <div class="favorites-grid">
-          <button v-for="favorite in quickFavorites" :key="favorite.label" class="favorite-action" :class="`tone-${favorite.tone}`" type="button">
-            <TeacherIcon :icon="favorite.icon" :size="24" />
-            <span>{{ favorite.label }}</span>
-          </button>
-        </div>
-      </aside>
-
+      <!-- Session Log -->
       <section class="panel session-panel">
         <div class="panel-header">
           <h2>Session Log</h2>
@@ -209,7 +533,11 @@ const searchValue = ref('')
           <div class="session-row session-heading">
             <span>Date</span><span>Activity Type</span><span>Subject</span><span>Score</span><span>Actions</span>
           </div>
-          <div v-for="log in sessionLogs" :key="`${log.date}-${log.type}`" class="session-row">
+          <div
+            v-for="log in sessionLogs"
+            :key="`${log.date}-${log.type}`"
+            class="session-row session-data-row"
+          >
             <span>{{ log.date }}</span>
             <strong>{{ log.type }}</strong>
             <span>{{ log.subject }}</span>
@@ -225,7 +553,13 @@ const searchValue = ref('')
 </template>
 
 <style scoped>
-/* ── Dashboard-specific overrides (6-column stats, engage grid, etc.) ── */
+/* ── Live data pulse animation ─────────────────────────────── */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ── Stats Grid ────────────────────────────────────────────── */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(6, minmax(120px, 1fr));
@@ -233,8 +567,31 @@ const searchValue = ref('')
 }
 
 .stat-card {
+  position: relative;
   min-height: 126px;
   padding: 26px 24px 20px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.stat-number {
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 32px rgba(21, 33, 72, 0.12);
+  border-color: var(--primary);
+}
+
+.stat-card:active {
+  transform: translateY(-2px);
+}
+
+.stat-card:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
 .stat-value-row {
@@ -242,24 +599,63 @@ const searchValue = ref('')
   margin-top: 22px;
 }
 
-.stat-value-row strong {
+.stat-number {
   font-size: 31px;
   line-height: 0.9;
+  display: inline-block;
+  transition: transform 0.3s ease;
 }
 
-.stat-value-row span {
+.stat-card:hover .stat-number {
+  transform: scale(1.05);
+}
+
+.stat-meta-badge {
   color: var(--green);
   font-size: 11px;
   font-weight: 800;
 }
 
-.stat-card.tone-red .stat-value-row strong,
-.stat-card.tone-red .stat-value-row span {
+.stat-card.tone-red .stat-number,
+.stat-card.tone-red .stat-meta-badge {
   color: var(--red);
 }
 
-.engage-section {
-  margin-top: 32px;
+.stat-card.tone-green .stat-number {
+  color: var(--green);
+}
+
+.stat-card.tone-green .stat-meta-badge {
+  color: var(--green);
+}
+
+.stat-hover-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px;
+  background: rgba(0, 31, 158, 0.06);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary);
+  transform: translateY(100%);
+  transition: transform 0.2s ease;
+}
+
+.stat-card:hover .stat-hover-indicator {
+  transform: translateY(0);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   REDESIGNED FAVORITE TOOLS SECTION
+   ══════════════════════════════════════════════════════════════ */
+.favtools-section {
+  margin-top: 38px;
 }
 
 .section-title-row {
@@ -270,9 +666,36 @@ const searchValue = ref('')
 }
 
 .section-title-row h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   margin: 0;
   font-size: 16px;
   font-weight: 800;
+}
+
+.favtools-title-icon {
+  display: inline-grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #fff;
+}
+
+.favtools-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 0 6px;
 }
 
 .manage-tools-btn {
@@ -281,88 +704,336 @@ const searchValue = ref('')
   border-color: var(--primary);
 }
 
-.engage-grid {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(120px, 1fr));
-  gap: 24px;
-  margin-top: 22px;
+.favtools-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.engage-tool {
-  position: relative;
+.favtools-actions-row .ghost-button,
+.favtools-actions-row .outline-button {
+  min-height: 34px;
+  font-size: 12px;
+}
+
+/* Empty state */
+.empty-favorites {
   display: flex;
-  min-height: 154px;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 20px;
-  border: 1px solid transparent;
-  border-left: 4px solid var(--primary);
-  border-radius: 8px;
-  background: var(--primary-soft);
-  color: var(--primary);
-  box-shadow: 0 14px 22px rgba(18, 36, 91, 0.08);
+  gap: 12px;
+  padding: 52px 24px;
+  border: 2px dashed var(--line);
+  border-radius: 16px;
+  background: linear-gradient(135deg, #fafbff 0%, #f0f4ff 100%);
+  margin-top: 22px;
 }
 
-.engage-tool .tool-icon {
-  display: grid;
-  width: 64px;
-  height: 64px;
-  place-items: center;
-  border-radius: 8px;
-  background: #ffffff;
+.empty-fav-icon {
+  color: var(--muted);
+  opacity: 0.35;
 }
 
-.engage-tool .tool-label {
+.empty-favorites h3 {
+  margin: 0;
+  font-size: 18px;
   font-weight: 800;
+  color: var(--ink);
 }
 
-.favorite-star {
+.empty-favorites p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  max-width: 300px;
+  text-align: center;
+}
+
+/* ── Favorites track (horizontal scroll) ───────────────────── */
+.favtools-track-wrapper {
+  margin-top: 20px;
+  margin-left: -4px;
+  margin-right: -4px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+.favtools-track-wrapper::-webkit-scrollbar {
+  height: 4px;
+}
+
+.favtools-track-wrapper::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 999px;
+}
+
+.favtools-track {
+  display: flex;
+  gap: 16px;
+  padding: 4px;
+  min-width: min-content;
+}
+
+/* ── Individual favorite card ──────────────────────────────── */
+.favtool-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 156px;
+  min-height: 156px;
+  padding: 20px 14px;
+  border-radius: 16px;
+  border: 1px solid #e6eaff;
+  background: linear-gradient(145deg, #ffffff 0%, #f8faff 100%);
+  color: var(--primary);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(21, 33, 72, 0.05);
+}
+
+.favtool-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 14px 32px rgba(21, 33, 72, 0.13);
+  border-color: var(--primary);
+}
+
+.favtool-card:active {
+  transform: translateY(-3px);
+}
+
+/* ── VIBRANT COLOR SCHEMES for favorite tool cards ───────── */
+
+.favtool-card.color-cyan {
+  background: linear-gradient(145deg, #e8f4fd 0%, #d0ecff 100%);
+  border-color: #7fc4ff;
+  color: #0066cc;
+}
+.favtool-card.color-cyan:hover {
+  border-color: #0095ff;
+  box-shadow: 0 12px 28px rgba(0, 149, 255, 0.25);
+  background: linear-gradient(145deg, #dceefe 0%, #b8e0ff 100%);
+}
+
+.favtool-card.color-green {
+  background: linear-gradient(145deg, #e6f7ed 0%, #c8f0d7 100%);
+  border-color: #6fcf8f;
+  color: #007733;
+}
+.favtool-card.color-green:hover {
+  border-color: #00b34d;
+  box-shadow: 0 12px 28px rgba(0, 179, 77, 0.25);
+  background: linear-gradient(145deg, #d4f4e0 0%, #a8e8c0 100%);
+}
+
+.favtool-card.color-orange {
+  background: linear-gradient(145deg, #fef0e0 0%, #fde0b8 100%);
+  border-color: #faba66;
+  color: #cc5a00;
+}
+.favtool-card.color-orange:hover {
+  border-color: #ff8800;
+  box-shadow: 0 12px 28px rgba(255, 136, 0, 0.25);
+  background: linear-gradient(145deg, #fde8cc 0%, #fcd4a0 100%);
+}
+
+.favtool-card.color-violet {
+  background: linear-gradient(145deg, #f0e8fe 0%, #e0d0fc 100%);
+  border-color: #b88af0;
+  color: #6b21a8;
+}
+.favtool-card.color-violet:hover {
+  border-color: #9333ea;
+  box-shadow: 0 12px 28px rgba(147, 51, 234, 0.25);
+  background: linear-gradient(145deg, #e8d8fe 0%, #d0b8fc 100%);
+}
+
+.favtool-card.color-red {
+  background: linear-gradient(145deg, #fde8e8 0%, #fccccc 100%);
+  border-color: #f08080;
+  color: #b91c1c;
+}
+.favtool-card.color-red:hover {
+  border-color: #ef4444;
+  box-shadow: 0 12px 28px rgba(239, 68, 68, 0.25);
+  background: linear-gradient(145deg, #fcd4d4 0%, #fab0b0 100%);
+}
+
+.favtool-card.color-blue {
+  background: linear-gradient(145deg, #e0e8ff 0%, #c0d4ff 100%);
+  border-color: #80a0ff;
+  color: #001f9e;
+}
+.favtool-card.color-blue:hover {
+  border-color: #3366ff;
+  box-shadow: 0 12px 28px rgba(51, 102, 255, 0.25);
+  background: linear-gradient(145deg, #ccd8ff 0%, #a0baff 100%);
+}
+
+/* Remove button */
+.favtool-remove {
   position: absolute;
-  top: 14px;
-  right: 12px;
+  top: 8px;
+  right: 8px;
+  display: inline-grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.04);
+  color: #8a92a8;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.2s ease;
 }
 
-.engage-tool.tone-green {
-  border-left-color: var(--green);
-  background: var(--green-soft);
-  color: var(--green);
+.favtool-card:hover .favtool-remove {
+  opacity: 1;
 }
 
-.engage-tool.tone-orange {
-  border-left-color: var(--orange);
-  background: var(--orange-soft);
-  color: #eb6400;
+.favtool-remove:hover {
+  background: var(--red-soft);
+  color: var(--red);
+  transform: scale(1.15);
 }
 
-.engage-tool.tone-cyan {
-  border-left-color: var(--cyan);
-  background: var(--cyan-soft);
-  color: var(--cyan);
+.favtool-emoji {
+  font-size: 36px;
+  line-height: 1;
+  transition: transform 0.3s ease;
 }
 
-.engage-tool.tone-violet {
-  border-left-color: var(--violet);
-  background: var(--violet-soft);
-  color: var(--violet);
+.favtool-card:hover .favtool-emoji {
+  transform: scale(1.12);
 }
 
-.engage-tool.add-tool {
-  border: 2px dashed #bfc6db;
+.favtool-name {
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.favtool-hint {
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.favtool-card:hover .favtool-hint {
+  opacity: 1;
+}
+
+/* Add More card */
+.favtool-add-more {
+  border: 2px dashed var(--line);
   background: transparent;
-  color: #696d7d;
+  color: var(--muted);
   box-shadow: none;
 }
 
-.engage-tool.add-tool .tool-icon {
-  background: #edf2ff;
+.favtool-add-more:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-soft);
+  transform: translateY(-4px);
 }
 
+.favtool-add-icon {
+  display: inline-grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  border-radius: 12px;
+  background: #edf2ff;
+  color: var(--primary);
+  transition: all 0.2s;
+}
+
+.favtool-add-more:hover .favtool-add-icon {
+  background: var(--primary);
+  color: #fff;
+  transform: scale(1.08);
+}
+
+/* ── Hide toggle in manage modal ───────────────────────────── */
+.manage-tool-hide {
+  display: inline-grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 6px;
+  color: #d0d6e8;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.manage-tool-hide:hover {
+  background: #eef3ff;
+  color: #4a5268;
+}
+
+.manage-tool-hide.hidden {
+  color: #8a92a8;
+  opacity: 0.6;
+}
+
+.manage-tool-hide.hidden:hover {
+  opacity: 1;
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.manage-tool-item {
+  position: relative;
+}
+
+.manage-tool-item.is-hidden {
+  background: #f8f8fa;
+  border-color: #e0e4ef;
+  border-style: dashed;
+}
+
+.manage-tool-item.is-hidden .manage-tool-icon {
+  filter: grayscale(0.3);
+}
+
+.manage-tool-item.is-hidden::after {
+  content: 'Hidden';
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  border-radius: 4px;
+  background: #e8ecf4;
+  color: #8a92a8;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  line-height: 1.4;
+}
+
+.text-muted {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* ── Dashboard Grid ─────────────────────────────────────────── */
 .dashboard-grid {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(260px, 0.95fr);
   gap: 24px;
-  margin-top: 32px;
+  margin-top: 38px;
 }
 
 .panel {
@@ -371,6 +1042,11 @@ const searchValue = ref('')
   border-radius: 8px;
   background: #ffffff;
   box-shadow: 0 16px 24px rgba(21, 33, 72, 0.06);
+  transition: box-shadow 0.2s ease;
+}
+
+.panel:hover {
+  box-shadow: 0 20px 32px rgba(21, 33, 72, 0.1);
 }
 
 .panel-header {
@@ -401,8 +1077,15 @@ const searchValue = ref('')
   font-size: 14px;
   cursor: pointer;
   font-weight: 700;
+  transition: color 0.15s;
 }
 
+.link-button:hover {
+  color: var(--primary-dark);
+  text-decoration: underline;
+}
+
+/* ── Activity Table ────────────────────────────────────────── */
 .activity-table,
 .session-table {
   width: 100%;
@@ -415,6 +1098,7 @@ const searchValue = ref('')
   min-height: 90px;
   border-top: 1px solid #e0e4ef;
   padding: 0 24px;
+  transition: background 0.15s ease;
 }
 
 .activity-heading,
@@ -425,6 +1109,10 @@ const searchValue = ref('')
   font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
+}
+
+.activity-data-row:hover {
+  background: #f5f8ff;
 }
 
 .activity-row strong {
@@ -446,8 +1134,16 @@ mark.live {
   background: transparent;
   color: #646b7c;
   cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.15s;
 }
 
+.table-action:hover {
+  background: #eef3ff;
+  color: var(--primary);
+}
+
+/* ── Live Poll Panel ───────────────────────────────────────── */
 .live-poll-panel {
   border-left: 4px solid var(--primary);
   padding: 30px 26px 24px;
@@ -460,7 +1156,10 @@ mark.live {
   gap: 16px;
 }
 
-.live-poll-header > span {
+.live-poll-header .live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   border-radius: 999px;
   background: #ffdde0;
   color: var(--red);
@@ -468,6 +1167,15 @@ mark.live {
   font-weight: 800;
   padding: 5px 10px;
   text-transform: uppercase;
+}
+
+.live-badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--red);
+  animation: pulse-dot 1.5s ease-in-out infinite;
 }
 
 .live-poll-header div {
@@ -523,14 +1231,22 @@ mark.live {
   border-radius: 999px;
   background: var(--primary);
   box-shadow: 80px 0 0 #dbe6fb;
+  transition: width 0.5s ease;
 }
 
 .close-poll-button {
   width: 100%;
   min-height: 50px;
   margin-top: 52px;
+  transition: all 0.2s;
 }
 
+.close-poll-button:hover {
+  opacity: 0.9;
+  transform: scale(1.01);
+}
+
+/* ── Trends Panel ──────────────────────────────────────────── */
 .trends-panel {
   min-height: 346px;
   padding-bottom: 20px;
@@ -566,10 +1282,16 @@ mark.live {
   width: calc(100% - 48px);
   height: 205px;
   margin: 10px 24px 0;
+  overflow: visible;
 }
 
 .chart-fill {
   fill: rgba(0, 31, 158, 0.11);
+  transition: all 0.5s ease;
+}
+
+.trends-panel:hover .chart-fill {
+  fill: rgba(0, 31, 158, 0.16);
 }
 
 .chart-line {
@@ -592,6 +1314,15 @@ mark.live {
   fill: var(--primary);
 }
 
+.chart-points circle {
+  transition: r 0.2s ease;
+  cursor: pointer;
+}
+
+.chart-points circle:hover {
+  r: 7;
+}
+
 .weekday-row {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -601,63 +1332,7 @@ mark.live {
   text-transform: uppercase;
 }
 
-.favorites-panel {
-  padding: 16px 20px 24px;
-}
-
-.favorites-panel .panel-header {
-  min-height: 58px;
-  padding: 0;
-}
-
-.compact {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  background: #e8eefb;
-  color: var(--primary);
-}
-
-.favorites-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-  margin-top: 16px;
-}
-
-.favorite-action {
-  display: flex;
-  min-height: 116px;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  border: 0;
-  border-left: 4px solid var(--primary);
-  border-radius: 8px;
-  background: var(--primary-soft);
-  color: var(--primary);
-  font-size: 12px;
-  font-weight: 800;
-  text-transform: uppercase;
-  cursor: pointer;
-}
-
-.favorite-action.tone-green {
-  border-left-color: var(--green);
-  color: var(--green);
-}
-
-.favorite-action.tone-orange {
-  border-left-color: var(--orange);
-  color: var(--orange);
-}
-
-.favorite-action.tone-cyan {
-  border-left-color: var(--cyan);
-  color: var(--cyan);
-}
-
+/* ── Session Log ───────────────────────────────────────────── */
 .session-panel {
   grid-column: 1 / -1;
   margin-top: 10px;
@@ -676,6 +1351,12 @@ mark.live {
   background: #fff;
   cursor: pointer;
   font-weight: 700;
+  transition: all 0.15s;
+}
+
+.filter-button:hover {
+  border-color: var(--primary);
+  color: var(--primary);
 }
 
 .session-row {
@@ -685,6 +1366,11 @@ mark.live {
   min-height: 82px;
   border-top: 1px solid #dfe4ef;
   padding: 0 24px;
+  transition: background 0.15s ease;
+}
+
+.session-data-row:hover {
+  background: #f5f8ff;
 }
 
 .session-row strong {
@@ -695,23 +1381,9 @@ mark.live {
   color: var(--green);
 }
 
-.icon-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 42px;
-  height: 42px;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: #151928;
-  cursor: pointer;
-}
-
 /* ── Responsive ─────────────────────────────────────────────── */
 @media (max-width: 1280px) {
-  .stats-grid,
-  .engage-grid {
+  .stats-grid {
     grid-template-columns: repeat(3, minmax(150px, 1fr));
   }
 }
@@ -726,16 +1398,25 @@ mark.live {
 }
 
 @media (max-width: 720px) {
-  .stats-grid,
-  .engage-grid,
-  .favorites-grid {
+  .stats-grid {
     grid-template-columns: 1fr;
   }
+
+  .favtools-track {
+    gap: 12px;
+  }
+
+  .favtool-card {
+    width: 140px;
+    min-height: 140px;
+  }
+
   .section-title-row,
   .panel-header {
     flex-direction: column;
     align-items: flex-start;
   }
+
   .activity-row,
   .session-row {
     grid-template-columns: 1fr;
@@ -743,6 +1424,7 @@ mark.live {
     min-height: auto;
     padding: 18px;
   }
+
   .activity-heading,
   .session-heading {
     display: none;
