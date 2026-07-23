@@ -6,12 +6,19 @@ import SingleStudentPickerView from '@/views/SingleStudentPickerView.vue'
 import MultipleStudentPickerView from '@/views/MultipleStudentPickerView.vue'
 import LuckyDrawView from '@/views/LuckyDrawView.vue'
 import HomepageView from '@/views/Homepage.vue'
-import ToolsPage from '@/pages/ToolsPage.vue'
 import ToolDetailPage from '@/pages/ToolDetailPage.vue'
 import GroupGeneratorView from '@/views/GroupGeneratorView.vue'
+import Icebreakers from '@/views/Icebreakers.vue'
+import TwoTruthsOneLie from '@/views/TwoTruthsOneLie.vue'
+import WouldYouRather from '@/views/WouldYouRather.vue'
+import SpinTheQuestion from '@/views/SpinTheQuestion.vue'
+import SpinTheQuestionResults from '@/views/SpinTheQuestionResults.vue'
+import RandomChallengeGenerator from '@/views/RandomChallengeGenerator.vue'
+import MysteryBox from '@/views/MysteryBox.vue'
 import CreateGamePage from '@/pages/CreateGamePage.vue'
 import JoinGamePage from '@/pages/JoinGamePage.vue'
 import GamePlayPage from '@/pages/GamePlayPage.vue'
+import GameHistoryPage from '@/pages/GameHistoryPage.vue'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -256,9 +263,19 @@ const routes: RouteRecordRaw[] = [
     component: LuckyDrawView,
   },
   {
+    path: '/soundboard',
+    name: 'soundboard',
+    component: () => import('@/pages/SoundboardPage.vue'),
+  },
+  {
     path: '/tools',
     name: 'tools',
-    component: ToolsPage,
+    component: () => import('@/pages/AllToolsPage.vue'),
+  },
+  {
+    path: '/tools/fun-activities',
+    name: 'fun-activities',
+    component: () => import('@/pages/ToolsPage.vue'),
   },
   {
     path: '/tools/category/:slug',
@@ -397,6 +414,45 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/pages/StudentLiveVote.vue'),
   },
   {
+    path: '/tools/icebreakers',
+    redirect: '/icebreakers',
+  },
+  {
+    path: '/icebreakers',
+    name: 'icebreakers',
+    component: Icebreakers,
+  },
+  {
+    path: '/tools/icebreakers/two-truths-one-lie',
+    name: 'two-truths-one-lie',
+    component: TwoTruthsOneLie,
+  },
+  {
+    path: '/tools/icebreakers/would-you-rather',
+    name: 'would-you-rather',
+    component: WouldYouRather,
+  },
+  {
+    path: '/tools/icebreakers/spin-the-question',
+    name: 'spin-the-question',
+    component: SpinTheQuestion,
+  },
+  {
+    path: '/tools/icebreakers/spin-the-question/results',
+    name: 'spin-the-question-results',
+    component: SpinTheQuestionResults,
+  },
+  {
+    path: '/tools/icebreakers/random-challenge-generator',
+    name: 'random-challenge-generator',
+    component: RandomChallengeGenerator,
+  },
+  {
+    path: '/tools/icebreakers/mystery-box',
+    name: 'mystery-box',
+    component: MysteryBox,
+  },
+  {
     path: '/create-voting-poll',
     name: 'create-voting-poll',
     component: () => import('@/pages/CreateVotingPoll.vue'),
@@ -447,6 +503,11 @@ const routes: RouteRecordRaw[] = [
     component: GamePlayPage,
   },
   {
+    path: '/games/history',
+    name: 'game-history',
+    component: GameHistoryPage,
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
     component: () => import('@/pages/NotFound.vue'),
@@ -460,6 +521,11 @@ const router = createRouter({
 
 router.beforeEach((to) => {
   const authStore = useAuthStore()
+
+  // Allow access to homepage without authentication
+  if (to.name === 'home') {
+    return true
+  }
 
   if (to.meta.requiresAuth && !authStore.user) {
     return '/login'

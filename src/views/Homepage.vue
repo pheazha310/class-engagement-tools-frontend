@@ -231,7 +231,6 @@ const team = [
   line-height: 1.6;
   color: #1f2937;
   background: #ffffff;
-  padding-top: 64px;
 }
 
 .container {

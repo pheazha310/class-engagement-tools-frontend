@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref } from 'vue'
+import { RouterLink } from 'vue-router'
 
 const elapsedSeconds = ref(0)
 const intervalId = ref<number | null>(null)
@@ -84,6 +85,8 @@ onUnmounted(() => {
 <template>
   <section class="stopwatch-section">
     <div class="stopwatch-card">
+      <!-- <RouterLink to="/tools" class="back-button">← Back</RouterLink> -->
+
       <div class="stopwatch-display">
         <div class="stopwatch-time">{{ formattedElapsedTime }}</div>
         <div class="stopwatch-label">Elapsed Time</div>
@@ -198,6 +201,31 @@ onUnmounted(() => {
   border: 1px solid rgba(148, 163, 184, 0.16);
   padding: 32px;
   text-align: center;
+}
+
+.back-button {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.85rem;
+  border: 1.5px solid #e2e8f0;
+  color: #475569;
+  background: #ffffff;
+  transition: all 0.15s ease;
+  z-index: 5;
+}
+
+.back-button:hover {
+  border-color: #2563eb;
+  background: #f0f9ff;
+  color: #2563eb;
 }
 
 .fullscreen-button {

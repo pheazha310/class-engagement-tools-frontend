@@ -94,16 +94,16 @@ function removeOption(index: number) {
 
 function moveOptionUp(index: number) {
   if (index > 0) {
-    const temp = mcOptions.value[index]
-    mcOptions.value[index] = mcOptions.value[index - 1]
+    const temp = mcOptions.value[index] as string
+    mcOptions.value[index] = mcOptions.value[index - 1] as string
     mcOptions.value[index - 1] = temp
   }
 }
 
 function moveOptionDown(index: number) {
   if (index < mcOptions.value.length - 1) {
-    const temp = mcOptions.value[index]
-    mcOptions.value[index] = mcOptions.value[index + 1]
+    const temp = mcOptions.value[index] as string
+    mcOptions.value[index] = mcOptions.value[index + 1] as string
     mcOptions.value[index + 1] = temp
   }
 }
@@ -186,7 +186,7 @@ function buildFormData(): PollFormData {
     question: questionWithContext,
     options,
     is_multiple_choice: isMultipleChoice,
-    is_open_text: isOpenText,
+    is_open_text: false,
     is_anonymous: false,
     is_quiz: false,
   }

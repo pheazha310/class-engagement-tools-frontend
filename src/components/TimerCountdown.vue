@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref, watch } from 'vue'
+import { RouterLink } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useTimerStore } from '@/stores/timerStore'
 
@@ -386,7 +387,7 @@ onUnmounted(() => {
 
 <style scoped>
 .timer-section {
-  padding: 36px 0 16px;
+  padding: 8px 0 16px;
 }
 
 .fullscreen-btn {
@@ -504,7 +505,7 @@ onUnmounted(() => {
 .timer-card {
   position: relative;
   max-width: 500px;
-  margin: 24px auto 0;
+  margin: 0 auto;
   background: white;
   border-radius: 28px;
   box-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);

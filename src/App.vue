@@ -45,4 +45,8 @@ html {
 body {
   font-family: inherit;
 }
+
+.main-content {
+  padding-top: 64px;
+}
 </style>

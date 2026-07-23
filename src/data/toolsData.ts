@@ -43,7 +43,7 @@ export const categories: Category[] = [
     tools: [
       { title: 'Timer', slug: 'timer', icon: '⏱️', description: 'Run countdowns, stopwatches, and Pomodoro sessions with alerts.', category: 'Classroom Control', route: '/timer' },
       { title: 'Stopwatch', slug: 'stopwatch', icon: '⏱️', description: 'Measure activity duration with an easy-start stopwatch.', category: 'Classroom Control', route: '/stopwatch' },
-      { title: 'Soundboard', slug: 'soundboard', icon: '🔊', description: 'Bring excitement to lessons with applause, countdown, and success sounds.', category: 'Classroom Control', route: '/tools/soundboard' },
+      { title: 'Soundboard', slug: 'soundboard', icon: '🔊', description: 'Bring excitement to lessons with applause, countdown, and success sounds.', category: 'Classroom Control', route: '/soundboard' },
     ]
   },
   {
@@ -70,11 +70,11 @@ export const categories: Category[] = [
   {
     name: 'Fun Activities',
     icon: '🎉',
-    slug: 'fun',
+    slug: 'fun-activities',
     tools: [
-      { title: 'Icebreakers', slug: 'icebreakers', icon: '✨', description: 'Warm up your class with energizing prompts and team-building games.', category: 'Fun Activities', route: '/tools/icebreakers' },
-      { title: 'Bingo Generator', slug: 'bingo-generator', icon: '🎱', description: 'Create custom bingo games for any subject.', category: 'Fun Activities', route: '/tools/bingo-generator' },
-      { title: 'Flashcards', slug: 'flashcards', icon: '📖', description: 'Interactive flashcards for vocabulary and concept review.', category: 'Fun Activities', route: '/tools/flashcards' },
+      { title: 'Icebreakers', slug: 'icebreakers', icon: '✨', description: 'Warm up your class with energizing prompts and team-building exercises.', category: 'Fun Activities', route: '/icebreakers' },
+      { title: 'Bingo Generator', slug: 'bingo-generator', icon: '🎱', description: 'Create custom bingo games for any subject.', category: 'Fun Activities' },
+      { title: 'Flashcards', slug: 'flashcards', icon: '📖', description: 'Interactive flashcards for vocabulary and concept review.', category: 'Fun Activities' },
     ]
   },
 ]
