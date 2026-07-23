@@ -40,9 +40,9 @@ export default {
       window.location.href = '/teacher/live-polls/create'
     }
 
-    const navigateToQuizzes = () => {
-      window.location.href = '/quizzes/create'
-    }
+  const navigateToQuizzes = () => {
+    window.location.href = '/Classroom'
+  }
 
     const navigateToActivityHistory = () => {
       window.location.href = '/teacher/activity-history'

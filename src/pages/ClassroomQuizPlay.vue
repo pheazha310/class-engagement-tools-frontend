@@ -2,11 +2,13 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useClassroomQuizStore } from '@/stores/classroomQuizStore'
+import { useAuthStore } from '@/stores/auth'
 import type { SeededQuestion } from '@/data/quizData'
 
 const router = useRouter()
 const route = useRoute()
 const store = useClassroomQuizStore()
+const authStore = useAuthStore()
 
 const quizId = route.params.quizId as string
 const quiz = computed(() => store.getQuizById(quizId))
@@ -33,8 +35,13 @@ onMounted(() => {
     router.push('/classroom')
     return
   }
+
   questions.value = store.getQuestionsForQuiz(quizId)
   timeRemaining.value = quiz.value.duration * 60
+
+  if (!store.currentStudentName && authStore.user?.name && authStore.user?.email?.includes('@student')) {
+    store.setStudentInfo(authStore.user.name, authStore.user.school || '')
+  }
 })
 
 function startQuiz() {

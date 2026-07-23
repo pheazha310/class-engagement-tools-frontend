@@ -2,18 +2,35 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useClassroomQuizStore } from '@/stores/classroomQuizStore'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
 const store = useClassroomQuizStore()
+const authStore = useAuthStore()
 
 const searchQuery = ref('')
 const studentName = ref(store.currentStudentName || '')
 const studentClass = ref(store.currentStudentClass || '')
-const showNameModal = ref(!studentName.value)
+const showNameModal = ref(false)
 
 onMounted(() => {
   store.init()
-  if (!store.currentStudentName) {
+  
+  if (authStore.user?.name && authStore.user?.email?.includes('@student')) {
+    const loggedInName = authStore.user.name
+    const loggedInClass = authStore.user.school || ''
+    
+    if (store.currentStudentName) {
+      showNameModal.value = false
+    } else {
+      studentName.value = loggedInName
+      studentClass.value = loggedInClass
+      setTimeout(() => {
+        store.setStudentInfo(studentName.value, studentClass.value)
+        showNameModal.value = false
+      }, 100)
+    }
+  } else {
     showNameModal.value = true
   }
 })

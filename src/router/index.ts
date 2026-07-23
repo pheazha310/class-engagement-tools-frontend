@@ -117,14 +117,18 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/pages/ClassroomRankings.vue'),
   },
 
-  // Quizzes
+  // Classroom (teacher dashboard quizzes)
   {
-    path: '/quizzes',
-    name: 'teacher-quizzes',
+    path: '/classroom',
+    name: 'teacher-classroom',
     component: () => import('@/pages/TeacherQuizList.vue'),
   },
   {
-    path: '/quizzes/create',
+    path: '/Classroom',
+    redirect: '/classroom',
+  },
+  {
+    path: '/classroom/create',
     name: 'create-quiz',
     component: () => import('@/pages/CreateQuiz.vue'),
   },

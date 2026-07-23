@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useClassroomQuizStore } from '@/stores/classroomQuizStore'
+import { useAuthStore } from '@/stores/auth'
+
 const router = useRouter()
 const store = useClassroomQuizStore()
+const authStore = useAuthStore()
 
 const step = ref<'details' | 'questions'>('details')
 const toastMessage = ref<string | null>(null)
@@ -18,6 +21,16 @@ const form = reactive({
   duration: 10,
   passing_score: 50,
   shuffle_questions: false,
+})
+
+// Initialize form with auth store data
+onMounted(() => {
+  if (authStore.user?.name) {
+    form.title = authStore.user.name
+  }
+  if (authStore.user?.school) {
+    form.class_name = authStore.user.school
+  }
 })
 
 // Questions

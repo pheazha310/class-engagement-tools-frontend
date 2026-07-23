@@ -41,7 +41,7 @@ function generateBingo() {
   for (let r = 0; r < gridSize; r++) {
     const row: string[] = []
     for (let c = 0; c < gridSize; c++) {
-      if (centerFree && r === 2 && c === 2) {
+      if (centerFree.value && r === 2 && c === 2) {
         row.push('★ FREE ★')
       } else if (idx < shuffled.length) {
         row.push(shuffled[idx++])

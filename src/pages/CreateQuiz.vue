@@ -2,6 +2,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useQuizStore } from '@/stores/quizStore'
+import { useAuthStore } from '@/stores/auth'
 import { questionService } from '@/services/questionService'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import ToastNotification from '@/components/ToastNotification.vue'
@@ -13,6 +14,7 @@ import type { AxiosError } from 'axios'
 const router = useRouter()
 const route = useRoute()
 const store = useQuizStore()
+const authStore = useAuthStore()
 
 const isEditMode = computed(() => !!route.params.id)
 const quizId = computed(() => route.params.id as string | undefined)
@@ -35,6 +37,16 @@ const submittingQuestions = ref(false)
 const errors = ref<Record<string, string>>({})
 const toastMessage = ref<string | null>(null)
 const toastType = ref<'success' | 'error'>('success')
+
+// Initialize form with auth store data on mount
+onMounted(() => {
+  if (authStore.user?.name) {
+    form.title = authStore.user.name
+  }
+  if (authStore.user?.school) {
+    form.class_name = authStore.user.school
+  }
+})
 
 // ── Questions (inline) ──
 interface PendingQuestion {

@@ -49,7 +49,7 @@ onMounted(async () => {
 })
 
 function navigateToCreate() {
-  router.push('/quizzes/create')
+  router.push('/classroom/create')
 }
 
 function editQuiz(id: string) {

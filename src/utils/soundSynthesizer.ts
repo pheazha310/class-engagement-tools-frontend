@@ -19,7 +19,7 @@ let perSoundMultiplier = 1.0 // Per-sound user-adjusted multiplier (0-1)
 
 // Per-sound user volume settings (persisted in localStorage)
 const STORAGE_KEY = 'soundboard_per_sound_volumes'
-let perSoundVolumes: Record<string, number> = loadPerSoundVolumes()
+const perSoundVolumes: Record<string, number> = loadPerSoundVolumes()
 
 function loadPerSoundVolumes(): Record<string, number> {
   try {
