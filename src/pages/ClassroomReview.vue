@@ -183,7 +183,7 @@ function retakeQuiz() {
 .review-page {
   position: relative;
   min-height: 100vh;
-  padding: 3rem 1rem 4rem;
+  padding: calc(68px + 3rem) 1rem 4rem;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
@@ -474,7 +474,7 @@ function retakeQuiz() {
    ============================================================ */
 @media (max-width: 768px) {
   .review-page {
-    padding: 2.5rem 0.75rem 3rem;
+    padding: calc(68px + 1.25rem) 0.75rem 3rem;
   }
 
   .review-header {

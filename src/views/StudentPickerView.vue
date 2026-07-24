@@ -212,6 +212,7 @@ function openFeature(feature: FeatureCard) {
 <style scoped>
 .dashboard {
   min-height: 100vh;
+  padding-top: 68px;
   background: #ffffff;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }

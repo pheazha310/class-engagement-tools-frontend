@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { categories } from '@/data/toolsData'
 import ProfileDropdown from '@/components/ProfileDropdown.vue'
@@ -9,7 +9,6 @@ defineOptions({
   name: 'AppNavbar',
 })
 
-const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
 
@@ -60,12 +59,6 @@ const closeMobileMenu = () => {
   activeDropdown.value = false
 }
 
-async function handleLogout() {
-  await auth.logout()
-  mobileMenuOpen.value = false
-  await router.replace('/')
-}
-
 onMounted(() => {
   window.addEventListener('scroll', handleScroll)
 })
@@ -81,7 +74,6 @@ onUnmounted(() => {
       <!-- Logo -->
       <RouterLink to="/" class="nav-logo">
         <img src="@/assets/photo_logo.jpg" alt="Classroom Tools" class="nav-logo-img" />
-        <span class="nav-logo-text">EduPulse</span>
       </RouterLink>
 
       <!-- Navigation Links -->
@@ -181,6 +173,7 @@ onUnmounted(() => {
             <RouterLink to="/games/history" class="dropdown-item" @click="closeMobileMenu">Game History</RouterLink>
           </div>
         </li>
+        <li><RouterLink to="/contact" class="nav-link" :class="{ active: route.path === '/contact' }" @click="closeMobileMenu">Contact</RouterLink></li>
 
         <li>
           <RouterLink to="/contact" class="nav-link" :class="{ active: route.path === '/contact' }" @click="closeMobileMenu">
@@ -194,7 +187,6 @@ onUnmounted(() => {
           <template v-if="auth.isAuthenticated">
             <RouterLink to="/profile" class="nav-link" @click="closeMobileMenu">Profile</RouterLink>
             <RouterLink to="/settings" class="nav-link" @click="closeMobileMenu">Settings</RouterLink>
-            <button class="nav-link mobile-logout-btn" type="button" @click="handleLogout">Logout</button>
           </template>
           <template v-else>
             <RouterLink to="/login" class="nav-link mobile-login-btn" @click="closeMobileMenu">Login</RouterLink>
@@ -211,9 +203,6 @@ onUnmounted(() => {
             Vote
           </RouterLink>
           <ProfileDropdown />
-          <button class="btn btn-logout" type="button" @click="handleLogout" title="Sign out">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          </button>
         </template>
         <template v-else>
           <RouterLink to="/login" class="btn btn-login">Log in</RouterLink>
@@ -282,31 +271,10 @@ onUnmounted(() => {
 
 }
 
-.nav-logo-text {
-  font-size: 24px;
-  font-weight: 800;
-  color: #0b1020;
-  letter-spacing: -0.02em;
-  transition: color 0.2s ease;
-}
-
-.nav-logo:hover .nav-logo-text {
-  color: #001f9e;
-}
-
-@media (max-width: 768px) {
-  .nav-logo-text {
-    display: none;
-  }
-}
-
 /* Larger logo on desktop */
 @media (min-width: 1024px) {
   .nav-logo-img {
     height: 100px;
-  }
-  .nav-logo-text {
-    font-size: 20px;
   }
 }
 

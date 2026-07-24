@@ -15,23 +15,16 @@ const showNameModal = ref(false)
 
 onMounted(() => {
   store.init()
-  
+
+  // For logged-in students, use their account info by default and hide the modal.
+  // Only prompt if we don't already have a saved name/class.
   if (authStore.user?.name && authStore.user?.email?.includes('@student')) {
-    const loggedInName = authStore.user.name
-    const loggedInClass = authStore.user.school || ''
-    
-    if (store.currentStudentName) {
-      showNameModal.value = false
-    } else {
-      studentName.value = loggedInName
-      studentClass.value = loggedInClass
-      setTimeout(() => {
-        store.setStudentInfo(studentName.value, studentClass.value)
-        showNameModal.value = false
-      }, 100)
+    if (!store.currentStudentName) {
+      store.setStudentInfo(authStore.user.name, authStore.user.school || '')
     }
+    showNameModal.value = false
   } else {
-    showNameModal.value = true
+    showNameModal.value = !store.currentStudentName
   }
 })
 
@@ -281,7 +274,7 @@ function getTotalQuestions(quizId: string): number {
 .classroom-page {
   position: relative;
   min-height: 100vh;
-  padding: 2rem 1rem 4rem;
+  padding: calc(68px + 2rem) 1rem 4rem;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
@@ -827,7 +820,7 @@ function getTotalQuestions(quizId: string): number {
    ============================================================ */
 @media (max-width: 768px) {
   .classroom-page {
-    padding: 1.25rem 0.75rem 3rem;
+    padding: calc(68px + 1.25rem) 0.75rem 3rem;
   }
 
   .classroom-header {

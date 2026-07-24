@@ -27,8 +27,10 @@ let timerInterval: ReturnType<typeof setInterval> | null = null
 const currentQuestion = computed(() => questions.value[currentIndex.value] || null)
 const totalQuestions = computed(() => questions.value.length)
 const progress = computed(() => totalQuestions.value > 0 ? ((currentIndex.value + 1) / totalQuestions.value) * 100 : 0)
-const answeredCount = computed(() => Object.keys(answers.value).length)
-
+const isCurrentQuestionAnswered = computed(() => {
+  if (!currentQuestion.value) return false
+  return answers.value[currentQuestion.value.id] != null
+})
 onMounted(() => {
   store.init()
   if (!quiz.value) {
@@ -71,6 +73,15 @@ function selectAnswer(questionId: string, choiceId: string) {
     }
   } else {
     answers.value[questionId] = [choiceId]
+  }
+
+  // Auto advance after selection for non-multiple-answer questions
+  if (!question || question.question_type !== 'multiple_answer') {
+    setTimeout(() => {
+      if (currentIndex.value < totalQuestions.value - 1) {
+        currentIndex.value++
+      }
+    }, 300)
   }
 }
 
@@ -301,7 +312,7 @@ onUnmounted(() => {
           </div>
 
           <button
-            v-if="currentIndex < totalQuestions - 1"
+            v-if="currentIndex < totalQuestions - 1 || !isCurrentQuestionAnswered"
             class="btn btn-nav"
             @click="nextQuestion"
           >
@@ -410,7 +421,7 @@ onUnmounted(() => {
 .quiz-play-page {
   position: relative;
   min-height: 100vh;
-  padding: 1.5rem 1rem 3rem;
+  padding: calc(68px + 1.5rem) 1rem 3rem;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
