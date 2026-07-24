@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import ProfileDropdown from '@/components/ProfileDropdown.vue'
 
@@ -8,7 +8,6 @@ defineOptions({
   name: 'AppNavbar',
 })
 
-const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
 
@@ -40,12 +39,6 @@ const closeMobileMenu = () => {
   mobileMenuOpen.value = false
   activeDropdown.value = false
   activeParticipantsDropdown.value = false
-}
-
-async function handleLogout() {
-  await auth.logout()
-  mobileMenuOpen.value = false
-  await router.replace('/')
 }
 
 onMounted(() => {
@@ -100,24 +93,12 @@ onUnmounted(() => {
             </RouterLink>
           </div>
         </li>
-        <li class="nav-dropdown-trigger" @mouseenter="activeParticipantsDropdown = true" @mouseleave="activeParticipantsDropdown = false">
-          <button class="nav-link dropdown-toggle" type="button" @click.prevent="activeParticipantsDropdown = !activeParticipantsDropdown">
-            Participants
-            <svg class="dropdown-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
-          </button>
-          <div class="dropdown-menu" :class="{ active: activeParticipantsDropdown }">
-            <RouterLink to="/participants/theme" class="dropdown-item" @click="closeMobileMenu">Theme</RouterLink>
-          </div>
-        </li>
         <li><RouterLink to="/contact" class="nav-link" :class="{ active: route.path === '/contact' }" @click="closeMobileMenu">Contact</RouterLink></li>
 
         <li v-if="auth.initialized" class="mobile-auth-links">
           <template v-if="auth.isAuthenticated">
             <RouterLink to="/profile" class="nav-link" @click="closeMobileMenu">Profile</RouterLink>
             <RouterLink to="/settings" class="nav-link" @click="closeMobileMenu">Settings</RouterLink>
-            <button class="nav-link mobile-logout-btn" type="button" @click="handleLogout">Logout</button>
           </template>
           <template v-else>
             <RouterLink to="/login" class="nav-link mobile-login-btn" @click="closeMobileMenu">Login</RouterLink>
@@ -129,7 +110,6 @@ onUnmounted(() => {
       <div class="nav-buttons">
         <template v-if="auth.isAuthenticated">
           <ProfileDropdown />
-          <button class="btn btn-logout" type="button" @click="handleLogout">Logout</button>
         </template>
         <template v-else>
           <RouterLink to="/login" class="btn btn-login">Login</RouterLink>
