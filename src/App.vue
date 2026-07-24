@@ -9,8 +9,8 @@ const auth = useAuthStore();
 
 const hideNavbar = computed(() => {
   const routeHide = route.meta?.hideNavbar || false;
-  const isTeacher = auth.isAuthenticated && auth.user?.role === 'teacher';
-  return routeHide || isTeacher;
+  const isTeacherOnDashboard = auth.isAuthenticated && auth.user?.role === 'teacher' && route.path.startsWith('/teacher');
+  return routeHide || isTeacherOnDashboard;
 });
 </script>
 
