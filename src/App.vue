@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { RouterView, useRoute } from 'vue-router'
 import Navbar from './components/Navbar.vue';
+import TeacherNavbar from './components/teacher/TeacherNavbar.vue';
 import { computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 
@@ -12,10 +13,15 @@ const hideNavbar = computed(() => {
   const isTeacherOnDashboard = auth.isAuthenticated && auth.user?.role === 'teacher' && route.path.startsWith('/teacher');
   return routeHide || isTeacherOnDashboard;
 });
+
+const showTeacherNav = computed(() => {
+  return auth.isAuthenticated && auth.user?.role === 'teacher' && !route.path.startsWith('/teacher') && !route.meta?.hideNavbar;
+});
 </script>
 
 <template>
-  <Navbar v-if="!hideNavbar" />
+  <TeacherNavbar v-if="showTeacherNav" />
+  <Navbar v-else-if="!hideNavbar" />
   <RouterView />
 </template>
 
