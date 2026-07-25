@@ -237,6 +237,11 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/pages/WheelPage.vue'),
   },
   {
+    path: '/wheel-canvas',
+    name: 'wheel-canvas',
+    component: () => import('@/views/WheelCanvasView.vue'),
+  },
+  {
     path: '/wheel/shared/:shareToken',
     name: 'shared-wheel',
     component: () => import('@/views/SharedWheelView.vue'),
@@ -527,6 +532,7 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
 
+<<<<<<< HEAD
   // Allow access to public routes without authentication
   const publicRoutes = ['home', 'about', 'contact', 'login', 'register', 'not-found',
     'wheel', 'student-picker', 'single-student-picker', 'multiple-student-picker', 'tools', 'category-tools',
@@ -534,6 +540,14 @@ router.beforeEach((to, from, next) => {
   if (publicRoutes.includes(to.name as string)) {
     next()
     return
+=======
+  if (to.name === 'home') {
+    return true
+>>>>>>> 6acf3de (fix: fixed style that brokend after merge)
+  }
+
+  if (to.meta.requiresAuth && !authStore.initialized) {
+    return true
   }
 
   if (to.meta.requiresAuth && !authStore.user) {

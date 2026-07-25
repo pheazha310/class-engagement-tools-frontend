@@ -9,6 +9,7 @@ const route = useRoute();
 const auth = useAuthStore();
 
 const hideNavbar = computed(() => {
+<<<<<<< HEAD
   const routeHide = route.meta?.hideNavbar || false;
   const isTeacherOnDashboard = auth.isAuthenticated && auth.user?.role === 'teacher' && route.path.startsWith('/teacher');
   return routeHide || isTeacherOnDashboard;
@@ -17,6 +18,12 @@ const hideNavbar = computed(() => {
 const showTeacherNav = computed(() => {
   return auth.isAuthenticated && auth.user?.role === 'teacher' && !route.path.startsWith('/teacher') && !route.meta?.hideNavbar;
 });
+=======
+  const routeHide = route.meta?.hideNavbar || false
+  const isTeacher = auth.isAuthenticated && auth.user?.role === 'teacher'
+  return routeHide || isTeacher
+})
+>>>>>>> 6acf3de (fix: fixed style that brokend after merge)
 </script>
 
 <template>
@@ -50,7 +57,4 @@ body {
   font-family: inherit;
 }
 
-.main-content {
-  padding-top: 64px;
-}
 </style>

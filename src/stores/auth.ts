@@ -22,7 +22,23 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => user.value !== null)
   const userName = computed(() => user.value?.name ?? '')
-  const profileImageUrl = computed(() => user.value?.profile_image_url ?? user.value?.avatar ?? '')
+  const profileImageCachedUrl = ref('')
+  const profileImageVersion = ref(0)
+
+  const profileImageUrl = computed(() => {
+    const url = user.value?.profile_image_url ?? user.value?.profile_image ?? user.value?.avatar ?? ''
+    if (!url) return ''
+    if (profileImageCachedUrl.value !== url) {
+      profileImageCachedUrl.value = url
+      profileImageVersion.value++
+    }
+    const separator = url.includes('?') ? '&' : '?'
+    return `${url}${separator}v=${profileImageVersion.value}`
+  })
+
+  function bumpProfileImageVersion() {
+    profileImageVersion.value++
+  }
 
   const userInitials = computed(() => {
     const name = user.value?.name ?? ''
@@ -92,11 +108,11 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  async function login(email: string, password: string): Promise<string | null> {
+  async function login(email: string, password: string, remember: boolean = false): Promise<string | null> {
     loading.value = true
     try {
       await ensureCsrfCookie()
-      const { data } = await api.post('/api/login', { email: email.trim(), password })
+      const { data } = await api.post('/api/login', { email: email.trim(), password, remember })
       const authenticatedUser = normalizeUser(data)
       if (authenticatedUser) {
         setUser(authenticatedUser)
@@ -159,6 +175,7 @@ export const useAuthStore = defineStore('auth', () => {
     login,
     register,
     logout,
+    bumpProfileImageVersion,
     setUser,
     clearUser,
   }

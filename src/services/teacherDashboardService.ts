@@ -34,6 +34,41 @@ export interface DashboardStats {
   unique_students: number
   active_quizzes: number
   total_classes: number
+  active_polls: number
+  scheduled_sessions: number
+  live_sessions: number
+  engagement_pct: number
+  live_poll: {
+    id: string
+    title: string
+    question: string
+    responses: number
+    options: Array<{
+      label: string
+      value: number
+      votes: number
+    }>
+  } | null
+  participation_trend: Array<{
+    label: string
+    value: number
+  }>
+}
+
+export interface TeacherStudentRosterItem {
+  id: string
+  name: string
+  email: string
+  class: string
+  classCode: string
+  status: 'active' | 'inactive'
+  joinDate: string | null
+  lastActive: string | null
+  engagement: number
+  totalPolls: number
+  totalQuizzes: number
+  averageScore: number
+  avatarInitials: string
 }
 
 export interface ActivityHistoryResponse {
@@ -167,6 +202,10 @@ class TeacherDashboardAPIService {
 
   async getTopQuizzes(): Promise<ApiResponse<any[]>> {
     return this.request(api.get('/api/teacher/top-quizzes'))
+  }
+
+  async getStudents(): Promise<ApiResponse<TeacherStudentRosterItem[]>> {
+    return this.request(api.get('/api/teacher/students'))
   }
 }
 

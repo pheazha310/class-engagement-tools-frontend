@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onUnmounted } from 'vue'
+import { RouterLink } from 'vue-router'
 
 interface Student {
   id: number
@@ -130,23 +131,28 @@ function formatTime(date: Date) {
   <div class="page">
     <div class="container">
       <header class="header">
-        <div class="header-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 2v4" />
-            <path d="M12 18v4" />
-            <path d="M2 12h4" />
-            <path d="M18 12h4" />
-            <path d="m4.93 4.93 2.83 2.83" />
-            <path d="m16.24 16.24 2.83 2.83" />
-            <path d="m4.93 19.07 2.83-2.83" />
-            <path d="m16.24 7.76 2.83-2.83" />
-            <path d="M12 6a6 6 0 1 0 0 12 6 6 0 0 0 0-12Z" />
-          </svg>
+        <div class="header__row">
+          <RouterLink to="/tools" class="header__back">← Back to all tools</RouterLink>
         </div>
-        <div>
-          <h1 class="header-title">Lucky Draw</h1>
-          <p class="header-subtitle">Add participants and draw one lucky winner with a fun spinning animation!</p>
+        <div class="header__content">
+          <div class="header-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 2v4" />
+              <path d="M12 18v4" />
+              <path d="M2 12h4" />
+              <path d="M18 12h4" />
+              <path d="m4.93 4.93 2.83 2.83" />
+              <path d="m16.24 16.24 2.83 2.83" />
+              <path d="m4.93 19.07 2.83-2.83" />
+              <path d="m16.24 7.76 2.83-2.83" />
+              <path d="M12 6a6 6 0 1 0 0 12 6 6 0 0 0 0-12Z" />
+            </svg>
+          </div>
+          <div>
+            <h1 class="header-title">Lucky Draw</h1>
+            <p class="header-subtitle">Add participants and draw one lucky winner with a fun spinning animation!</p>
+          </div>
         </div>
       </header>
 
@@ -355,10 +361,10 @@ function formatTime(date: Date) {
 
 <style scoped>
 .page {
+  margin-top: 70px;
   min-height: 100vh;
   background: linear-gradient(135deg, #1e3a5f, #2563eb);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  padding-top: 64px;
 }
 
 .container {
@@ -372,9 +378,39 @@ function formatTime(date: Date) {
 
 .header {
   display: flex;
-  align-items: flex-start;
+  flex-direction: column;
   gap: 1rem;
   padding: 0 0.25rem;
+}
+
+.header__row {
+  display: flex;
+  align-items: center;
+}
+
+.header__content {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.header__back {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.9);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.header__back:hover {
+  border-color: #22d3ee;
+  color: #22d3ee;
 }
 
 .header-icon {
@@ -410,6 +446,25 @@ function formatTime(date: Date) {
   color: #bfdbfe;
   margin: 0.25rem 0 0;
   line-height: 1.6;
+}
+
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.9);
+  transition: all 0.2s ease;
+  margin-bottom: 24px;
+}
+
+.header__back:hover {
+  border-color: #22d3ee;
+  color: #22d3ee;
 }
 
 .card {
@@ -1074,6 +1129,25 @@ function formatTime(date: Date) {
   .container {
     padding: 1.5rem 1rem 2rem;
     gap: 1rem;
+  }
+
+  .header__row {
+    justify-content: flex-start;
+  }
+
+  .header__back {
+    font-size: 0.85rem;
+    padding: 8px 16px;
+  }
+
+  .header-icon {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+
+  .header-icon svg {
+    width: 18px;
+    height: 18px;
   }
 
   .card {

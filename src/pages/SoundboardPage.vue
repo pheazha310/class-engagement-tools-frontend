@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { RouterLink } from 'vue-router'
 import { fetchSounds, playSound, fetchPlayHistory, type Sound, type SoundPlayHistory } from '@/services/sound'
 import { playSynthSound, stopAll, fadeOutAndStop, setVolume, getVolume, getAnalyserLevel, setPerSoundVolume, getPerSoundVolume, deletePerSoundVolume } from '@/utils/soundSynthesizer'
 import { getEcho } from '@/services/echo'
@@ -967,6 +968,8 @@ async function toggleHistory() {
       </div>
     </main>
 
+    <RouterLink to="/tools" class="btn-back">← Back to all tools</RouterLink>
+
     <!-- ═══════════════════════════════════
          Now Playing Bar
          ═══════════════════════════════════ -->
@@ -1132,9 +1135,9 @@ async function toggleHistory() {
    Root
    ═══════════════════════════════════ */
 .soundboard {
+  margin-top: 70px;
   min-height: 100vh;
   min-height: 100dvh;
-  padding-top: 64px;
   background: #F8FAFC;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
@@ -1321,6 +1324,25 @@ async function toggleHistory() {
   margin: 0 auto;
   padding: var(--content-pad) var(--content-pad) calc(var(--content-pad) * 3.5);
   transition: padding-bottom 0.3s;
+}
+
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  border: 1.5px solid #e2e8f0;
+  color: #334155;
+  transition: all 0.2s ease;
+  margin-bottom: 24px;
+}
+
+.btn-back:hover {
+  border-color: #2563eb;
+  color: #2563eb;
 }
 
 /* ═══════════════════════════════════

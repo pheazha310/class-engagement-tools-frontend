@@ -1,7 +1,12 @@
 <script setup lang="ts">
+<<<<<<< HEAD
 import { ref, computed, onUnmounted, watch } from 'vue'
 import { jsPDF } from 'jspdf'
 import * as XLSX from 'xlsx'
+=======
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { RouterLink } from 'vue-router'
+>>>>>>> 6acf3de (fix: fixed style that brokend after merge)
 
 interface Student {
   id: number
@@ -684,6 +689,7 @@ function confirmSelection() {
   alert(`Selected ${selectedCount.value} student${selectedCount.value !== 1 ? 's' : ''}`)
 }
 
+<<<<<<< HEAD
 onUnmounted(() => {
   if (pickTimeout) clearTimeout(pickTimeout)
   groupTimeouts.forEach(t => clearTimeout(t))
@@ -721,6 +727,11 @@ function addAllStudents() {
   }))
   students.value.push(...newStudents)
   namesInput.value = ''
+=======
+function selectClass(cls: string) {
+  selectedClass.value = cls
+  classDropdownOpen.value = false
+>>>>>>> 6acf3de (fix: fixed style that brokend after merge)
 }
 
 function triggerFileImport() {
@@ -730,6 +741,7 @@ function triggerFileImport() {
   fileInput.value?.click()
 }
 
+<<<<<<< HEAD
 function parseSpreadsheet(file: File): Promise<string[]> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -918,6 +930,30 @@ watch(showConfetti, (val) => {
   if (!val) {
     stopCardGlow()
   }
+=======
+const observer = ref<IntersectionObserver | null>(null)
+
+onMounted(() => {
+  observer.value = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in-view')
+        }
+      })
+    },
+    { threshold: 0.05, rootMargin: '0px 0px -30px 0px' },
+  )
+
+  document.querySelectorAll('.card').forEach((el) => observer.value?.observe(el))
+})
+
+onBeforeUnmount(() => {
+  observer.value?.disconnect()
+  if (pickTimeout) clearTimeout(pickTimeout)
+  groupTimeouts.forEach(t => clearTimeout(t))
+  groupTimeouts = []
+>>>>>>> 6acf3de (fix: fixed style that brokend after merge)
 })
 </script>
 
@@ -944,15 +980,23 @@ watch(showConfetti, (val) => {
 
     <!-- ─── Header ─── -->
     <div class="header">
+      <div class="header-orb header-orb--1" />
+      <div class="header-orb header-orb--2" />
+      <div class="header-grid" />
       <div class="header__inner">
-        <div>
-          <h1 class="header__title">Card Picker</h1>
-          <p class="header__desc">Select one or more students by tapping their cards.</p>
+        <div class="header__left">
+          <div>
+            <h1 class="header__title anim-fade-in-up">Card Picker</h1>
+            <p class="header__desc anim-fade-in-up" style="animation-delay: 0.08s">Select one or more students by tapping their cards.</p>
+          </div>
         </div>
-        <div class="header__actions">
-          <div class="header__counter" v-if="selectedCount > 0">
-            <span class="header__count">{{ selectedCount }}</span>
-            <span class="header__count-label">selected</span>
+        <div class="header__right anim-fade-in-up" style="animation-delay: 0.16s">
+          <RouterLink to="/tools" class="btn-back">← Back to all tools</RouterLink>
+          <div class="header__actions">
+            <div class="header__counter" v-if="selectedCount > 0">
+              <span class="header__count">{{ selectedCount }}</span>
+              <span class="header__count-label">selected</span>
+            </div>
           </div>
           <button class="header__import-btn" @click="showImportPanel = !showImportPanel" :class="{ active: showImportPanel }">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1152,9 +1196,10 @@ watch(showConfetti, (val) => {
     <main class="main">
       <TransitionGroup name="grid" tag="div" class="grid">
         <button
-          v-for="student in filteredStudents"
+          v-for="(student, idx) in filteredStudents"
           :key="student.id"
           class="card"
+          :style="{ transitionDelay: `${idx * 0.04}s` }"
           :class="{
             'card--sel': selectedIds.has(student.id),
             'card--pick': pickedId === student.id,
@@ -1231,8 +1276,8 @@ watch(showConfetti, (val) => {
    Root
    ═══════════════════════════════════ */
 .picker {
+  margin-top: 70px;
   min-height: 100vh;
-  padding-top: 64px;
   background: #F8FAFC;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
@@ -1274,29 +1319,93 @@ watch(showConfetti, (val) => {
   border-bottom: 1px solid rgba(255,255,255,0.1);
   position: relative;
   overflow: hidden;
+  padding: 0;
 }
 
-.header::before {
-  content: '';
+.header-grid {
   position: absolute;
+<<<<<<< HEAD
   top: -50%;
   right: -10%;
   width: 500px;
   height: 500px;
   background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%);
+=======
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black 40%, transparent 100%);
+>>>>>>> 6acf3de (fix: fixed style that brokend after merge)
   pointer-events: none;
+  animation: gridDrift 20s linear infinite;
+}
+
+.header-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  pointer-events: none;
+  opacity: 0.2;
+}
+
+.header-orb--1 {
+  width: 420px;
+  height: 420px;
+  background: #3b82f6;
+  top: -120px;
+  left: -80px;
+  animation: orbFloat 10s ease-in-out infinite alternate;
+}
+
+.header-orb--2 {
+  width: 360px;
+  height: 360px;
+  background: #6366f1;
+  bottom: -120px;
+  right: -60px;
+  animation: orbFloat 12s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes orbFloat {
+  from { transform: translate(0, 0) scale(1); }
+  to { transform: translate(28px, -24px) scale(1.06); }
+}
+
+@keyframes gridDrift {
+  from { transform: translate(0, 0); }
+  to { transform: translate(64px, 64px); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.anim-fade-in-up {
+  opacity: 0;
+  animation: fadeInUp 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .header__inner {
   max-width: 80rem;
   margin: 0 auto;
-  padding: 2rem 2rem;
+  padding: 3rem 2rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
   position: relative;
   z-index: 1;
+  flex-wrap: wrap;
+}
+
+.header__left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
 }
 
 .header__title {
@@ -1309,10 +1418,17 @@ watch(showConfetti, (val) => {
 }
 
 .header__desc {
-  margin: 0.35rem 0 0;
+  margin: 0;
   color: #94A3B8;
   font-size: 0.9rem;
   font-weight: 400;
+}
+
+.header__right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
 }
 
 .header__actions {
@@ -1320,6 +1436,25 @@ watch(showConfetti, (val) => {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+}
+
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  border: 1.5px solid #e2e8f0;
+  color: #334155;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-back:hover {
+  border-color: #2563eb;
+  color: #2563eb;
 }
 
 .header__counter {
@@ -1928,13 +2063,14 @@ watch(showConfetti, (val) => {
 .main {
   max-width: 80rem;
   margin: 0 auto;
-  padding: 1.5rem 2rem 7rem;
+  padding: 2.5rem 2rem 10rem;
 }
 
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-  gap: 1rem;
+  gap: 1.5rem;
+  margin-top: 0.5rem;
 }
 
 @media (min-width: 1024px) {
@@ -1944,32 +2080,50 @@ watch(showConfetti, (val) => {
   .grid { grid-template-columns: repeat(3, 1fr); }
 }
 @media (max-width: 639px) {
-  .grid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+  .grid { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
 }
 
 /* ═══════════════════════════════════
-   Card
+   Cards Reveal Animation
    ═══════════════════════════════════ */
 .card {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.7rem;
-  padding: 1.4rem 0.9rem 0.9rem;
-  background: white;
-  border: 1px solid #E5E7EB;
-  border-radius: 16px;
-  cursor: pointer;
-  font-family: inherit;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  outline: none;
-  text-align: center;
-  min-height: 155px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.25s ease,
+              background 0.25s ease,
+              box-shadow 0.25s ease;
 }
 
-.card:hover {
+.card.in-view {
+   opacity: 1;
+   transform: translateY(0);
+ }
+
+ /* ═══════════════════════════════════
+    Card
+    ═══════════════════════════════════ */
+ .card {
+   position: relative;
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+   gap: 0.7rem;
+   padding: 1.4rem 0.9rem 0.9rem;
+   background: white;
+   border: 1px solid #E5E7EB;
+   border-radius: 16px;
+   cursor: pointer;
+   font-family: inherit;
+   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+   outline: none;
+   text-align: center;
+   min-height: 155px;
+   box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
+ }
+
+ .card:hover {
   border-color: #D1D5DB;
   transform: translateY(-4px);
   box-shadow: 0 12px 24px rgba(0,0,0,0.08), 0 4px 8px rgba(0,0,0,0.04);
@@ -2436,6 +2590,19 @@ watch(showConfetti, (val) => {
   transform: translateX(-50%) translateY(8px);
 }
 
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 2px 8px rgba(59,130,246,0.3); }
+  50% { box-shadow: 0 4px 18px rgba(59,130,246,0.5); }
+}
+
+.toolbar__btn--primary:not(:disabled) {
+  animation: pulse 2.5s ease-in-out infinite;
+}
+
+.toolbar__btn--primary:hover:not(:disabled) {
+  animation: none;
+}
+
 /* ═══════════════════════════════════
    Responsive
    ═══════════════════════════════════ */
@@ -2443,14 +2610,22 @@ watch(showConfetti, (val) => {
   .header__inner {
     padding: 1.5rem 1.25rem;
     flex-wrap: wrap;
+    gap: 1rem;
   }
+
+  .header__left {
+    gap: 0.6rem;
+  }
+
   .header__title {
     font-size: 1.25rem;
   }
+
   .header__desc {
     font-size: 0.85rem;
   }
 
+<<<<<<< HEAD
   .import-panel__inner {
     padding: 1rem 1.25rem;
     flex-direction: column;
@@ -2464,6 +2639,15 @@ watch(showConfetti, (val) => {
     flex: 1;
     height: 1px;
     width: auto;
+=======
+  .header__right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .header__actions {
+    margin-left: auto;
+>>>>>>> 6acf3de (fix: fixed style that brokend after merge)
   }
 
   .toolbar__inner {
@@ -2483,7 +2667,7 @@ watch(showConfetti, (val) => {
   }
 
   .main {
-    padding: 1rem 1.25rem 6rem;
+    padding: 2rem 1.25rem 8rem;
   }
 
   .card {
@@ -2522,7 +2706,7 @@ watch(showConfetti, (val) => {
 
 @media (max-width: 380px) {
   .grid {
-    gap: 0.6rem;
+    gap: 0.8rem;
   }
   .card {
     min-height: 125px;

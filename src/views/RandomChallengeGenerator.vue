@@ -319,8 +319,8 @@ const categoriesList = [
       </div>
     </section>
     <StickyBottomNav
-      to="/tools/icebreakers"
-      label="Back to Icebreakers"
+      to="/tools"
+      label="Back to all tools"
       gradient="linear-gradient(135deg, #f59e0b, #d97706)"
       border-color="rgba(245, 158, 11, 0.15)"
       shadow-color="rgba(245, 158, 11, 0.3)"
@@ -336,12 +336,12 @@ const categoriesList = [
 }
 
 .random-challenge-page {
+  margin-top: 70px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   line-height: 1.6;
   color: #1f2937;
   background: #f9fafb;
   min-height: 100vh;
-  padding-top: 64px;
   padding-bottom: 80px;
 }
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
+import { RouterLink } from 'vue-router'
 
 const router = useRouter()
 
@@ -70,7 +71,8 @@ function openFeature(feature: FeatureCard) {
   <div class="dashboard">
     <!-- Header -->
     <header class="header">
-      <div class="header__inner">
+    <div class="header__inner">
+      <div class="header__left">
         <div class="header__icon-wrap">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="11" cy="11" r="8" />
@@ -78,16 +80,20 @@ function openFeature(feature: FeatureCard) {
           </svg>
           <span class="header__icon-glow"></span>
         </div>
-        <div>
+        <div class="header__text">
           <h1 class="header__title">Student Picker</h1>
           <p class="header__subtitle">Choose a picker mode below to get started.</p>
         </div>
+      </div>
+      <div class="header__right">
+        <RouterLink to="/tools" class="btn-back">← Back to all tools</RouterLink>
         <div class="header__badge">
           <span class="header__badge-dot"></span>
           <span class="header__badge-text">Classroom Tools</span>
         </div>
       </div>
-      <div class="header__gradient"></div>
+    </div>
+    <div class="header__gradient"></div>
     </header>
 
     <!-- Feature Grid -->
@@ -211,10 +217,12 @@ function openFeature(feature: FeatureCard) {
 
 <style scoped>
 .dashboard {
+  margin-top: 70px;
   min-height: 100vh;
   padding-top: 68px;
   background: #ffffff;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+<<<<<<< HEAD
 }
 
 .header {
@@ -222,6 +230,8 @@ function openFeature(feature: FeatureCard) {
   background: #0f172a;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   overflow: hidden;
+=======
+>>>>>>> 6acf3de (fix: fixed style that brokend after merge)
 }
 
 .header {
@@ -232,26 +242,39 @@ function openFeature(feature: FeatureCard) {
 }
 
 .header__inner {
-  position: relative;
-  z-index: 1;
-  max-width: 72rem;
+  max-width: 80rem;
   margin: 0 auto;
-  padding: 2.5rem 2rem 2.75rem;
+  padding: 2rem 2rem;
   display: flex;
   align-items: center;
-  gap: 1.25rem;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.header__left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.header__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
 }
 
 .header__icon-wrap {
   position: relative;
-  width: 4rem;
-  height: 4rem;
+  width: 3.5rem;
+  height: 3.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, #6366f1, #8b5cf6);
   color: white;
-  border-radius: 1.1rem;
+  border-radius: 1rem;
   flex-shrink: 0;
   box-shadow: 0 20px 40px rgba(99, 102, 241, 0.35);
 }
@@ -271,23 +294,29 @@ function openFeature(feature: FeatureCard) {
 }
 
 .header__title {
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 800;
   color: #f8fafc;
   margin: 0;
-  line-height: 1.1;
-  letter-spacing: -0.03em;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
 }
 
 .header__subtitle {
-  margin: 0.4rem 0 0;
+  margin: 0;
   color: #94a3b8;
-  font-size: 1rem;
-  line-height: 1.45;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.header__right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
 }
 
 .header__badge {
-  margin-left: auto;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -301,6 +330,7 @@ function openFeature(feature: FeatureCard) {
   letter-spacing: 0.04em;
   text-transform: uppercase;
   backdrop-filter: blur(8px);
+  white-space: nowrap;
 }
 
 .header__badge-dot {
@@ -320,84 +350,23 @@ function openFeature(feature: FeatureCard) {
   background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.5), transparent);
 }
 
-.header__inner {
-  max-width: 72rem;
-  margin: 0 auto;
-  padding: 2.25rem 2rem;
-  display: flex;
+.btn-back {
+  display: inline-flex;
   align-items: center;
-  gap: 1rem;
+  padding: 10px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.9);
+  transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
-.header__icon-wrap {
-  width: 3rem;
-  height: 3rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: white;
-  border-radius: 0.75rem;
-  flex-shrink: 0;
-  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.35);
-}
-
-.header__title {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: #f8fafc;
-  margin: 0;
-  line-height: 1.2;
-  letter-spacing: -0.02em;
-}
-
-.header__subtitle {
-  margin: 0.25rem 0 0;
-  color: #94a3b8;
-  font-size: 0.9rem;
-  line-height: 1.5;
-}
-
-.main {
-  max-width: 72rem;
-  margin: 0 auto;
-  padding: 2rem;
-}
-
-@media (max-width: 640px) {
-  .header__inner {
-    padding: 1.5rem 1rem;
-    flex-wrap: wrap;
-  }
-
-  .header__icon-wrap {
-    width: 3.25rem;
-    height: 3.25rem;
-  }
-
-  .header__title {
-    font-size: 1.5rem;
-  }
-
-  .header__subtitle {
-    font-size: 0.9rem;
-  }
-
-  .header__badge {
-    margin-left: 0;
-    width: 100%;
-    justify-content: center;
-    margin-top: 0.5rem;
-  }
-
-  .main {
-    padding: 1.25rem 1rem 2rem;
-  }
-
-  .grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
+.btn-back:hover {
+  border-color: #22d3ee;
+  color: #22d3ee;
 }
 
 .grid {
@@ -701,7 +670,7 @@ function openFeature(feature: FeatureCard) {
 }
 
 .main {
-  max-width: 72rem;
+  max-width: 80rem;
   margin: 0 auto;
   padding: 2rem;
 }
@@ -710,26 +679,38 @@ function openFeature(feature: FeatureCard) {
   .header__inner {
     padding: 1.5rem 1rem;
     flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .header__left {
+    gap: 0.75rem;
   }
 
   .header__icon-wrap {
-    width: 3.25rem;
-    height: 3.25rem;
+    width: 3rem;
+    height: 3rem;
   }
 
   .header__title {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
   }
 
   .header__subtitle {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+  }
+
+  .header__right {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .header__badge {
-    margin-left: 0;
-    width: 100%;
-    justify-content: center;
-    margin-top: 0.5rem;
+    margin-left: auto;
+  }
+
+  .btn-back {
+    font-size: 0.85rem;
+    padding: 8px 16px;
   }
 
   .main {

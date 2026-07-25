@@ -418,8 +418,8 @@ onMounted(() => {
       </div>
     </section>
     <StickyBottomNav
-      to="/tools/icebreakers"
-      label="Back to Icebreakers"
+      to="/tools"
+      label="Back to all tools"
       gradient="linear-gradient(135deg, #8b5cf6, #7c3aed)"
       border-color="rgba(139, 92, 246, 0.15)"
       shadow-color="rgba(139, 92, 246, 0.3)"
@@ -435,12 +435,12 @@ onMounted(() => {
 }
 
 .would-you-rather-page {
+  margin-top: 70px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   line-height: 1.6;
   color: #1f2937;
   background: #f9fafb;
   min-height: 100vh;
-  padding-top: 64px;
   padding-bottom: calc(80px + env(safe-area-inset-bottom));
 }
 

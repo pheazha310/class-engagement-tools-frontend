@@ -1,5 +1,10 @@
 <script setup lang="ts">
+<<<<<<< HEAD
 import { ref, computed, onUnmounted, watch } from 'vue'
+=======
+import { ref, computed, onUnmounted } from 'vue'
+import { RouterLink } from 'vue-router'
+>>>>>>> 6acf3de (fix: fixed style that brokend after merge)
 import { jsPDF } from 'jspdf'
 import * as XLSX from 'xlsx'
 
@@ -658,7 +663,11 @@ function exportToPDF() {
     </div>
 
     <div class="container">
+<<<<<<< HEAD
       <!-- Header -->
+=======
+      <RouterLink to="/tools" class="btn-back">← Back to all tools</RouterLink>
+>>>>>>> 6acf3de (fix: fixed style that brokend after merge)
       <header class="header">
         <div class="header__brand">
           <div class="header__icon">
@@ -933,18 +942,27 @@ function exportToPDF() {
 </template>
 
 <style scoped>
+<<<<<<< HEAD
 /* ═══════════════════════════════════════
    RESET & BASE
    ═══════════════════════════════════════ */
 *, *::before, *::after { box-sizing: border-box; }
 
 .app {
+=======
+/* ── Page ── */
+.page {
+  margin-top: 70px;
+>>>>>>> 6acf3de (fix: fixed style that brokend after merge)
   min-height: 100vh;
   width: 100%;
   background: linear-gradient(160deg, #f0f4ff 0%, #f8fafc 40%, #fefefe 100%);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+<<<<<<< HEAD
   padding-top: 64px;
   color: #0f172a;
+=======
+>>>>>>> 6acf3de (fix: fixed style that brokend after merge)
 }
 
 .container {
@@ -993,12 +1011,40 @@ function exportToPDF() {
 .header__sub {
   font-size: 0.8rem; color: #64748b; margin: 0.1rem 0 0;
 }
+<<<<<<< HEAD
 .header__stats {
   display: flex; gap: 0.75rem;
 }
 .stat {
   display: flex; flex-direction: column; align-items: center;
   background: #fff; padding: 0.35rem 0.65rem; border-radius: 0.5rem;
+=======
+
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  border: 1.5px solid #e2e8f0;
+  color: #334155;
+  transition: all 0.2s ease;
+  margin-bottom: 24px;
+}
+
+.btn-back:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+.card {
+  background: white;
+  border-radius: 1rem;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.02);
+>>>>>>> 6acf3de (fix: fixed style that brokend after merge)
   border: 1px solid #f1f5f9;
 }
 .stat__value { font-size: 1.1rem; font-weight: 700; line-height: 1; color: #0f172a; }

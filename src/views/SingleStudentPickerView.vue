@@ -1,5 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, onUnmounted, watch } from 'vue'
+<<<<<<< HEAD
+=======
+import { RouterLink } from 'vue-router'
+import { useRouter } from 'vue-router'
+>>>>>>> 6acf3de (fix: fixed style that brokend after merge)
 import * as XLSX from 'xlsx'
 
 interface Student {
@@ -548,6 +553,7 @@ function formatTime(date: Date) {
     </div>
 
     <div class="picker-content">
+      <RouterLink to="/tools" class="btn-back">← Back to all tools</RouterLink>
       <div class="picker-layout">
         <!-- Left Column: Student Pool -->
         <section class="pool-section">
@@ -835,8 +841,8 @@ function formatTime(date: Date) {
 
 <style scoped>
 .picker-page {
+  margin-top: 80px;
   min-height: 100vh;
-  padding-top: 64px;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   position: relative;
@@ -874,6 +880,25 @@ function formatTime(date: Date) {
   max-width: 80rem;
   margin: 0 auto;
   padding: 1.5rem 2rem;
+}
+
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  border: 1.5px solid #e2e8f0;
+  color: #334155;
+  transition: all 0.2s ease;
+  margin-bottom: 24px;
+}
+
+.btn-back:hover {
+  border-color: #2563eb;
+  color: #2563eb;
 }
 
 .picker-layout {

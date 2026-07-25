@@ -17,11 +17,15 @@ app.use(router)
 async function initializeApp() {
   try {
     await ensureCsrfCookie()
-    // Restore auth state from existing session
+  } catch (error) {
+    console.warn('CSRF cookie init failed, proceeding to restore session:', error)
+  }
+
+  try {
     const authStore = useAuthStore()
     await authStore.fetchUser()
   } catch (error) {
-    console.warn('Failed to initialize app:', error)
+    console.warn('Auth session restore failed:', error)
   }
 }
 

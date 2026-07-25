@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { RouterLink } from 'vue-router'
 import { getPolls, deletePoll, updatePoll, type LivePoll } from '@/utils/pollStorage'
 import { useAuthStore } from '@/stores/auth'
 import ToastNotification from '@/components/ToastNotification.vue'
@@ -191,6 +192,8 @@ function getDurationLabel(minutes: number) {
           Create Poll
         </button>
       </header>
+
+      <RouterLink to="/tools" class="btn-back">← Back to all tools</RouterLink>
 
       <!-- Search -->
       <div class="vl-search-bar">
@@ -607,6 +610,25 @@ function getDurationLabel(minutes: number) {
   position: relative;
   margin-bottom: 28px;
   max-width: 480px;
+}
+
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  border: 1.5px solid #e2e8f0;
+  color: #334155;
+  transition: all 0.2s ease;
+  margin-bottom: 24px;
+}
+
+.btn-back:hover {
+  border-color: #2563eb;
+  color: #2563eb;
 }
 
 .vl-search-icon {

@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
 import TeacherLayout from '@/components/teacher/TeacherLayout.vue'
 import TeacherIcon from '@/components/teacher/TeacherIcon.vue'
+<<<<<<< HEAD
 import * as XLSX from 'xlsx'
 import { showNotification } from '@/utils/notifications'
 
@@ -25,11 +25,18 @@ interface Student {
   averageScore: number
   avatarInitials: string
 }
+=======
+import teacherDashboardService, { type TeacherStudentRosterItem } from '@/services/teacherDashboardService'
+import { showNotification } from '@/utils/notifications'
+
+const router = useRouter()
+>>>>>>> 6acf3de (fix: fixed style that brokend after merge)
 
 const loading = ref(false)
 const searchQuery = ref('')
 const selectedClassFilter = ref('all')
 const selectedStatusFilter = ref<'all' | 'active' | 'inactive'>('all')
+<<<<<<< HEAD
 const students = ref<Student[]>([])
 const studentDetail = ref<Student | null>(null)
 const showDetailModal = ref(false)
@@ -149,6 +156,20 @@ function generateDemoStudents(): Student[] {
 // ── Computed ──
 const classOptions = computed(() => ['all', ...Array.from(new Set(students.value.map((s) => s.class)))])
 
+=======
+const showInviteModal = ref(false)
+const inviteEmail = ref('')
+const inviteClass = ref('')
+const studentDetail = ref<TeacherStudentRosterItem | null>(null)
+const showDetailModal = ref(false)
+
+const students = ref<TeacherStudentRosterItem[]>([])
+
+const classOptions = computed(() => {
+  const classes = Array.from(new Set(students.value.map((s) => s.class).filter(Boolean)))
+  return ['all', ...classes]
+})
+>>>>>>> 6acf3de (fix: fixed style that brokend after merge)
 const filteredStudents = computed(() => {
   let r = students.value
   if (searchQuery.value.trim()) {
@@ -165,6 +186,7 @@ const filteredStudents = computed(() => {
   if (selectedStatusFilter.value !== 'all') r = r.filter((s) => s.status === selectedStatusFilter.value)
   return r
 })
+<<<<<<< HEAD
 
 const statsSummary = computed(() => ({
   total: students.value.length,
@@ -648,6 +670,77 @@ onMounted(() => {
         <div class="stat-label-row"><span>Avg Score</span><TeacherIcon icon="trophy" :size="19" /></div>
         <div class="stat-value-row"><strong>{{ statsSummary.avgScore }}%</strong></div>
       </article>
+=======
+const statsSummary = computed(() => {
+  const total = students.value.length
+  const active = students.value.filter((s) => s.status === 'active').length
+  const avgEngagement = total > 0 ? Math.round(students.value.reduce((sum, s) => sum + s.engagement, 0) / total) : 0
+  const avgScore = total > 0 ? Math.round(students.value.reduce((sum, s) => sum + s.averageScore, 0) / total) : 0
+  return { total, active, avgEngagement, avgScore }
+})
+
+async function fetchStudents() {
+  loading.value = true
+  try {
+    const response = await teacherDashboardService.getStudents()
+    const payload = response.data?.data
+    students.value = Array.isArray(payload) ? payload : []
+  } catch {
+    students.value = []
+    showNotification('Failed to load students.', 'error')
+  } finally {
+    loading.value = false
+  }
+}
+
+function viewStudentDetail(student: TeacherStudentRosterItem) { studentDetail.value = student; showDetailModal.value = true }
+function closeDetail() { showDetailModal.value = false; studentDetail.value = null }
+function openInviteModal() { inviteEmail.value = ''; inviteClass.value = classOptions.value.filter(c => c !== 'all')[0] || ''; showInviteModal.value = true }
+function formatDate(d: string | null | undefined) { return d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-' }
+function getEngColor(s: number) { return s >= 80 ? 'var(--green)' : s >= 60 ? 'var(--orange)' : 'var(--red)' }
+
+onMounted(() => { void fetchStudents() })
+</script>
+
+<template>
+  <TeacherLayout sidebar-active="students" page-title="Students" page-subtitle="Manage your students across all classes." v-model:search-value="searchQuery" search-placeholder="Search students...">
+    <template #actions>
+      <button class="primary-button" type="button" @click="openInviteModal"><TeacherIcon icon="plus" :size="18" /><span>Invite Student</span></button>
+    </template>
+
+    <section class="students-hero" aria-label="Students overview">
+      <div class="students-hero-copy">
+        <p class="hero-kicker">Student roster</p>
+        <h2>Track engagement, performance, and activity at a glance.</h2>
+        <p class="hero-text">
+          Keep an eye on students across every class, filter quickly, and jump into details without losing context.
+        </p>
+      </div>
+      <div class="students-hero-metrics">
+        <div class="hero-metric">
+          <span class="hero-metric-icon"><TeacherIcon icon="users" :size="18" /></span>
+          <strong>{{ statsSummary.total }}</strong>
+          <span>Total</span>
+        </div>
+        <div class="hero-metric">
+          <span class="hero-metric-icon"><TeacherIcon icon="check" :size="18" /></span>
+          <strong>{{ statsSummary.active }}</strong>
+          <span>Active</span>
+        </div>
+        <div class="hero-metric">
+          <span class="hero-metric-icon"><TeacherIcon icon="activity" :size="18" /></span>
+          <strong>{{ statsSummary.avgEngagement }}%</strong>
+          <span>Engagement</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="stats-grid" aria-label="Student stats">
+      <article class="stat-card tone-blue"><div class="stat-label-row"><span>Total Students</span><span class="stat-icon-badge"><TeacherIcon icon="users" :size="18" /></span></div><div class="stat-value-row"><strong>{{ statsSummary.total }}</strong></div></article>
+      <article class="stat-card tone-green"><div class="stat-label-row"><span>Active Students</span><span class="stat-icon-badge"><TeacherIcon icon="check" :size="18" /></span></div><div class="stat-value-row"><strong>{{ statsSummary.active }}</strong></div></article>
+      <article class="stat-card tone-blue"><div class="stat-label-row"><span>Avg Engagement</span><span class="stat-icon-badge"><TeacherIcon icon="activity" :size="18" /></span></div><div class="stat-value-row"><strong>{{ statsSummary.avgEngagement }}%</strong></div></article>
+      <article class="stat-card tone-orange"><div class="stat-label-row"><span>Avg Score</span><span class="stat-icon-badge"><TeacherIcon icon="trophy" :size="18" /></span></div><div class="stat-value-row"><strong>{{ statsSummary.avgScore }}%</strong></div></article>
+>>>>>>> 6acf3de (fix: fixed style that brokend after merge)
     </section>
 
     <!-- Filter & Actions Bar -->
@@ -1076,6 +1169,7 @@ onMounted(() => {
 </template>
 
 <style scoped>
+<<<<<<< HEAD
 /* ── Table ── */
 .data-table { width: 100%; }
 .table-row {
@@ -1088,6 +1182,166 @@ onMounted(() => {
   gap: 12px;
   transition: background .15s;
 }
+=======
+.students-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.85fr);
+  gap: 18px;
+  align-items: stretch;
+  margin-bottom: 18px;
+  padding: 22px 24px;
+  border: 1px solid rgba(197, 203, 221, 0.8);
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(249, 251, 255, 0.96) 100%);
+  box-shadow: 0 18px 38px rgba(21, 33, 72, 0.08);
+}
+
+.students-hero-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.hero-kicker {
+  margin: 0 0 8px;
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.students-hero-copy h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(24px, 2.2vw, 32px);
+  line-height: 1.08;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+}
+
+.hero-text {
+  max-width: 54ch;
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.students-hero-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.hero-metric {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 8px;
+  padding: 16px 12px;
+  border: 1px solid #dbe3fb;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #ffffff 0%, #f5f8ff 100%);
+  text-align: center;
+}
+
+.hero-metric-icon {
+  display: inline-grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.hero-metric strong {
+  color: var(--ink);
+  font-size: 24px;
+  line-height: 1;
+  font-weight: 900;
+}
+
+.hero-metric span:last-child {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.data-table { width: 100%; }
+.stats-grid {
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.stat-card {
+  min-height: 132px;
+  padding: 22px 20px 20px;
+  border-radius: 18px;
+  border: 1px solid rgba(214, 221, 242, 0.95);
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.5), transparent 38%),
+    linear-gradient(180deg, #ffffff 0%, #f8faff 100%);
+  box-shadow: 0 14px 30px rgba(21, 33, 72, 0.07);
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--primary);
+}
+
+.stat-card.tone-green::before { background: var(--green); }
+.stat-card.tone-orange::before { background: var(--orange); }
+
+.stat-label-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  color: #60677a;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.stat-icon-badge {
+  display: inline-grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.stat-card.tone-green .stat-icon-badge {
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.stat-card.tone-orange .stat-icon-badge {
+  background: var(--orange-soft);
+  color: var(--orange);
+}
+
+.stat-value-row {
+  margin-top: 18px;
+}
+
+.stat-value-row strong {
+  font-size: 30px;
+  line-height: 1;
+}
+
+.table-row { display: grid; grid-template-columns: minmax(220px,2fr) minmax(160px,1.2fr) 80px minmax(130px,1fr) 90px 110px 80px; align-items: center; min-height: 68px; border-top: 1px solid #e0e4ef; padding: 0 20px; gap: 12px; transition: background .15s; }
+>>>>>>> 6acf3de (fix: fixed style that brokend after merge)
 .table-row:hover { background: #f8faff; }
 .table-row.clickable { cursor: pointer; }
 .table-heading {
@@ -1295,6 +1549,7 @@ onMounted(() => {
 .detail-meta-item:last-child { border-bottom: 0; }
 .detail-meta-item span { font-size: 13px; color: var(--muted); }
 .detail-meta-item strong { font-size: 14px; color: var(--ink); }
+<<<<<<< HEAD
 .modal-action-btn {
   display: inline-grid; width: 36px; height: 36px;
   place-items: center; border: 0; border-radius: 8px;
@@ -1371,4 +1626,9 @@ onMounted(() => {
   .table-row { grid-template-columns: 1fr; }
   .detail-stats-grid { grid-template-columns: repeat(2,1fr); }
 }
+=======
+@media (max-width:1280px) { .students-hero { grid-template-columns: 1fr; } .table-row { grid-template-columns: minmax(180px,2fr) minmax(130px,1.2fr) 80px minmax(110px,1fr) 80px 100px 70px; } }
+@media (max-width:980px) { .table-row { grid-template-columns: 1fr 1fr; min-height: auto; padding: 16px 20px; } .table-heading { display: none; } }
+@media (max-width:720px) { .students-hero-metrics { grid-template-columns: 1fr; } .table-row { grid-template-columns: 1fr; } .detail-stats-grid { grid-template-columns: repeat(2,1fr); } }
+>>>>>>> 6acf3de (fix: fixed style that brokend after merge)
 </style>

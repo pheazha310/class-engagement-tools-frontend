@@ -69,14 +69,12 @@ const stats = [
             Back to Dashboard
           </RouterLink>
         <div class="header-content">
-          <div class="module-badge">
-            <span class="module-number">Module 8</span>
-          </div>
           <h1 class="module-title">Icebreaker Activities</h1>
           <p class="module-description">
             Quickly engage your students with these fun and interactive classroom icebreakers.
             Choose an activity to get started!
           </p>
+          <RouterLink to="/tools" class="btn-back">← Back to all tools</RouterLink>
         </div>
       </div>
     </section>
@@ -165,12 +163,12 @@ const stats = [
 }
 
 .icebreakers-page {
+  margin-top: 60px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   line-height: 1.6;
   color: #1f2937;
   background: #f9fafb;
   min-height: 100vh;
-  padding-top: 64px;
 }
 
 .container {
@@ -219,6 +217,25 @@ const stats = [
   font-size: 18px;
   opacity: 0.9;
   line-height: 1.6;
+}
+
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.9);
+  transition: all 0.2s ease;
+  margin-top: 16px;
+}
+
+.btn-back:hover {
+  border-color: #22d3ee;
+  color: #22d3ee;
 }
 
 /* Activities Section */

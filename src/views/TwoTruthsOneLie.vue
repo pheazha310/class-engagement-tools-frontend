@@ -325,8 +325,8 @@ const toggleLie = (id: number) => {
       </div>
     </dialog>
     <StickyBottomNav
-      to="/tools/icebreakers"
-      label="Back to Icebreakers"
+      to="/tools"
+      label="Back to all tools"
     />
   </div>
 </template>
@@ -339,12 +339,12 @@ const toggleLie = (id: number) => {
 }
 
 .two-truths-one-lie-page {
+  margin-top: 70px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   line-height: 1.6;
   color: #1f2937;
   background: #f9fafb;
   min-height: 100vh;
-  padding-top: 64px;
   padding-bottom: 80px;
 }
 

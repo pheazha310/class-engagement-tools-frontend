@@ -108,6 +108,7 @@ onUnmounted(() => {
           </button>
 
           <div class="dropdown-menu" :class="{ active: activeDropdown }">
+<<<<<<< HEAD
             <!-- Overview -->
             <RouterLink to="/tools" class="dropdown-item dropdown-item--hero" @click="closeMobileMenu(); closeAllCategories()">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
@@ -171,6 +172,16 @@ onUnmounted(() => {
               Vote on Polls
             </RouterLink>
             <RouterLink to="/games/history" class="dropdown-item" @click="closeMobileMenu">Game History</RouterLink>
+=======
+            <RouterLink to="/tools" class="dropdown-item" @click="closeMobileMenu">All Tools</RouterLink>
+            <RouterLink to="/tools/category/random" class="dropdown-item" @click="closeMobileMenu">Random Tools</RouterLink>
+            <RouterLink to="/tools/category/quiz" class="dropdown-item" @click="closeMobileMenu">Quiz &amp; Assessment</RouterLink>
+            <RouterLink to="/tools/category/classroom" class="dropdown-item" @click="closeMobileMenu">Classroom Control</RouterLink>
+            <RouterLink to="/tools/category/games" class="dropdown-item" @click="closeMobileMenu">Games</RouterLink>
+            <RouterLink to="/tools/category/engagement" class="dropdown-item" @click="closeMobileMenu">Engagement</RouterLink>
+            <RouterLink to="/tools/category/fun-activities" class="dropdown-item" @click="closeMobileMenu">Fun Activities</RouterLink>
+            <div class="dropdown-divider" />
+>>>>>>> 6acf3de (fix: fixed style that brokend after merge)
           </div>
         </li>
         <li><RouterLink to="/contact" class="nav-link" :class="{ active: route.path === '/contact' }" @click="closeMobileMenu">Contact</RouterLink></li>

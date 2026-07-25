@@ -3,10 +3,13 @@ import { ref, computed, onBeforeUnmount } from 'vue'
 import type { Participant, WheelTheme } from '@/types/wheel'
 import { spinWheel } from '@/services/wheel'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   participants: Participant[]
   theme: WheelTheme
-}>()
+  projectorMode?: boolean
+}>(), {
+  projectorMode: false,
+})
 
 const emit = defineEmits<{
   spinComplete: [participant: Participant]
@@ -159,7 +162,7 @@ onBeforeUnmount(() => {
 </script>
 
   <template>
-    <div class="wheel-wrapper" :style="{ background: theme.backgroundColor }">
+    <div class="wheel-wrapper" :class="{ 'projector-full': projectorMode }" :style="{ background: theme.backgroundColor }">
         <div class="wheel-container" @click="spin">
           <svg
             :viewBox="`0 0 ${size} ${size}`"
@@ -264,6 +267,28 @@ onBeforeUnmount(() => {
   max-width: 520px;
   margin: 0 auto;
   padding: 24px;
+}
+
+.wheel-wrapper.projector-full {
+  max-width: 100%;
+  padding: 0;
+  height: 100vh;
+  width: 100vw;
+  justify-content: center;
+  align-items: center;
+}
+
+.wheel-wrapper.projector-full .wheel-controls {
+  display: none;
+}
+
+.wheel-wrapper.projector-full .wheel-container {
+  max-width: 90vmin;
+}
+
+.wheel-wrapper.projector-full .wheel-svg {
+  width: 90vmin;
+  height: 90vmin;
 }
 
 .wheel-container {

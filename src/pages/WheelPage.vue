@@ -1,22 +1,13 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { useRoute } from 'vue-router'
 import WheelCanvas from '@/components/WheelCanvas.vue'
 import ParticipantListEditor from '@/components/ParticipantListEditor.vue'
 import WheelThemePicker from '@/components/WheelThemePicker.vue'
-import SaveWheelModal from '@/components/SaveWheelModal.vue'
-import MyWheels from '@/components/MyWheels.vue'
-import ShareWheelModal from '@/components/ShareWheelModal.vue'
-import Navbar from '@/components/Navbar.vue'
-import type { Participant, WheelTheme, SavedWheel } from '@/types/wheel'
+import type { Participant, WheelTheme } from '@/types/wheel'
 import { wheelThemes, getThemeById, defaultThemeId } from '@/types/wheel'
-import { createSavedWheel, loadSavedWheel, AuthorizationError, AuthenticationError } from '@/services/wheel'
-import { useAuthStore } from '@/stores/auth'
-import { ensureCsrfCookie } from '@/services/api'
 
 const route = useRoute()
-const router = useRouter()
-const auth = useAuthStore()
 
 const participants = ref<Participant[]>([
   { id: 1, name: 'Alice' },
@@ -52,16 +43,6 @@ watch(selectedTheme, (theme) => {
   saveTheme(theme)
 })
 
-const showSaveModal = ref(false)
-const showMyWheelsModal = ref(false)
-const showShareModal = ref(false)
-const saving = ref(false)
-const saveError = ref<string | null>(null)
-const saveSuccess = ref<string | null>(null)
-const wheelName = ref('')
-const wheelDescription = ref('')
-const savedWheelId = ref<string | null>(null)
-
 const futureListTitle = ref('Future List')
 
 function parseNames(raw: string): string[] {
@@ -89,10 +70,22 @@ function applyUrlNames() {
   }
 }
 
-onMounted(async () => {
+onMounted(() => {
   loadTheme()
   applyUrlNames()
+  document.addEventListener('fullscreenchange', onFullscreenChange)
 })
+
+onUnmounted(() => {
+  document.removeEventListener('fullscreenchange', onFullscreenChange)
+})
+
+function onFullscreenChange() {
+  if (projectorMode.value && !document.fullscreenElement) {
+    projectorMode.value = false
+    exitProjectorMode()
+  }
+}
 
 watch(
   [() => route.query.names, () => route.query.futureListTitle],
@@ -118,131 +111,55 @@ function handleRemoveWinner(participant: Participant) {
   participants.value = participants.value.filter((p) => p.id !== participant.id)
 }
 
-function openSaveModal() {
-  wheelName.value = ''
-  wheelDescription.value = ''
-  saveError.value = null
-  saveSuccess.value = null
-  showSaveModal.value = true
-}
+const projectorMode = ref(false)
+const wheelContainerRef = ref<HTMLElement | null>(null)
 
-function closeSaveModal() {
-  showSaveModal.value = false
-}
-
-async function handleSaveWheel(payload: { name: string; description: string }) {
-  saving.value = true
-  saveError.value = null
-  saveSuccess.value = null
-
-  try {
-    await ensureCsrfCookie()
-    await auth.fetchUser()
-    if (!auth.user) {
-      throw new Error('Your session has expired. Please log in again.')
-    }
-
-    const wheel = await createSavedWheel({
-      name: payload.name,
-      description: payload.description,
-      color: selectedTheme.value.id,
-      participants: participants.value,
-    })
-    savedWheelId.value = wheel.id
-    saveSuccess.value = 'Wheel saved successfully!'
-    closeSaveModal()
-  } catch (err) {
-    if (err instanceof AuthenticationError) {
-      saveError.value = 'Your session has expired. Please log in again to save your wheel.'
-      // Redirect to login page after a brief delay so user sees the message
-      auth.clearUser()
-      setTimeout(() => {
-        router.push('/login?redirect=' + encodeURIComponent(route.fullPath))
-      }, 2000)
-    } else if (err instanceof AuthorizationError) {
-      saveError.value = err.message || 'You do not have permission to perform this action.'
-    } else {
-      saveError.value = err instanceof Error ? err.message : 'Failed to save wheel'
-    }
-  } finally {
-    saving.value = false
+function toggleProjectorMode() {
+  projectorMode.value = !projectorMode.value
+  if (projectorMode.value) {
+    enterProjectorMode()
+  } else {
+    exitProjectorMode()
   }
 }
 
-function openShareModal() {
-  showShareModal.value = true
-}
-
-function handleShared() {
-  saveSuccess.value = 'Share link generated!'
-}
-
-async function handleOpenWheel(wheel: SavedWheel) {
-  try {
-    const loaded = await loadSavedWheel(wheel.id)
-    participants.value = loaded.participants.map((p) => ({
-      id: p.id,
-      name: p.name,
-    }))
-    savedWheelId.value = wheel.id
-
-    if (loaded.color) {
-      const theme = getThemeById(loaded.color)
-      if (theme) {
-        selectedTheme.value = theme
-      }
-    }
-  } catch (err) {
-    saveError.value = err instanceof Error ? err.message : 'Failed to load wheel'
+function enterProjectorMode() {
+  const el = document.documentElement
+  if (el.requestFullscreen) {
+    el.requestFullscreen().catch(() => {})
   }
+  document.body.style.overflow = 'hidden'
+  document.body.classList.add('projector-mode-active')
 }
 
-function handleDeleteWheel() {
-  // handled inside MyWheels modal
+function exitProjectorMode() {
+  if (document.fullscreenElement) {
+    document.exitFullscreen().catch(() => {})
+  }
+  document.body.style.overflow = ''
+  document.body.classList.remove('projector-mode-active')
 }
 </script>
 
-  <template>
-    <div class="page" :style="{ background: selectedTheme.backgroundColor }">
-      <div class="back-wrapper">
+<template>
+  <div class="page" :class="{ 'projector-mode': projectorMode }" :style="{ background: selectedTheme.backgroundColor }">
+    <div class="container">
+      <div class="page-header">
         <RouterLink to="/tools" class="btn-back">← Back to all tools</RouterLink>
-      </div>
-      <h1 class="title">Random Wheel</h1>
-      <p class="subtitle">Manage participants and spin to select one randomly</p>
-
-      <div class="toolbar">
-        <button
-          type="button"
-          class="btn btn-primary"
-          :disabled="!auth.isAuthenticated"
-          @click="openSaveModal"
-        >
-          Save Wheel
-        </button>
-        <button
-          type="button"
-          class="btn btn-secondary"
-          :disabled="!auth.isAuthenticated"
-          @click="showMyWheelsModal = true"
-        >
-          My Wheels
-        </button>
-        <button
-          type="button"
-          class="btn btn-share"
-          :disabled="!auth.isAuthenticated"
-          @click="openShareModal"
-        >
-          Share Wheel
-        </button>
-
-      </div>
-
-      <div v-if="saveError" class="alert alert-error">
-        {{ saveError }}
-      </div>
-      <div v-if="saveSuccess" class="alert alert-success">
-        {{ saveSuccess }}
+        <div class="header-actions">
+          <button class="btn-projector" type="button" @click="toggleProjectorMode">
+            <svg class="icon-projector" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 2h8l4 4v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z" />
+              <path d="M7 14h10" />
+              <path d="M12 10v8" />
+            </svg>
+            {{ projectorMode ? 'Exit Projector' : 'Projector Mode' }}
+          </button>
+        </div>
+        <div class="header-text">
+          <h1 class="title">Random Wheel</h1>
+          <p class="subtitle">Manage participants and spin to select one randomly</p>
+        </div>
       </div>
 
       <div class="layout">
@@ -250,6 +167,7 @@ function handleDeleteWheel() {
           <WheelCanvas
             :participants="participants"
             :theme="selectedTheme"
+            :projector-mode="projectorMode"
             @spin-complete="handleSpinComplete"
             @spin-error="handleSpinError"
             @close-winner="handleCloseWinner"
@@ -264,82 +182,42 @@ function handleDeleteWheel() {
           />
         </div>
       </div>
-
-      <SaveWheelModal
-        v-model="showSaveModal"
-        :name="wheelName"
-        :description="wheelDescription"
-        :participants="participants"
-        :theme="selectedTheme"
-        :loading="saving"
-        :error="saveError"
-        :is-authenticated="auth.isAuthenticated"
-        @save="handleSaveWheel"
-      />
-
-      <ShareWheelModal
-        v-model="showShareModal"
-        :wheel-id="savedWheelId"
-        :wheel-name="wheelName"
-        :theme="selectedTheme"
-        @shared="handleShared"
-      />
-
-      <MyWheels
-        v-model="showMyWheelsModal"
-        :is-authenticated="auth.isAuthenticated"
-        @open-wheel="handleOpenWheel"
-        @delete-wheel="handleDeleteWheel"
-      />
     </div>
-  </template>
+  </div>
+</template>
 
 <style scoped>
 .page {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
   min-height: 100vh;
-  padding: 88px 24px 24px;
-  gap: 20px;
+  padding: 24px;
+  gap: 24px;
 }
 
-.back-wrapper {
+.container {
   width: 100%;
   max-width: 1200px;
   display: flex;
-  justify-content: flex-start;
+  flex-direction: column;
+  gap: 24px;
 }
 
-.toolbar {
+.page-header {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
   gap: 12px;
-  flex-wrap: wrap;
 }
 
-.alert {
+.header-actions {
   width: 100%;
-  max-width: 1200px;
-  padding: 12px 16px;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 700;
+  display: flex;
+  justify-content: center;
+}
+
+.header-text {
   text-align: center;
-}
-
-.alert-error {
-  color: #ff6b6b;
-  background: #2a1010;
-  border: 1px solid #5a1f1f;
-}
-
-.alert-success {
-  color: #4ecdc4;
-  background: #1f1f38;
-  border: 1px solid #2a2a45;
 }
 
 .layout {
@@ -378,59 +256,32 @@ function handleDeleteWheel() {
   text-align: center;
 }
 
-.btn {
-  padding: 10px 18px;
-  border: none;
-  border-radius: 10px;
-  font-size: 14px;
+.btn-projector {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 720px;
+  height: 56px;
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.82);
+  color: #fff;
+  font-size: 16px;
   font-weight: 700;
   cursor: pointer;
-  color: #fff;
-  transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s, background 0.15s;
+  transition: background 0.2s ease, border-color 0.2s ease;
 }
 
-.btn:hover:not(:disabled) {
-  transform: translateY(-1px);
+.btn-projector:hover {
+  background: rgba(15, 23, 42, 0.94);
+  border-color: rgba(255, 255, 255, 0.22);
 }
 
-.btn:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn-primary {
-  background: #22d3ee;
-  color: #0f172a;
-  box-shadow: 0 4px 12px rgba(34, 211, 238, 0.35);
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: #06b6d4;
-  box-shadow: 0 4px 16px rgba(34, 211, 238, 0.45);
-}
-
-.btn-secondary {
-  background: #1e293b;
-  box-shadow: none;
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background: #334155;
-}
-
-.btn-share {
-  background: #4ecdc4;
-  color: #0f172a;
-  box-shadow: 0 4px 12px rgba(78, 205, 196, 0.35);
-}
-
-.btn-share:hover:not(:disabled) {
-  background: #3dbdb4;
-  box-shadow: 0 4px 16px rgba(78, 205, 196, 0.45);
+.icon-projector {
+  width: 20px;
+  height: 20px;
 }
 
 .btn-back {
@@ -462,5 +313,47 @@ function handleDeleteWheel() {
     max-width: 520px;
     width: 100%;
   }
+}
+
+.page.projector-mode {
+  padding: 0;
+}
+
+.page.projector-mode .container {
+  max-width: 100%;
+  padding: 0;
+}
+
+.page.projector-mode .layout {
+  max-width: 100%;
+  gap: 0;
+  padding: 0;
+}
+
+.page.projector-mode .editor-column {
+  display: none;
+}
+
+.page.projector-mode .wheel-column {
+  max-width: 100%;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.page.projector-mode .page-header {
+  display: none;
+}
+
+.page.projector-mode .wheel-controls {
+  display: none;
+}
+</style>
+
+<style>
+body.projector-mode-active .navbar {
+  display: none !important;
 }
 </style>

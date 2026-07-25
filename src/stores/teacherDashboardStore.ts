@@ -14,6 +14,8 @@ import type {
 } from '@/services/teacherDashboardService'
 
 export const useTeacherDashboardStore = defineStore('teacherDashboard', () => {
+  const unwrapData = <T>(response: any): T => response?.data?.data ?? response?.data ?? response
+
   // State
   const loading = ref(false)
   const error = ref<string | null>(null)
@@ -46,7 +48,7 @@ export const useTeacherDashboardStore = defineStore('teacherDashboard', () => {
     error.value = null
     try {
       const response = await teacherDashboardService.getClassConfigurations()
-      classConfigs.value = response.data || []
+      classConfigs.value = unwrapData<ClassConfiguration[]>(response) || []
       success.value = 'Class configurations loaded successfully'
       setTimeout(() => (success.value = null), 3000)
     } catch (err) {
@@ -62,10 +64,10 @@ export const useTeacherDashboardStore = defineStore('teacherDashboard', () => {
     error.value = null
     try {
       const response = await teacherDashboardService.createClassConfiguration(data)
-      classConfigs.value.unshift(response.data)
+      classConfigs.value.unshift(unwrapData<ClassConfiguration>(response))
       success.value = 'Class configuration created successfully'
       setTimeout(() => (success.value = null), 3000)
-      return response.data
+      return unwrapData<ClassConfiguration>(response)
     } catch (err) {
       error.value = 'Failed to create class configuration'
       setTimeout(() => (error.value = null), 5000)
@@ -82,11 +84,11 @@ export const useTeacherDashboardStore = defineStore('teacherDashboard', () => {
       const response = await teacherDashboardService.updateClassConfiguration(id, data)
       const index = classConfigs.value.findIndex((c) => c.id === id)
       if (index !== -1) {
-        classConfigs.value[index] = response.data
+        classConfigs.value[index] = unwrapData<ClassConfiguration>(response)
       }
       success.value = 'Class configuration updated successfully'
       setTimeout(() => (success.value = null), 3000)
-      return response.data
+      return unwrapData<ClassConfiguration>(response)
     } catch (err) {
       error.value = 'Failed to update class configuration'
       setTimeout(() => (error.value = null), 5000)
@@ -118,7 +120,7 @@ export const useTeacherDashboardStore = defineStore('teacherDashboard', () => {
     error.value = null
     try {
       const response = await teacherDashboardService.getDashboardStats(params)
-      dashboardStats.value = response.data
+      dashboardStats.value = unwrapData<DashboardStats>(response)
       success.value = 'Dashboard stats loaded successfully'
       setTimeout(() => (success.value = null), 3000)
     } catch (err) {
@@ -134,7 +136,7 @@ export const useTeacherDashboardStore = defineStore('teacherDashboard', () => {
     error.value = null
     try {
       const response = await teacherDashboardService.createActivity(data)
-      activities.value.unshift(response.data)
+      activities.value.unshift(unwrapData<TeacherActivity>(response))
       success.value = 'Activity created successfully'
       setTimeout(() => (success.value = null), 3000)
     } catch (err) {
@@ -150,7 +152,7 @@ export const useTeacherDashboardStore = defineStore('teacherDashboard', () => {
     error.value = null
     try {
       const response = await teacherDashboardService.getRecentActivities()
-      recentActivities.value = response.data || []
+      recentActivities.value = unwrapData<TeacherActivity[]>(response) || []
       success.value = 'Recent activities loaded successfully'
       setTimeout(() => (success.value = null), 3000)
     } catch (err) {
@@ -166,7 +168,7 @@ export const useTeacherDashboardStore = defineStore('teacherDashboard', () => {
     error.value = null
     try {
       const response = await teacherDashboardService.getTopQuizzes()
-      topQuizzes.value = response.data || []
+      topQuizzes.value = unwrapData<any[]>(response) || []
       success.value = 'Top quizzes loaded successfully'
       setTimeout(() => (success.value = null), 3000)
     } catch (err) {
@@ -197,6 +199,12 @@ export const useTeacherDashboardStore = defineStore('teacherDashboard', () => {
   const uniqueStudents = computed(() => dashboardStats.value?.unique_students || 0)
   const activeQuizzes = computed(() => dashboardStats.value?.active_quizzes || 0)
   const totalClasses = computed(() => dashboardStats.value?.total_classes || 0)
+  const activePolls = computed(() => dashboardStats.value?.active_polls || 0)
+  const scheduledSessions = computed(() => dashboardStats.value?.scheduled_sessions || 0)
+  const liveSessions = computed(() => dashboardStats.value?.live_sessions || 0)
+  const engagementPct = computed(() => dashboardStats.value?.engagement_pct || 0)
+  const livePoll = computed(() => dashboardStats.value?.live_poll || null)
+  const participationTrend = computed(() => dashboardStats.value?.participation_trend || [])
 
   return {
     // State
@@ -216,6 +224,12 @@ export const useTeacherDashboardStore = defineStore('teacherDashboard', () => {
     uniqueStudents,
     activeQuizzes,
     totalClasses,
+    activePolls,
+    scheduledSessions,
+    liveSessions,
+    engagementPct,
+    livePoll,
+    participationTrend,
 
     // Actions
     fetchClassConfigurations,

@@ -224,8 +224,8 @@ onMounted(() => {
       </div>
     </section>
     <StickyBottomNav
-      to="/tools/icebreakers"
-      label="Back to Icebreakers"
+      to="/tools"
+      label="Back to all tools"
     />
   </div>
 </template>
@@ -243,7 +243,6 @@ onMounted(() => {
   color: #1f2937;
   background: #f9fafb;
   min-height: 100vh;
-  padding-top: 64px;
   padding-bottom: calc(80px + env(safe-area-inset-bottom));
 }
 

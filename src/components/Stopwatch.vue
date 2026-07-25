@@ -85,8 +85,6 @@ onUnmounted(() => {
 <template>
   <section class="stopwatch-section">
     <div class="stopwatch-card">
-      <!-- <RouterLink to="/tools" class="back-button">← Back</RouterLink> -->
-
       <div class="stopwatch-display">
         <div class="stopwatch-time">{{ formattedElapsedTime }}</div>
         <div class="stopwatch-label">Elapsed Time</div>
@@ -293,21 +291,34 @@ onUnmounted(() => {
 .btn {
   border: none;
   border-radius: 10px;
-  padding: 8px 12px;
+  padding: 10px 18px;
   cursor: pointer;
   font-weight: 700;
-  font-size: 0.82rem;
-  min-width: 70px;
+  font-size: 0.85rem;
+  min-width: auto;
+  white-space: nowrap;
+  transition: all 0.2s ease;
 }
 
 .btn-primary {
   background: #4f46e5;
   color: white;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #6366f1;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
 }
 
 .btn-secondary {
   background: #f1f5f9;
   color: #0f172a;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #e2e8f0;
 }
 
 .btn-tertiary {
@@ -329,5 +340,8 @@ button:disabled {
     font-size: 3rem;
   }
 
+  .stopwatch-card {
+    padding: 24px;
+  }
 }
 </style>
