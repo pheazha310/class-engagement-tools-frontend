@@ -318,15 +318,9 @@ onBeforeUnmount(() => {
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-<<<<<<< HEAD
-  color: #001f9e;
-  background: #eaf0ff;
-  padding: 6px 14px;
-=======
   color: var(--about-primary);
   background: var(--about-primary-soft);
   padding: 7px 16px;
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
   border-radius: 999px;
   margin-bottom: 18px;
   animation: fadeDown 0.5s ease forwards;
@@ -359,35 +353,8 @@ onBeforeUnmount(() => {
   border: none;
   cursor: pointer;
   transition: all 0.25s ease;
-<<<<<<< HEAD
-}
-
-.btn-primary {
-  background: white;
-  color: #001f9e;
-  box-shadow: 0 4px 14px rgba(0, 31, 158, 0.25);
-}
-
-.btn-primary:hover {
-  background: #f8faff;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 31, 158, 0.35);
-}
-
-.btn-secondary {
-  background: transparent;
-  color: white;
-  border: 2px solid rgba(255, 255, 255, 0.9);
-}
-
-.btn-secondary:hover {
-  background: white;
-  color: #001f9e;
-  transform: translateY(-2px);
-=======
   position: relative;
   z-index: 1;
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
 }
 
 .btn-large {
@@ -432,13 +399,6 @@ onBeforeUnmount(() => {
 
 /* Hero */
 .hero {
-<<<<<<< HEAD
-  background: linear-gradient(135deg, #001f9e 0%, #2d4ec4 100%);
-  color: white;
-  padding: 140px 20px 100px;
-  text-align: center;
-=======
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
   position: relative;
   background: linear-gradient(135deg, #001f9e 0%, #2547bc 50%, #3b5bf6 100%);
   color: white;
@@ -574,22 +534,6 @@ onBeforeUnmount(() => {
   margin-bottom: 0;
 }
 
-<<<<<<< HEAD
-.image-placeholder {
-  width: 100%;
-  max-width: 420px;
-  aspect-ratio: 1;
-  background: linear-gradient(135deg, #001f9e 0%, #2d4ec4 100%);
-  border-radius: 24px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  color: white;
-  text-align: center;
-  padding: 48px;
-  box-shadow: 0 24px 48px rgba(0, 31, 158, 0.25);
-=======
 .overview-card {
   perspective: 1400px;
 }
@@ -603,7 +547,6 @@ onBeforeUnmount(() => {
   transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.6s ease;
   position: relative;
   overflow: hidden;
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
 }
 
 .overview-card-inner::before {
@@ -980,15 +923,9 @@ onBeforeUnmount(() => {
 }
 
 .team-role {
-<<<<<<< HEAD
-  font-size: 13px;
-  font-weight: 600;
-  color: #001f9e;
-=======
   font-size: 12px;
   font-weight: 800;
   color: var(--about-primary);
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
   margin-bottom: 10px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -1000,48 +937,8 @@ onBeforeUnmount(() => {
   line-height: 1.6;
 }
 
-<<<<<<< HEAD
-/* Stats Section */
-.stats {
-  padding: 80px 20px;
-  background: linear-gradient(135deg, #001f9e 0%, #1d4ed8 100%);
-  color: white;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 24px;
-  text-align: center;
-}
-
-.stat-item {
-  padding: 24px 16px;
-}
-
-.stat-number {
-  font-size: 44px;
-  font-weight: 800;
-  margin-bottom: 8px;
-  letter-spacing: -0.02em;
-}
-
-.stat-label {
-  font-size: 15px;
-  opacity: 0.9;
-  font-weight: 500;
-}
-
-/* Call-to-Action Section */
-.cta {
-  background: linear-gradient(135deg, #001f9e 0%, #2d4ec4 100%);
-  color: white;
-  padding: 100px 20px;
-  text-align: center;
-=======
 /* FAQ */
 .faq-section {
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
   position: relative;
 }
 

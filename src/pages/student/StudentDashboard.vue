@@ -73,7 +73,7 @@ function calculateStreak(dates: string[]): number {
     new Date(d).toLocaleDateString('sv-SE')
 
   // Normalize to unique YYYY-MM-DD dates (local tz), sorted descending
-  const uniqueDays = [...new Set(dates.map(d => toLocalDate(d)))].filter(Boolean)
+  const uniqueDays = [...new Set(dates.map(d => toLocalDate(d)))].filter((d): d is string => typeof d === 'string' && d.length > 0)
   uniqueDays.sort().reverse()
 
   const now = new Date()
@@ -87,8 +87,8 @@ function calculateStreak(dates: string[]): number {
   // Count consecutive days backward from the most recent date
   let streak = 1
   for (let i = 1; i < uniqueDays.length; i++) {
-    const prev = uniqueDays[i - 1]
-    const curr = uniqueDays[i]
+    const prev = uniqueDays[i - 1]!
+    const curr = uniqueDays[i]!
     const diffMs = new Date(prev).getTime() - new Date(curr).getTime()
     const diffDays = Math.round(diffMs / 86400000)
     if (diffDays === 1) {

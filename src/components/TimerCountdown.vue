@@ -245,7 +245,7 @@ onUnmounted(() => {
         ⛶
       </button>
       
-      <div class="timer-circle" :class="{ running: isRunning, [urgencyClass.value]: true }">
+      <div class="timer-circle" :class="{ running: isRunning, [urgencyClass]: true }">
         <!-- SVG progress ring -->
         <svg
           class="timer-progress-ring"
@@ -285,7 +285,7 @@ onUnmounted(() => {
             </linearGradient>
           </defs>
         </svg>
-        <div class="timer-display" :class="{ pulse: isRunning && remainingSeconds.value > 0 }">
+        <div class="timer-display" :class="{ pulse: isRunning && remainingSeconds > 0 }">
           {{ formattedRemainingTime }}
         </div>
         <p class="timer-label">{{ isFinished ? 'Finished' : 'Remaining' }}</p>

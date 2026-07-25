@@ -92,11 +92,7 @@ onBeforeUnmount(() => {
 
 /* Hero */
 .tools-hero {
-<<<<<<< HEAD
-  background: linear-gradient(135deg, #001f9e 0%, #2d4ec4 100%);
-=======
   background: linear-gradient(135deg, #001f9e 0%, #2547bc 50%, #3b5bf6 100%);
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
   color: white;
   padding: 120px 20px 100px;
   text-align: center;

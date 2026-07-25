@@ -219,19 +219,8 @@ function openFeature(feature: FeatureCard) {
 .dashboard {
   margin-top: 70px;
   min-height: 100vh;
-  padding-top: 68px;
   background: #ffffff;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-<<<<<<< HEAD
-}
-
-.header {
-  position: relative;
-  background: #0f172a;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  overflow: hidden;
-=======
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
 }
 
 .header {

@@ -1,10 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onUnmounted, watch } from 'vue'
-<<<<<<< HEAD
-=======
 import { RouterLink } from 'vue-router'
 import { useRouter } from 'vue-router'
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
 import * as XLSX from 'xlsx'
 
 interface Student {
@@ -448,12 +445,7 @@ function resetSelectionHistory() {
 }
 
 function removeStudent(id: number) {
-  const removed = students.value.find(s => s.id === id)
   students.value = students.value.filter(s => s.id !== id)
-  if (removed) {
-    selectedNames.value = selectedNames.value.filter(n => n !== removed.name)
-    persistSelectedNames(selectedNames.value)
-  }
   if (pickedStudent.value?.id === id) {
     pickedStudent.value = null
     showResult.value = false
@@ -1106,19 +1098,9 @@ function formatTime(date: Date) {
 
 .student-chip--selected {
   opacity: 0.55;
+  pointer-events: none;
   border-color: #d1d5db;
   background: #f9fafb;
-}
-
-.student-chip--selected .student-chip__remove {
-  opacity: 0.4;
-  pointer-events: auto;
-}
-
-.student-chip--selected .student-chip__remove:hover {
-  opacity: 1;
-  background: #fee2e2;
-  color: #ef4444;
 }
 
 /* Import status messages */
@@ -1166,6 +1148,11 @@ function formatTime(date: Date) {
 .student-chip--selected .student-chip__name {
   text-decoration: line-through;
   color: #9ca3af;
+}
+
+.student-chip--selected .student-chip__remove {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .student-chip__check {

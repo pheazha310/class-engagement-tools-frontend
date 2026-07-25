@@ -7,21 +7,6 @@ import TeacherIcon from './TeacherIcon.vue'
 const router = useRouter()
 const authStore = useAuthStore()
 
-<<<<<<< HEAD
-const props = withDefaults(defineProps<{
-  sidebarActive?: string
-  pageTitle?: string
-  pageSubtitle?: string
-  teacherName?: string
-  teacherRole?: string
-}>(), {
-  sidebarActive: 'dashboard',
-  pageTitle: '',
-  pageSubtitle: '',
-  teacherName: '',
-  teacherRole: 'Senior Instructor',
-})
-=======
 const props = withDefaults(
   defineProps<{
     sidebarActive?: string
@@ -46,7 +31,10 @@ const props = withDefaults(
     hideTopbar: false,
   },
 )
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
+
+const emit = defineEmits<{
+  'update:searchValue': [value: string]
+}>()
 
 const currentHour = ref(new Date().getHours())
 
@@ -124,7 +112,10 @@ function navigateTo(route: string) {
   router.push(route)
 }
 
-
+function onSearchInput(e: Event) {
+  const target = e.target as HTMLInputElement
+  emit('update:searchValue', target.value)
+}
 </script>
 
 <template>
@@ -189,7 +180,19 @@ function navigateTo(route: string) {
           </slot>
         </div>
 
-        <div></div><!-- spacer -->
+        <!-- Search Slot -->
+        <slot name="search">
+          <label v-if="showSearch" class="search-field" aria-label="Search">
+            <TeacherIcon icon="search" :size="22" />
+            <input
+              :value="searchValue"
+              type="search"
+              :placeholder="searchPlaceholder"
+              @input="onSearchInput"
+            />
+          </label>
+          <div v-else></div>
+        </slot>
 
         <div class="topbar-actions">
           <slot name="actions" />
@@ -564,14 +567,10 @@ button {
 }
 
 .dashboard-topbar {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(260px, 430px) auto;
+  gap: 22px;
   align-items: center;
-<<<<<<< HEAD
-  justify-content: space-between;
-  min-height: 68px;
-  border-bottom: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.96);
-=======
   min-height: 82px;
   border-bottom: 1px solid rgba(197, 203, 221, 0.7);
   background: rgba(255, 255, 255, 0.84);
@@ -579,7 +578,6 @@ button {
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.75) inset,
     0 10px 30px rgba(21, 33, 72, 0.04);
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
   padding: 0 42px;
   position: sticky;
   top: 0;
@@ -612,8 +610,6 @@ button {
   color: var(--green);
 }
 
-<<<<<<< HEAD
-=======
 .search-field {
   display: grid;
   grid-template-columns: 24px 1fr;
@@ -641,7 +637,6 @@ button {
   color: #6d7587;
 }
 
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
 .topbar-actions {
   display: flex;
   align-items: center;
@@ -663,13 +658,13 @@ button {
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(.16,1,.3,1);
+  transition: all 0.2s ease;
   box-shadow: 0 4px 10px rgba(0, 31, 158, 0.25);
 }
 
 .launch-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 31, 158, 0.38);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 31, 158, 0.35);
 }
 
 .launch-btn:active {
@@ -887,10 +882,9 @@ button {
   }
 
   .dashboard-topbar {
-    flex-direction: column;
-    gap: 10px;
+    grid-template-columns: 1fr;
+    gap: 14px;
     padding: 18px 28px;
-    align-items: stretch;
   }
 
   .topbar-actions {
@@ -957,33 +951,6 @@ button {
 <!-- Non-scoped styles for shared utility classes (used in slot content, so can't be scoped) -->
 <style>
 /* ── Shared utility classes (available to slot content via slot) ── */
-<<<<<<< HEAD
-.outline-button, .primary-button, .danger-button, .ghost-button {
-  display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; font-weight: 700; gap: 8px;
-  transition: all .2s cubic-bezier(.16,1,.3,1);
-  cursor: pointer;
-}
-.ghost-button { border: 0; background: transparent; color: #001f9e; padding: 0 8px; gap: 4px; }
-.ghost-button:hover { background: rgba(0,31,158,.06); color: #00157a; }
-.outline-button { min-height: 38px; border: 1.5px solid #c5cbdd; background: #fff; color: #001f9e; padding: 0 18px; }
-.outline-button:hover:not(:disabled) { border-color: #001f9e; background: rgba(0,31,158,.04); transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,31,158,.08); }
-.outline-button:active:not(:disabled) { transform: translateY(0); }
-.primary-button { min-height: 38px; border: 1px solid #00157a; background: linear-gradient(135deg, #2d4ec4 0%, #001f9e 100%); color: #fff; padding: 0 18px; box-shadow: 0 6px 14px rgba(0,31,158,.2); }
-.primary-button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(0,31,158,.28); }
-.primary-button:active:not(:disabled) { transform: translateY(0); }
-.primary-button:disabled { opacity: .45; cursor: default; }
-.danger-button { min-height: 38px; border: 1px solid #c51313; background: linear-gradient(135deg, #dc2626 0%, #c51313 100%); color: #fff; padding: 0 18px; box-shadow: 0 6px 14px rgba(197,19,19,.2); }
-.danger-button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(197,19,19,.28); }
-.danger-button:active:not(:disabled) { transform: translateY(0); }
-.danger-button:disabled { opacity: .45; cursor: default; }
-
-.view-toggle { display: flex; border: 1px solid #c5cbdd; border-radius: 8px; overflow: hidden; }
-.toggle-btn { display: grid; width: 36px; height: 36px; place-items: center; border: 0; background: transparent; color: #6e7687; transition: all .15s; cursor: pointer; }
-.toggle-btn:hover { background: #eef3ff; color: #001f9e; }
-.toggle-btn.active { background: #001f9e; color: #fff; }
-.toggle-btn.active:hover { background: #00157a; }
-.toggle-btn:not(:last-child) { border-right: 1px solid #c5cbdd; }
-=======
 .outline-button,
 .primary-button,
 .danger-button,
@@ -1049,7 +1016,6 @@ button {
 .toggle-btn:not(:last-child) {
   border-right: 1px solid #c5cbdd;
 }
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
 
 .stats-grid {
   display: grid;
@@ -1111,22 +1077,6 @@ button {
   color: #c51313;
 }
 
-<<<<<<< HEAD
-.filter-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; padding: 14px 20px; border-radius: 10px; background: #fff; border: 1px solid #c5cbdd; }
-.filter-group { display: flex; align-items: center; gap: 12px; }
-.filter-label { font-size: 11px; font-weight: 800; text-transform: uppercase; color: #697082; }
-.filter-chips { display: flex; gap: 6px; flex-wrap: wrap; }
-.chip { min-height: 30px; border: 1px solid #c5cbdd; border-radius: 999px; background: #fff; padding: 0 14px; font-size: 12px; font-weight: 700; color: #697082; transition: all .18s; cursor: pointer; }
-.chip:hover:not(.active) { border-color: #001f9e; color: #001f9e; background: #f8faff; }
-.chip.active { background: #001f9e; color: #fff; border-color: #001f9e; box-shadow: 0 2px 6px rgba(0,31,158,.15); }
-.chip-green.active { background: #00772f; border-color: #00772f; color: #fff; }
-.chip-gray.active { background: #6e7687; border-color: #6e7687; color: #fff; }
-.chip-orange.active { background: #f07800; border-color: #f07800; color: #fff; }
-.chip-violet.active { background: #8d35ff; border-color: #8d35ff; color: #fff; }
-.chip-primary.active { background: #001f9e; border-color: #001f9e; color: #fff; }
-.filter-info { display: flex; align-items: center; gap: 10px; }
-.result-count { font-size: 13px; color: #697082; font-weight: 600; }
-=======
 .filter-bar {
   display: flex;
   align-items: center;
@@ -1207,7 +1157,6 @@ button {
   color: #697082;
   font-weight: 600;
 }
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
 
 .table-wrapper {
   border: 1px solid #c5cbdd;

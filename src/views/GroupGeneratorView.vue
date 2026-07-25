@@ -3,7 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import type { Student, Group, GenerationMethod } from '@/types/groupGenerator'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
-
+import Navbar from '@/components/Navbar.vue'
 
 function handleClickOutside(event: MouseEvent) {
   const target = event.target as HTMLElement
@@ -430,6 +430,7 @@ function processFile(file: File) {
 
 <template>
   <div class="group-generator">
+    <Navbar />
 
     <header class="page-header">
       <div class="page-header__inner">
@@ -725,7 +726,6 @@ function processFile(file: File) {
 <style scoped>
 .group-generator {
   min-height: 100vh;
-  padding-top: 68px;
   background: #f8fafc;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
@@ -734,7 +734,7 @@ function processFile(file: File) {
   background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
   padding: 0;
   position: sticky;
-  top: 68px;
+  top: 64px;
   left: 0;
   right: 0;
   z-index: 40;
@@ -799,7 +799,7 @@ function processFile(file: File) {
   max-width: 80rem;
   margin: 0 auto;
   padding: 2rem;
-  height: calc(100vh - 68px - 80px);
+  height: calc(100vh - 64px - 80px);
   overflow-y: auto;
 }
 

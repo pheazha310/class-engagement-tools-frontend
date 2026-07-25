@@ -276,144 +276,9 @@ const handleSubmit = () => {
   padding: 0 24px;
 }
 
-<<<<<<< HEAD
-/* Typography */
-.section-header {
-  text-align: center;
-  max-width: 700px;
-  margin: 0 auto 56px;
-}
-
-.section-eyebrow {
-  display: inline-block;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #001f9e;
-  background: #eaf0ff;
-  padding: 6px 14px;
-  border-radius: 999px;
-  margin-bottom: 16px;
-}
-
-.section-title {
-  font-size: 36px;
-  font-weight: 800;
-  color: #0f172a;
-  margin-bottom: 16px;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
-}
-
-.section-subtitle {
-  color: #64748b;
-  font-size: 17px;
-  line-height: 1.7;
-}
-
-/* Buttons */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 14px 28px;
-  border-radius: 10px;
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 15px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.25s ease;
-}
-
-.btn-primary {
-  background: white;
-  color: #001f9e;
-  box-shadow: 0 4px 14px rgba(0, 31, 158, 0.25);
-}
-
-.btn-primary:hover {
-  background: #f8faff;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 31, 158, 0.35);
-}
-
-.btn-secondary {
-  background: transparent;
-  color: white;
-  border: 2px solid rgba(255, 255, 255, 0.9);
-}
-
-.btn-secondary:hover {
-  background: white;
-  color: #001f9e;
-  transform: translateY(-2px);
-}
-
-.btn-large {
-  padding: 16px 32px;
-  font-size: 16px;
-  border-radius: 12px;
-}
-
-.btn-login {
-  background: transparent;
-  color: #475569;
-  border: 1px solid #e2e8f0;
-  backdrop-filter: blur(10px);
-  border-radius: 8px;
-  padding: 8px 18px;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.btn-login:hover {
-  background: #f8fafc;
-  color: #001f9e;
-  border-color: #cbd5e1;
-}
-
-.btn-register {
-  background: #001f9e;
-  color: white;
-  border-radius: 8px;
-  padding: 8px 18px;
-  font-size: 14px;
-  font-weight: 600;
-  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.2);
-}
-
-.btn-register:hover {
-  background: #00157a;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 31, 158, 0.3);
-}
-
-.btn-submit {
-  background: linear-gradient(135deg, #001f9e 0%, #2d4ec4 100%);
-  color: white;
-  padding: 14px 28px;
-  font-size: 15px;
-  width: 100%;
-  max-width: 300px;
-  border-radius: 10px;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
-}
-
-.btn-submit:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35);
-}
-
-/* Hero Section */
-.hero {
-  background: linear-gradient(135deg, #001f9e 0%, #2d4ec4 100%);
-=======
 /* Hero */
 .hero {
   background: linear-gradient(135deg, #001f9e 0%, #2547bc 50%, #3b5bf6 100%);
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
   color: white;
   padding: 120px 20px 140px;
   text-align: center;
@@ -778,14 +643,8 @@ const handleSubmit = () => {
   outline: none;
 }
 
-<<<<<<< HEAD
-.form-group input:focus,
-.form-group textarea:focus {
-  outline: none;
-=======
 .form-field input:focus,
 .form-field textarea:focus {
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
   border-color: #001f9e;
   box-shadow: 0 0 0 3px rgba(0, 31, 158, 0.1);
   background: white;
@@ -889,14 +748,6 @@ const handleSubmit = () => {
   overflow: hidden;
 }
 
-<<<<<<< HEAD
-.social-link:hover {
-  background: #001f9e;
-  color: white;
-  border-color: #001f9e;
-  transform: translateY(-6px);
-  box-shadow: 0 16px 32px rgba(0, 31, 158, 0.25);
-=======
 .social-card::before {
   content: '';
   position: absolute;
@@ -912,7 +763,6 @@ const handleSubmit = () => {
   border-color: transparent;
   transform: translateY(-6px);
   box-shadow: 0 20px 36px rgba(0, 31, 158, 0.3);
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
 }
 
 .social-card:hover .social-card-icon {

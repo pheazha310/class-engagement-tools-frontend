@@ -1,28 +1,22 @@
 <script setup lang="ts">
-
+import Navbar from '@/components/Navbar.vue'
 import TimerCountdown from '@/components/TimerCountdown.vue'
 import { RouterLink } from 'vue-router'
 </script>
 
 <template>
   <div class="timer-view">
+    <Navbar />
 
     <section class="timer-hero">
       <div class="hero-orb hero-orb--1" />
       <div class="hero-orb hero-orb--2" />
       <div class="hero-grid" />
       <div class="container">
-<<<<<<< HEAD
-          <RouterLink to="/teacher/dashboard" class="back-to-dashboard">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-            Back to Dashboard
-          </RouterLink>
-=======
         <RouterLink to="/tools" class="hero-back">
           <span class="back-icon">←</span>
           <span>Back to all tools</span>
         </RouterLink>
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
         <div class="hero-copy">
           <span class="hero-eyebrow reveal">CLASSROOM</span>
           <h1 class="hero-title">Countdown Timer</h1>

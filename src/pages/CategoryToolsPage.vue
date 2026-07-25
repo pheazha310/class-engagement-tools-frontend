@@ -101,11 +101,7 @@ onBeforeUnmount(() => {
 }
 
 .category-hero {
-<<<<<<< HEAD
-  background: linear-gradient(135deg, #001f9e 0%, #2d4ec4 100%);
-=======
   background: linear-gradient(135deg, #001f9e 0%, #2547bc 50%, #3b5bf6 100%);
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
   color: white;
   padding: 110px 20px 90px;
   text-align: center;
@@ -289,10 +285,6 @@ onBeforeUnmount(() => {
 }
 
 .btn-back:hover {
-<<<<<<< HEAD
-  border-color: #001f9e;
-  color: #001f9e;
-=======
   border-color: #2563eb;
   color: #2563eb;
   transform: translateY(-1px);
@@ -315,7 +307,6 @@ onBeforeUnmount(() => {
   font-size: 18px;
   color: #475569;
   margin-bottom: 32px;
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
 }
 
 @media (max-width: 768px) {

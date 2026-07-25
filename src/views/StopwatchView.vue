@@ -1,24 +1,17 @@
 <script setup lang="ts">
-
+import Navbar from '@/components/Navbar.vue'
 import Stopwatch from '@/components/Stopwatch.vue'
 import { RouterLink } from 'vue-router'
 </script>
 
 <template>
   <div class="stopwatch-view">
+    <Navbar />
 
     <section class="stopwatch-hero">
       <div class="container">
-<<<<<<< HEAD
-          <RouterLink to="/teacher/dashboard" class="back-to-dashboard">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-            Back to Dashboard
-          </RouterLink>
-        <!-- <div class="hero-copy">
-=======
         <RouterLink to="/tools" class="hero-back">← Back to all tools</RouterLink>
         <div class="hero-content">
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
           <h1>Stopwatch</h1>
           <p>Measure elapsed time with precision. Start, pause, and reset as needed.</p>
         </div>

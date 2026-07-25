@@ -68,11 +68,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="homepage">
-<<<<<<< HEAD
-    <!-- Hero Section -->
-=======
     <!-- Hero -->
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
     <section class="hero">
       <div class="hero-orb hero-orb--1" />
       <div class="hero-orb hero-orb--2" />
@@ -96,11 +92,7 @@ onBeforeUnmount(() => {
       </div>
     </section>
 
-<<<<<<< HEAD
-    <!-- Featured Tools Section -->
-=======
     <!-- Featured Tools -->
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
     <section class="featured-tools">
       <div class="container">
         <div class="section-header reveal">
@@ -137,13 +129,8 @@ onBeforeUnmount(() => {
       </div>
     </section>
 
-<<<<<<< HEAD
-    <!-- About Section -->
-    <section class="about">
-=======
     <!-- About / Mission -->
     <section class="about-section">
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
       <div class="container">
         <div class="section-header reveal">
           <span class="section-eyebrow">Our Mission</span>
@@ -154,32 +141,6 @@ onBeforeUnmount(() => {
         </div>
         <div class="about-content">
           <div class="about-text">
-<<<<<<< HEAD
-            <p>
-              ClassTools is dedicated to transforming education through innovative technology.
-              Our platform provides educators with a comprehensive suite of interactive tools
-              designed to increase student engagement, streamline classroom management, and
-              create dynamic learning experiences.
-            </p>
-            <p>
-              Founded by educators, for educators, we understand the challenges of modern
-              teaching. That's why we've created tools that are intuitive, effective, and
-              accessible to all teachers.
-            </p>
-          </div>
-          <div class="about-stats">
-            <div class="stat-item">
-              <div class="stat-number">10K+</div>
-              <div class="stat-label">Active Teachers</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-number">50K+</div>
-              <div class="stat-label">Students Engaged</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-number">15+</div>
-              <div class="stat-label">Interactive Tools</div>
-=======
             <div class="text-block reveal">
               <p>
                 ClassTools is dedicated to transforming education through innovative technology.
@@ -206,16 +167,12 @@ onBeforeUnmount(() => {
             <div class="stat-item reveal" v-for="(stat, idx) in stats" :key="stat.label" :style="{ transitionDelay: `${idx * 0.07}s` }">
               <div class="stat-value">{{ stat.value }}</div>
               <div class="stat-label">{{ stat.label }}</div>
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
             </div>
           </div>
         </div>
       </div>
     </section>
 
-<<<<<<< HEAD
-    <!-- Call-to-Action Section -->
-=======
     <!-- Features -->
     <section class="features-section section--tinted">
       <div class="container">
@@ -287,7 +244,6 @@ onBeforeUnmount(() => {
     </section>
 
     <!-- CTA -->
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
     <section class="cta">
       <div class="cta-orb cta-orb--1" />
       <div class="cta-orb cta-orb--2" />
@@ -308,9 +264,6 @@ onBeforeUnmount(() => {
   </div>
 </template>
 
-<<<<<<< HEAD
-<style scoped>
-=======
 <script lang="ts">
 import SopheaImage from '@/assets/images/Sophea.jpg'
 import SopheaSophornImage from '@/assets/images/oun.jpg'
@@ -384,7 +337,6 @@ const team = [
   box-sizing: border-box;
 }
 
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
 .homepage {
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   color: var(--home-ink);
@@ -395,58 +347,6 @@ const team = [
 .container {
   max-width: 1200px;
   margin: 0 auto;
-<<<<<<< HEAD
-  padding: 0 20px;
-}
-
-/* Buttons */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 12px 24px;
-  border-radius: 8px;
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 16px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-primary {
-  background: white;
-  color: #001f9e;
-}
-
-.btn-primary:hover {
-  background: #f0f5ff;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 31, 158, 0.3);
-}
-
-.btn-secondary {
-  background: transparent;
-  color: white;
-  border: 2px solid white;
-}
-
-.btn-secondary:hover {
-  background: white;
-  color: #001f9e;
-}
-
-.btn-large {
-  padding: 16px 32px;
-  font-size: 18px;
-}
-
-/* Hero Section */
-.hero {
-  background: linear-gradient(135deg, #001f9e 0%, #2d4ec4 100%);
-  color: white;
-  padding: 160px 20px 120px;
-=======
   padding: 0 24px;
 }
 
@@ -455,7 +355,6 @@ const team = [
 }
 
 .section-header {
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
   text-align: center;
   max-width: 720px;
   margin: 0 auto 56px;
@@ -473,14 +372,6 @@ const team = [
 
 .hero-grid {
   position: absolute;
-<<<<<<< HEAD
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd"><g fill="%23ffffff" fill-opacity="0.05"><path d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/></g></g></svg>');
-  opacity: 0.3;
-=======
   inset: 0;
   background-image:
     linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
@@ -534,14 +425,11 @@ const team = [
 @keyframes gridDrift {
   from { transform: translate(0, 0); }
   to { transform: translate(64px, 64px); }
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
 }
 
 .hero-content {
   position: relative;
   z-index: 1;
-<<<<<<< HEAD
-=======
   max-width: 820px;
   margin: 0 auto;
 }
@@ -557,7 +445,6 @@ const team = [
   color: rgba(255, 255, 255, 0.95);
   margin-bottom: 20px;
   border: 1px solid rgba(255, 255, 255, 0.2);
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
 }
 
 .hero-title {
@@ -566,9 +453,6 @@ const team = [
   margin-bottom: 22px;
   letter-spacing: -0.03em;
   line-height: 1.1;
-<<<<<<< HEAD
-  letter-spacing: -0.02em;
-=======
   color: #ffffff;
 }
 
@@ -580,7 +464,6 @@ const team = [
   display: inline-block;
   transform: skewX(-2deg);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
 }
 
 .hero-subtitle {
@@ -605,13 +488,8 @@ const team = [
   font-weight: 830;
   color: var(--home-ink);
   margin-bottom: 16px;
-<<<<<<< HEAD
-  color: #0f172a;
-  letter-spacing: -0.02em;
-=======
   letter-spacing: -0.03em;
   line-height: 1.15;
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
 }
 
 .section-subtitle {
@@ -706,18 +584,6 @@ const team = [
 
 .category-card {
   background: white;
-<<<<<<< HEAD
-  border-radius: 16px;
-  padding: 28px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e2e8f0;
-  transition: all 0.3s ease;
-}
-
-.category-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
-=======
   border-radius: 20px;
   border: 1px solid var(--home-line);
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
@@ -728,7 +594,6 @@ const team = [
 .category-card:hover {
   transform: translateY(-8px);
   box-shadow: 0 22px 42px rgba(0, 31, 158, 0.12);
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
   border-color: #cbd5e1;
 }
 
@@ -764,11 +629,7 @@ const team = [
   align-items: flex-start;
   gap: 14px;
   padding: 14px;
-<<<<<<< HEAD
-  border-radius: 10px;
-=======
   border-radius: 14px;
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
   text-decoration: none;
   color: #1e293b;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
@@ -808,15 +669,12 @@ const team = [
   background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
   border-radius: 12px;
   flex-shrink: 0;
-<<<<<<< HEAD
-=======
   transition: transform 0.25s ease;
   position: relative;
 }
 
 .category-tool-link:hover .category-tool-icon {
   transform: scale(1.08);
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
 }
 
 .category-tool-content {
@@ -841,11 +699,7 @@ const team = [
   line-height: 1.6;
   display: -webkit-box;
   -webkit-line-clamp: 2;
-<<<<<<< HEAD
-  -webkit-box-orient: vertical;
-=======
   -webkit-orientation: vertical;
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
   overflow: hidden;
 }
 
@@ -875,31 +729,14 @@ const team = [
 
 .about-stats {
   display: grid;
-<<<<<<< HEAD
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-=======
   grid-template-columns: repeat(2, 1fr);
   gap: 18px;
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
 }
 
 .stat-item {
   text-align: center;
   padding: 32px 20px;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-<<<<<<< HEAD
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-}
-
-.stat-number {
-  font-size: 36px;
-  font-weight: 800;
-  color: #001f9e;
-  margin-bottom: 8px;
-  letter-spacing: -0.02em;
-=======
   border-radius: 20px;
   border: 1px solid #e2e8f0;
   transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
@@ -936,7 +773,6 @@ const team = [
   color: var(--home-primary);
   margin-bottom: 8px;
   letter-spacing: -0.03em;
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
 }
 
 .stat-label {
@@ -946,14 +782,6 @@ const team = [
   letter-spacing: 0.02em;
 }
 
-<<<<<<< HEAD
-/* Call-to-Action Section */
-.cta {
-  background: linear-gradient(135deg, #001f9e 0%, #2d4ec4 100%);
-  color: white;
-  padding: 100px 20px;
-  text-align: center;
-=======
 /* Features */
 .features-section {
   padding: 100px 20px;
@@ -1216,7 +1044,6 @@ const team = [
 
 /* CTA */
 .cta {
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
   position: relative;
   background: linear-gradient(135deg, #001f9e 0%, #2547bc 50%, #3b5bf6 100%);
   color: white;
@@ -1268,10 +1095,6 @@ const team = [
   margin-bottom: 18px;
   letter-spacing: -0.02em;
   position: relative;
-<<<<<<< HEAD
-  letter-spacing: -0.02em;
-=======
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
 }
 
 .cta-subtitle {
@@ -1354,30 +1177,13 @@ const team = [
     grid-template-columns: 1fr;
   }
 
-<<<<<<< HEAD
-=======
   .cta-actions {
     flex-direction: column;
     align-items: stretch;
   }
 
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
   .cta-title {
     font-size: 32px;
   }
 }
-<<<<<<< HEAD
-
-@media (min-width: 769px) and (max-width: 1024px) {
-  .categories-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .about-content {
-    grid-template-columns: 1fr;
-  }
-}
 </style>
-=======
-</style>
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)

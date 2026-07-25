@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 import StudentPickerView from '@/views/StudentPickerView.vue'
@@ -468,19 +468,16 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true, role: 'teacher' },
   },
   {
-    path: '/live-voting',
-    name: 'live-voting',
-    component: () => import('@/pages/LiveClassroomVoting.vue'),
-  },
-  {
     path: '/teacher/polls',
     name: 'teacher-polls',
     component: () => import('@/pages/teacher/PollDashboard.vue'),
+    meta: { requiresAuth: true, role: 'teacher' },
   },
   {
     path: '/teacher/polls/create',
     name: 'teacher-polls-create',
     component: () => import('@/pages/teacher/PollCreatePage.vue'),
+    meta: { requiresAuth: true, role: 'teacher' },
   },
   {
     path: '/student/polls/:id',
@@ -491,11 +488,13 @@ const routes: RouteRecordRaw[] = [
     path: '/profile',
     name: 'profile',
     component: () => import('@/pages/ProfilePage.vue'),
+    meta: { requiresAuth: true },
   },
   {
     path: '/settings',
     name: 'settings',
     component: () => import('@/pages/ProfilePage.vue'),
+    meta: { requiresAuth: true },
   },
   {
     path: '/games/create',
@@ -503,12 +502,12 @@ const routes: RouteRecordRaw[] = [
     component: CreateGamePage,
   },
   {
-    path: '/games/join/:joinCode',
+    path: '/join/:joinCode',
     name: 'join-game',
     component: JoinGamePage,
   },
   {
-    path: '/games/play/:joinCode',
+    path: '/game/:joinCode',
     name: 'game-play',
     component: GamePlayPage,
   },
@@ -529,21 +528,11 @@ const router = createRouter({
   routes,
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to) => {
   const authStore = useAuthStore()
 
-<<<<<<< HEAD
-  // Allow access to public routes without authentication
-  const publicRoutes = ['home', 'about', 'contact', 'login', 'register', 'not-found',
-    'wheel', 'student-picker', 'single-student-picker', 'multiple-student-picker', 'tools', 'category-tools',
-    'tool-detail', 'group-generator']
-  if (publicRoutes.includes(to.name as string)) {
-    next()
-    return
-=======
   if (to.name === 'home') {
     return true
->>>>>>> 6acf3de (fix: fixed style that brokend after merge)
   }
 
   if (to.meta.requiresAuth && !authStore.initialized) {
@@ -551,45 +540,36 @@ router.beforeEach((to, from, next) => {
   }
 
   if (to.meta.requiresAuth && !authStore.user) {
-    next('/login')
-    return
+    return '/login'
   }
 
   if (to.meta.guest && authStore.user) {
     switch (authStore.user.role) {
       case 'admin':
-        next('/admin/users')
-        break
+        return '/admin/users'
       case 'teacher':
-        next('/teacher/dashboard')
-        break
+        return '/teacher/dashboard'
       case 'student':
-        next('/student/dashboard')
-        break
+        return '/student/dashboard'
       default:
-        next('/polls')
+        return '/polls'
     }
-    return
   }
 
   if (to.meta.role && authStore.user?.role !== to.meta.role) {
     switch (authStore.user?.role) {
       case 'admin':
-        next('/admin/users')
-        break
+        return '/admin/users'
       case 'teacher':
-        next('/teacher/dashboard')
-        break
+        return '/teacher/dashboard'
       case 'student':
-        next('/student/dashboard')
-        break
+        return '/student/dashboard'
       default:
-        next('/polls')
+        return '/polls'
     }
-    return
   }
 
-  next()
+  return true
 })
 
 export default router
