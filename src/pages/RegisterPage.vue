@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
+import SearchableSelect from '@/components/SearchableSelect.vue'
 
 import '@/assets/css/auth.css'
 
@@ -133,8 +134,8 @@ const step2Valid = computed(() => form.value.role !== '')
 const step3Valid = computed(
   () =>
     form.value.countryCode !== '' &&
-    form.value.provinceId !== null &&
-    form.value.schoolId !== null
+    form.value.province.trim() !== '' &&
+    form.value.schoolName.trim() !== ''
 )
 
 const selectedCountry = computed(() =>
@@ -151,8 +152,7 @@ const addLocationValid = computed(
 const steps = [
   { number: 1, label: 'Account', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
   { number: 2, label: 'Role', icon: 'M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0' },
-  { number: 3, label: 'Location', icon: 'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z' },
-  { number: 4, label: 'Review', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
+  { number: 3, label: 'Review', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
 ]
 
 async function fetchCountries() {
@@ -187,6 +187,12 @@ async function fetchProvinces() {
   try {
     const { data } = await api.get('/api/provinces', { params: { country_id: country.id } })
     provinces.value = data.data ?? data
+    if (provinces.value.length > 0) {
+      const firstProvince = provinces.value[0]
+      form.value.provinceId = firstProvince.id
+      form.value.province = firstProvince.name
+      await fetchSchools()
+    }
   } catch (err) {
     console.error('[RegisterPage] failed to load provinces', err)
   } finally {
@@ -205,6 +211,11 @@ async function fetchSchools() {
       params: { province_id: form.value.provinceId },
     })
     schools.value = data ?? []
+    if (schools.value.length > 0) {
+      const firstSchool = schools.value[0]
+      form.value.schoolId = firstSchool.id
+      form.value.schoolName = firstSchool.name
+    }
   } catch (err) {
     console.error('[RegisterPage] failed to load schools', err)
   } finally {
@@ -274,6 +285,7 @@ async function addLocationOption() {
     }
 
     form.value.schoolName = data.school.name
+    form.value.schoolId = data.school.id
     locationSuccess.value = 'Location added and selected.'
     showAddLocation.value = false
   } catch (err) {
@@ -415,7 +427,7 @@ const stepErrors = computed(() => {
         <div class="auth-stepper__track">
           <div
             class="auth-stepper__fill"
-            :style="{ width: `${((step - 1) / 3) * 100}%` }"
+            :style="{ width: `${((step - 1) / 2) * 100}%` }"
           />
         </div>
         <div class="auth-stepper__steps">
@@ -720,33 +732,32 @@ const stepErrors = computed(() => {
               </div>
             </div>
 
-            <label class="form-group">
-              <span class="form-label">Country</span>
-              <div class="input-wrap">
-                <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-                </svg>
-                <select v-model="form.countryCode" class="input input--select" :disabled="loadingCountries" @change="selectCountry(form.countryCode)">
-                  <option value="" disabled>{{ loadingCountries ? 'Loading...' : 'Select a country' }}</option>
-                  <option v-for="c in countries" :key="c.code" :value="c.code">{{ c.name }}</option>
-                </select>
-                <svg v-if="loadingCountries" class="input-spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" stroke-linecap="round" /></svg>
-              </div>
-            </label>
+            <SearchableSelect
+              v-model="form.countryCode"
+              label="Country"
+              :options="countries"
+              value-key="code"
+              label-key="name"
+              placeholder="Select a country"
+              :loading="loadingCountries"
+              :disabled="loadingCountries"
+              icon-path="<circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;10&quot; /><line x1=&quot;2&quot; y1=&quot;12&quot; x2=&quot;22&quot; y2=&quot;12&quot; /><path d=&quot;M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z&quot; />"
+              @change="selectCountry($event)"
+            />
 
             <label class="form-group">
               <span class="form-label">Province</span>
               <div class="input-wrap">
                 <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                  <circle cx="12" cy="10" r="3" />
                 </svg>
-                <select v-model="form.provinceId" class="input input--select" :disabled="!form.countryCode || loadingProvinces" @change="form.province = provinces.find(p => p.id === form.provinceId)?.name ?? ''; fetchSchools()">
-                  <option :value="null" disabled>
-                    {{ loadingProvinces ? 'Loading...' : form.countryCode ? 'Select a province' : 'Select a country first' }}
-                  </option>
-                  <option v-for="p in provinces" :key="p.id" :value="p.id">{{ p.name }}</option>
-                </select>
-                <svg v-if="loadingProvinces" class="input-spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" stroke-linecap="round" /></svg>
+                <input
+                  v-model="form.province"
+                  type="text"
+                  class="input"
+                  placeholder="Auto-filled after selecting country"
+                />
               </div>
             </label>
 
@@ -754,15 +765,15 @@ const stepErrors = computed(() => {
               <span class="form-label">School</span>
               <div class="input-wrap">
                 <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M22 10v6M2 10l10-5 10 5-10 5z" /><path d="M6 12v5c3 3 9 3 12 0v-5" />
+                  <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+                  <path d="M6 12v5c3 3 9 3 12 0v-5" />
                 </svg>
-                <select v-model="form.schoolId" class="input input--select" :disabled="!form.provinceId || loadingSchools" @change="form.schoolName = schools.find(s => s.id === form.schoolId)?.name ?? ''">
-                  <option :value="null" disabled>
-                    {{ loadingSchools ? 'Loading...' : form.provinceId ? 'Select a school' : 'Select a province first' }}
-                  </option>
-                  <option v-for="s in schools" :key="s.id" :value="s.id">{{ s.name }}</option>
-                </select>
-                <svg v-if="loadingSchools" class="input-spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" stroke-linecap="round" /></svg>
+                <input
+                  v-model="form.schoolName"
+                  type="text"
+                  class="input"
+                  placeholder="Auto-filled after selecting province"
+                />
               </div>
             </label>
           </div>
@@ -871,7 +882,7 @@ const stepErrors = computed(() => {
         <!-- Step indicator dots -->
         <div class="auth-step-dots">
           <span
-            v-for="i in 4"
+            v-for="i in 3"
             :key="i"
             class="auth-step-dot"
             :class="{ 'auth-step-dot--active': step === i, 'auth-step-dot--done': step > i }"

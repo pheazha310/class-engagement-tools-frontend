@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import TeacherLayout from '@/components/teacher/TeacherLayout.vue'
 import TeacherIcon from '@/components/teacher/TeacherIcon.vue'
+import teacherDashboardService, { type TeacherActivity } from '@/services/teacherDashboardService'
 
 interface ActivityLog { id: number; date: string; type: string; name: string; class: string; classCode: string; status: 'completed' | 'live' | 'scheduled'; participants: number; score?: string; duration?: string }
 
@@ -10,26 +11,59 @@ const typeFilter = ref<string>('all')
 const dateRange = ref<'all' | 'today' | 'week' | 'month'>('all')
 const currentPage = ref(1)
 const perPage = ref(10)
+const loading = ref(false)
 const activities = ref<ActivityLog[]>([])
+const loadError = ref('')
 
-function generateDemoActivities(): ActivityLog[] {
-  const types = ['quiz', 'poll', 'timer', 'picker', 'game', 'group'] as const
-  const names: Record<string, string[]> = { quiz: ['Cellular Mitosis Quiz', 'Molecular Bonding Quiz', 'Genetics & Inheritance', 'Chemistry Lab Safety', 'Physics Mechanics Test'], poll: ['Supply & Demand Poll', 'Concept Check: Module 3', 'Quick Check-In', 'Course Feedback Survey', 'Topic Preference Poll'], timer: ['Class Timer - 5 min', 'Pop Quiz Timer', 'Break Timer'], picker: ['Random Student Select', 'Group Leader Pick'], game: ['Trivia Challenge', 'Speed Round', 'Team Competition'], group: ['Group Generator - Project A', 'Team Formation'] }
-  const classesList = [{ name: 'Biology 101 - Section A', code: 'BIOL-101-A' }, { name: 'Advanced Chemistry', code: 'CHEM-201' }, { name: 'Introduction to Economics', code: 'ECON-101' }, { name: 'Physics for Engineers', code: 'PHYS-210' }] as const
-  const result: ActivityLog[] = []; const now = new Date()
-  for (let i = 0; i < 40; i++) {
-    const type = types[i % types.length] as string
-    const typeNames = names[type]
-    if (!typeNames) continue
-    const clsRaw = classesList[i % classesList.length]
-    if (clsRaw) {
-      const cls = clsRaw
-      const date = new Date(now)
-      date.setDate(date.getDate() - Math.floor(i / 2))
-      result.push({ id: i + 1, date: date.toISOString(), type, name: typeNames[i % typeNames.length]!, class: cls.name, classCode: cls.code, status: i < 8 ? 'completed' : i < 12 ? 'live' : 'completed', participants: Math.floor(10 + Math.random() * 30), score: ['quiz', 'poll'].includes(type) ? `${Math.floor(65 + Math.random() * 35)}%` : undefined, duration: type === 'timer' ? `${Math.floor(3 + Math.random() * 12)} min` : undefined })
-    }
+function mapActivity(activity: TeacherActivity): ActivityLog {
+  const data = activity.activity_data || {}
+  const status = data.status === 'live' || data.status === 'scheduled' ? data.status : 'completed'
+  return {
+    id: activity.id,
+    date: activity.created_at,
+    type: activity.activity_type,
+    name: data.name || data.title || data.activity_name || activity.activity_type,
+    class: data.class || data.class_name || data.className || '',
+    classCode: data.classCode || data.class_code || data.classCode || '',
+    status: status as ActivityLog['status'],
+    participants: data.participants ?? data.participant_count ?? 0,
+    score: data.score ?? data.average_score ?? undefined,
+    duration: data.duration,
   }
-  return result
+}
+
+async function fetchActivities() {
+  loading.value = true
+  loadError.value = ''
+  try {
+    const now = new Date()
+    const params: Record<string, any> = { per_page: 200 }
+    if (dateRange.value === 'today') {
+      params.start_date = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString().slice(0, 10)
+      params.end_date = now.toISOString().slice(0, 10)
+    } else if (dateRange.value === 'week') {
+      const start = new Date(now)
+      start.setDate(start.getDate() - 7)
+      params.start_date = start.toISOString().slice(0, 10)
+      params.end_date = now.toISOString().slice(0, 10)
+    } else if (dateRange.value === 'month') {
+      const start = new Date(now)
+      start.setMonth(start.getMonth() - 1)
+      params.start_date = start.toISOString().slice(0, 10)
+      params.end_date = now.toISOString().slice(0, 10)
+    }
+    if (typeFilter.value !== 'all') {
+      params.activity_type = typeFilter.value
+    }
+
+    const { data } = await teacherDashboardService.getActivityHistory(params)
+    activities.value = data.data.map(mapActivity)
+  } catch {
+    loadError.value = 'Failed to load activities'
+    activities.value = []
+  } finally {
+    loading.value = false
+  }
 }
 
 const typeColors: Record<string, string> = { quiz: 'var(--primary)', poll: 'var(--green)', timer: 'var(--orange)', picker: 'var(--cyan)', game: 'var(--violet)', group: 'var(--red)' }
@@ -49,13 +83,14 @@ const statsSummary = computed(() => ({ total: activities.value.length, completed
 function formatDate(d: string) { const diff = Math.floor((new Date().getTime() - new Date(d).getTime()) / (1000 * 60 * 60 * 24)); if (diff === 0) return 'Today'; if (diff === 1) return 'Yesterday'; if (diff < 7) return `${diff} days ago`; return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }
 function formatDateTime(d: string) { return new Date(d).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) }
 
-onMounted(() => { activities.value = generateDemoActivities() })
+onMounted(() => { fetchActivities() })
+watch([typeFilter, dateRange], () => { currentPage.value = 1; fetchActivities() })
 </script>
 
 <template>
   <TeacherLayout sidebar-active="history" page-title="Activity History" page-subtitle="Track all classroom activities and student engagement." v-model:search-value="searchQuery" search-placeholder="Search activities...">
     <template #actions>
-      <button class="outline-button" type="button" @click="() => { searchQuery = ''; typeFilter = 'all'; dateRange = 'all'; currentPage = 1 }"><TeacherIcon icon="refresh" :size="16" /><span>Reset</span></button>
+      <button class="outline-button" type="button" @click="() => { searchQuery = ''; typeFilter = 'all'; dateRange = 'all'; currentPage = 1; fetchActivities() }"><TeacherIcon icon="refresh" :size="16" /><span>Reset</span></button>
     </template>
 
     <section class="stats-grid" aria-label="Activity stats">
@@ -88,7 +123,9 @@ onMounted(() => { activities.value = generateDemoActivities() })
     </section>
 
     <section class="table-wrapper">
-      <div v-if="paginatedActivities.length === 0" class="empty-state"><div class="empty-icon"><TeacherIcon icon="history" :size="48" /></div><h3>No activities found</h3><p>Activities appear here when you start engaging your class.</p></div>
+      <div v-if="loading" class="empty-state"><div class="empty-icon"><TeacherIcon icon="history" :size="48" /></div><h3>Loading activities...</h3><p>Please wait while we fetch your history.</p></div>
+      <div v-else-if="loadError" class="empty-state"><div class="empty-icon"><TeacherIcon icon="alert-circle" :size="48" /></div><h3>Could not load activities</h3><p>{{ loadError }}</p></div>
+      <div v-else-if="paginatedActivities.length === 0" class="empty-state"><div class="empty-icon"><TeacherIcon icon="history" :size="48" /></div><h3>No activities found</h3><p>Activities appear here when you start engaging your class.</p></div>
       <template v-else>
         <div class="activity-table">
           <div class="activity-row activity-heading">
