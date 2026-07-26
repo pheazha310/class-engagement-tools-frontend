@@ -225,8 +225,8 @@ function openFeature(feature: FeatureCard) {
 
 .header {
   position: relative;
-  background: #0f172a;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #60a5fa 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   overflow: hidden;
 }
 

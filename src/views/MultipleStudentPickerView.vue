@@ -1,13 +1,32 @@
 <script setup lang="ts">
-import { ref, computed, onUnmounted } from 'vue'
+import { ref, computed, onUnmounted, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { jsPDF } from 'jspdf'
+import * as XLSX from 'xlsx'
+import { playSynthSound } from '@/utils/soundSynthesizer'
+import {
+  getPickedStudentNames,
+  savePickedStudentNames,
+  isStudentPicked,
+  resetPickedStudents,
+  getPickedCount,
+  saveStudentPool,
+  restoreStudentPool,
+  clearAllStudentData,
+} from '@/utils/studentPickerStorage'
 
 interface Student {
   id: number
   name: string
   initials: string
   color: string
+  previouslyPicked: boolean
+}
+
+interface Toast {
+  id: number
+  message: string
+  type: 'success' | 'info' | 'warning' | 'error'
 }
 
 const COLORS = [
@@ -21,11 +40,13 @@ function getColor(index: number): string {
 }
 
 function createStudent(name: string, index: number): Student {
+  const trimmed = name.trim()
   return {
     id: Date.now() + index,
-    name,
-    initials: name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2),
+    name: trimmed,
+    initials: trimmed.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2),
     color: getColor(index),
+    previouslyPicked: isStudentPicked(trimmed),
   }
 }
 
@@ -39,7 +60,36 @@ const pickLog = ref<{ students: string[]; time: Date }[]>([])
 const highlightIds = ref<Set<number>>(new Set())
 const inputFocused = ref(false)
 const isExporting = ref(false)
+const soundEnabled = ref(true)
+const showPickedInfo = ref(true)
+const toasts = ref<Toast[]>([])
+const fileInputRef = ref<HTMLInputElement | null>(null)
+const isImporting = ref(false)
+const importFileName = ref('')
+
+
+let toastIdCounter = 0
+function addToast(message: string, type: Toast['type'] = 'info') {
+  const id = ++toastIdCounter
+  toasts.value.push({ id, message, type })
+  setTimeout(() => {
+    toasts.value = toasts.value.filter(t => t.id !== id)
+  }, 3500)
+}
+
 let flashInterval: ReturnType<typeof setInterval> | null = null
+
+onMounted(() => {
+  const savedPool = restoreStudentPool()
+  if (savedPool) {
+    const startIndex = students.value.length
+    const newStudents = savedPool.map((name, i) => createStudent(name, startIndex + i))
+    students.value.push(...newStudents)
+    if (students.value.length > 0) {
+      addToast(`Restored ${students.value.length} student${students.value.length !== 1 ? 's' : ''} from previous session`, 'info')
+    }
+  }
+})
 
 onUnmounted(() => {
   if (flashInterval) {
@@ -48,6 +98,22 @@ onUnmounted(() => {
 })
 
 const isEmpty = computed(() => students.value.length === 0)
+
+const pickedCount = computed(() => getPickedCount())
+
+const remainingCount = computed(() => {
+  const pickedNames = getPickedStudentNames()
+  return students.value.filter(s => !pickedNames.has(s.name)).length
+})
+
+const allPicked = computed(() => remainingCount.value === 0 && students.value.length > 0)
+
+const availableCount = computed(() => {
+  const pickedNames = getPickedStudentNames()
+  return Math.min(pickCount.value, remainingCount.value)
+})
+
+
 
 function addAllStudents() {
   const raw = namesInput.value.trim()
@@ -61,16 +127,26 @@ function addAllStudents() {
   if (names.length === 0) return
 
   const startIndex = students.value.length
-  const newStudents = names.map((name, i) => createStudent(name, startIndex + i))
+  const pickedNames = getPickedStudentNames()
+  const newStudents = names.map((name, i) => {
+    const s = createStudent(name, startIndex + i)
+    s.previouslyPicked = pickedNames.has(name)
+    return s
+  })
   students.value.push(...newStudents)
   namesInput.value = ''
+  saveStudentPool(students.value.map(s => s.name))
+  addToast(`Added ${names.length} student${names.length !== 1 ? 's' : ''} to the pool`, 'success')
 }
 
 function clearAllStudents() {
+  if (students.value.length === 0) return
   students.value = []
   selectedStudents.value = []
   showResults.value = false
   pickCount.value = 1
+  saveStudentPool([])
+  addToast('Pool cleared', 'info')
 }
 
 function removeStudent(id: number) {
@@ -80,6 +156,7 @@ function removeStudent(id: number) {
     showResults.value = false
   }
   clampCount()
+  saveStudentPool(students.value.map(s => s.name))
 }
 
 function clampCount() {
@@ -89,16 +166,112 @@ function clampCount() {
   }
 }
 
+function toggleSound() {
+  soundEnabled.value = !soundEnabled.value
+  addToast(
+    soundEnabled.value ? 'Sound effects on' : 'Sound effects off',
+    'info',
+  )
+}
+
+function resetHistory() {
+  resetPickedStudents()
+  students.value = students.value.map(s => ({ ...s, previouslyPicked: false }))
+  addToast('Selection history reset — all students can be picked again', 'success')
+}
+
+function resetAllData() {
+  clearAllStudentData()
+  students.value = []
+  selectedStudents.value = []
+  showResults.value = false
+  pickLog.value = []
+  pickCount.value = 1
+  addToast('All data cleared', 'info')
+}
+
+function openFilePicker() {
+  fileInputRef.value?.click()
+}
+
+async function handleFileImport(event: Event) {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+
+  isImporting.value = true
+  importFileName.value = file.name
+
+  try {
+    const data = await file.arrayBuffer()
+    const workbook = XLSX.read(data, { type: 'array' })
+    const firstSheet = workbook.Sheets[workbook.SheetNames[0]!]
+    const jsonData = XLSX.utils.sheet_to_json<Record<string, unknown>>(firstSheet, { header: 1 })
+
+    const names: string[] = []
+    for (const row of jsonData) {
+      if (!Array.isArray(row)) continue
+      for (const cell of row) {
+        const cellStr = String(cell ?? '').trim()
+        if (cellStr && /^[a-zA-ZÀ-ÿ\s'-]+$/.test(cellStr) && cellStr.length > 0) {
+          names.push(cellStr)
+        }
+      }
+    }
+
+    if (names.length === 0) {
+      addToast('No student names found in the file', 'warning')
+      return
+    }
+
+    const startIndex = students.value.length
+    const pickedNames = getPickedStudentNames()
+    for (let i = 0; i < names.length; i++) {
+      const name = names[i]!.trim()
+      if (!name) continue
+      if (students.value.some(s => s.name.toLowerCase() === name.toLowerCase())) {
+        continue // skip duplicates already in the pool
+      }
+      const s = createStudent(name, startIndex + i)
+      s.previouslyPicked = pickedNames.has(name)
+      students.value.push(s)
+    }
+
+    saveStudentPool(students.value.map(s => s.name))
+    addToast(`Imported ${names.length} student${names.length !== 1 ? 's' : ''} from "${file.name}"`, 'success')
+  } catch (err) {
+    console.error('Import error:', err)
+    addToast('Failed to import file. Make sure it is a valid .xlsx, .xls, or .csv file.', 'error')
+  } finally {
+    isImporting.value = false
+    importFileName.value = ''
+    target.value = '' // reset file input
+  }
+}
+
 async function pickMultiple() {
   if (isPicking.value || isEmpty.value) return
 
-  const count = Math.min(pickCount.value, students.value.length)
+  const pickedNames = getPickedStudentNames()
+  const availableStudents = students.value.filter(s => !pickedNames.has(s.name))
+
+  if (availableStudents.length === 0) {
+    addToast('All students have been picked! Reset history to pick again.', 'warning')
+    return
+  }
+
+  const count = Math.min(pickCount.value, availableStudents.length)
   if (count < 1) return
 
   isPicking.value = true
   showResults.value = false
   selectedStudents.value = []
   highlightIds.value = new Set()
+
+  // Play drum roll if sound is on
+  if (soundEnabled.value) {
+    playSynthSound('Drum Roll').catch(() => {})
+  }
 
   const flashDuration = 1200
   const flashIntervalMs = 80
@@ -113,25 +286,43 @@ async function pickMultiple() {
         resolve()
         return
       }
-      const shuffled = [...students.value].sort(() => Math.random() - 0.5)
+      const shuffled = [...availableStudents].sort(() => Math.random() - 0.5)
       const flashSet = new Set(shuffled.slice(0, count).map(s => s.id))
       highlightIds.value = flashSet
     }, flashIntervalMs)
   })
 
-  const shuffled = [...students.value].sort(() => Math.random() - 0.5)
+  const shuffled = [...availableStudents].sort(() => Math.random() - 0.5)
   const finalPicks = shuffled.slice(0, count)
 
   selectedStudents.value = finalPicks
   highlightIds.value = new Set(finalPicks.map(s => s.id))
   showResults.value = true
 
+  // Save picked names to localStorage
+  const pickedNamesToSave = finalPicks.map(s => s.name)
+  savePickedStudentNames(pickedNamesToSave)
+
+  // Update previouslyPicked flag on all students
+  const updatedPickedNames = getPickedStudentNames()
+  students.value = students.value.map(s => ({
+    ...s,
+    previouslyPicked: updatedPickedNames.has(s.name),
+  }))
+
   pickLog.value.unshift({
-    students: finalPicks.map(s => s.name),
+    students: pickedNamesToSave,
     time: new Date(),
   })
 
   isPicking.value = false
+
+  // Play celebration sound if sound is on
+  if (soundEnabled.value) {
+    setTimeout(() => {
+      playSynthSound('Celebration').catch(() => {})
+    }, 200)
+  }
 
   setTimeout(() => {
     highlightIds.value = new Set()
@@ -197,10 +388,11 @@ function exportToPDF() {
     doc.setTextColor(100, 116, 139)
     doc.setFontSize(9)
     doc.text(`Total students in pool: ${students.value.length}`, 20, poolY)
+    doc.text(`Previously picked: ${pickedCount.value}`, 20, poolY + 7)
 
     if (latestPick) {
       const timeStr = formatTime(latestPick.time)
-      doc.text(`Pick time: ${formatDate(latestPick.time)} at ${timeStr}`, 20, poolY + 7)
+      doc.text(`Pick time: ${formatDate(latestPick.time)} at ${timeStr}`, 20, poolY + 14)
     }
 
     doc.setFillColor(248, 250, 252)
@@ -235,6 +427,81 @@ function exportToPDF() {
         </div>
       </header>
 
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <button class="toolbar__btn" @click="toggleSound" :title="soundEnabled ? 'Mute sounds' : 'Enable sounds'">
+          <svg v-if="soundEnabled" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+          </svg>
+          <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+            <line x1="23" y1="9" x2="17" y2="15" />
+            <line x1="17" y1="9" x2="23" y2="15" />
+          </svg>
+          <span>{{ soundEnabled ? 'Sound On' : 'Sound Off' }}</span>
+        </button>
+
+        <button class="toolbar__btn" @click="openFilePicker" :disabled="isImporting">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="17 8 12 3 7 8" />
+            <line x1="12" y1="3" x2="12" y2="15" />
+          </svg>
+          <span v-if="!isImporting">Import File</span>
+          <span v-else>Importing...</span>
+        </button>
+        <input
+          ref="fileInputRef"
+          type="file"
+          accept=".xlsx,.xls,.csv"
+          style="display:none"
+          @change="handleFileImport"
+        />
+
+        <button class="toolbar__btn" @click="showPickedInfo = !showPickedInfo">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+          <span>{{ showPickedInfo ? 'Hide Stats' : 'Show Stats' }}</span>
+        </button>
+      </div>
+
+      <!-- Stats Bar -->
+      <Transition name="slide-up">
+        <div v-if="showPickedInfo && students.length > 0" class="stats-bar">
+          <div class="stats-bar__item">
+            <span class="stats-bar__value">{{ students.length }}</span>
+            <span class="stats-bar__label">Total</span>
+          </div>
+          <div class="stats-bar__item stats-bar__item--success">
+            <span class="stats-bar__value">{{ remainingCount }}</span>
+            <span class="stats-bar__label">Available</span>
+          </div>
+          <div class="stats-bar__item stats-bar__item--warning">
+            <span class="stats-bar__value">{{ pickedCount }}</span>
+            <span class="stats-bar__label">Picked</span>
+          </div>
+          <div class="stats-bar__item stats-bar__item--info">
+            <span class="stats-bar__value">{{ pickLog.length }}</span>
+            <span class="stats-bar__label">Rounds</span>
+          </div>
+          <div class="stats-bar__progress">
+            <div class="stats-bar__progress-track">
+              <div
+                class="stats-bar__progress-fill"
+                :style="{ width: `${students.length > 0 ? (pickedCount / students.length) * 100 : 0}%` }"
+              ></div>
+            </div>
+            <span class="stats-bar__progress-label">
+              {{ students.length > 0 ? Math.round((pickedCount / students.length) * 100) : 0 }}% picked
+            </span>
+          </div>
+        </div>
+      </Transition>
+
       <section class="card">
         <div class="card-heading">
           <span class="step-badge">
@@ -267,6 +534,19 @@ function exportToPDF() {
               Add to pool
             </button>
             <button
+              class="btn btn--ghost-outline"
+              @click="openFilePicker"
+              :disabled="isImporting"
+              title="Import from Excel or CSV"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+              Import
+            </button>
+            <button
               v-if="students.length > 0"
               class="btn btn--ghost"
               @click="clearAllStudents"
@@ -289,6 +569,7 @@ function exportToPDF() {
               :class="{
                 'chip--active': highlightIds.has(student.id),
                 'chip--picked': selectedStudents.some(s => s.id === student.id) && showResults,
+                'chip--used': student.previouslyPicked && !highlightIds.has(student.id) && !(selectedStudents.some(s => s.id === student.id) && showResults),
               }"
               :style="{ '--chip-color': student.color }"
             >
@@ -296,6 +577,7 @@ function exportToPDF() {
                 {{ student.initials }}
               </div>
               <span class="chip__name">{{ student.name }}</span>
+              <span v-if="student.previouslyPicked && !(selectedStudents.some(s => s.id === student.id) && showResults)" class="chip__used-badge" title="Previously picked">✓</span>
               <button class="chip__remove" @click="removeStudent(student.id)" title="Remove">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                   <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
@@ -315,17 +597,35 @@ function exportToPDF() {
             </svg>
           </div>
           <p class="empty__text">No students added yet</p>
-          <p class="empty__hint">Type names above and click "Add to pool"</p>
+          <p class="empty__hint">Type names above, click "Add to pool", or <button class="empty__link" @click="openFilePicker">import from file</button></p>
         </div>
       </section>
 
-      <section class="card card--step2" :class="{ 'card--disabled': isEmpty }">
+      <section class="card card--step2" :class="{ 'card--disabled': isEmpty || (students.length > 0 && remainingCount === 0) }">
         <div class="card-heading">
           <span class="step-badge step-badge--gold">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;vertical-align:middle;"><path d="M12 5v14M5 12h14"/></svg>
             Pick Students
           </span>
           <h2 class="card-title">Select Randomly</h2>
+          <div v-if="students.length > 0 && pickedCount > 0" class="card-heading__actions">
+            <button class="btn btn--ghost btn--xs" @click="resetHistory" title="Reset pick history">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="1 4 1 10 7 10" />
+                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+              </svg>
+              Reset history
+            </button>
+          </div>
+        </div>
+
+        <div v-if="allPicked" class="all-picked-notice">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          <span>All students have been picked. <button class="empty__link" @click="resetHistory">Reset history</button> to pick again.</span>
         </div>
 
         <div class="picker-controls">
@@ -346,8 +646,8 @@ function exportToPDF() {
               </div>
               <button
                 class="counter__btn"
-                :disabled="pickCount >= students.length || students.length === 0 || isPicking"
-                @click="pickCount = Math.min(students.length, pickCount + 1)"
+                :disabled="pickCount >= remainingCount || remainingCount === 0 || isPicking"
+                @click="pickCount = Math.min(remainingCount, pickCount + 1)"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
                   <line x1="12" y1="5" x2="12" y2="19" />
@@ -355,13 +655,14 @@ function exportToPDF() {
                 </svg>
               </button>
             </div>
-            <span v-if="students.length > 0" class="counter__hint">Max {{ students.length }} student{{ students.length !== 1 ? 's' : '' }}</span>
+            <span v-if="remainingCount > 0" class="counter__hint">{{ remainingCount }} available</span>
+            <span v-else class="counter__hint counter__hint--warn">All picked</span>
           </div>
 
           <button
             class="pick-btn"
             :class="{ 'pick-btn--loading': isPicking }"
-            :disabled="isPicking || isEmpty"
+            :disabled="isPicking || isEmpty || allPicked"
             @click="pickMultiple"
           >
             <span v-if="isPicking" class="pick-btn__inner">
@@ -373,7 +674,7 @@ function exportToPDF() {
                 <circle cx="11" cy="11" r="8" />
                 <path d="m21 21-4.3-4.3" />
               </svg>
-              Pick {{ pickCount }} student{{ pickCount !== 1 ? 's' : '' }}
+              Pick {{ Math.min(pickCount, remainingCount) }} student{{ Math.min(pickCount, remainingCount) !== 1 ? 's' : '' }}
             </span>
           </button>
         </div>
@@ -404,7 +705,7 @@ function exportToPDF() {
                 <span v-if="isExporting" class="spinner spinner--sm"></span>
                 {{ isExporting ? 'Exporting...' : 'Export PDF' }}
               </button>
-              <button class="btn btn--ghost btn--sm" @click="pickMultiple" :disabled="isPicking || isEmpty">
+              <button class="btn btn--ghost btn--sm" @click="pickMultiple" :disabled="isPicking || isEmpty || allPicked">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="1 4 1 10 7 10" />
                   <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
@@ -413,6 +714,12 @@ function exportToPDF() {
               </button>
             </div>
           </div>
+
+          <!-- Confetti burst -->
+          <div class="confetti-burst">
+            <div v-for="i in 24" :key="i" class="confetti-particle" :style="{ '--i': i, '--confetti-color': COLORS[i % COLORS.length] }"></div>
+          </div>
+
           <div class="results-grid">
             <div
               v-for="student in selectedStudents"
@@ -430,6 +737,12 @@ function exportToPDF() {
               </div>
               <span class="result-tile__name">{{ student.name }}</span>
             </div>
+          </div>
+
+          <div class="results-footer">
+            <span class="results-footer__text">
+              Round #{{ pickLog.length }} · {{ remainingCount }} student{{ remainingCount !== 1 ? 's' : '' }} remaining in pool
+            </span>
           </div>
         </section>
       </Transition>
@@ -467,7 +780,48 @@ function exportToPDF() {
             </div>
           </TransitionGroup>
         </div>
+        <div v-if="pickLog.length > 0" class="history-footer">
+          <button class="btn btn--ghost btn--xs" @click="resetHistory">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="1 4 1 10 7 10" />
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+            </svg>
+            Reset pick history
+          </button>
+        </div>
       </section>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container">
+      <TransitionGroup name="toast">
+        <div
+          v-for="toast in toasts"
+          :key="toast.id"
+          class="toast"
+          :class="`toast--${toast.type}`"
+        >
+          <svg v-if="toast.type === 'success'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          <svg v-else-if="toast.type === 'warning'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+          <svg v-else-if="toast.type === 'error'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="15" y1="9" x2="9" y2="15" />
+            <line x1="9" y1="9" x2="15" y2="15" />
+          </svg>
+          <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="16" x2="12" y2="12" />
+            <line x1="12" y1="8" x2="12.01" y2="8" />
+          </svg>
+          <span>{{ toast.message }}</span>
+        </div>
+      </TransitionGroup>
     </div>
   </div>
 </template>
@@ -479,6 +833,7 @@ function exportToPDF() {
   min-height: 100vh;
   background: #f8fafc;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  position: relative;
 }
 
 .container {
@@ -547,6 +902,114 @@ function exportToPDF() {
   color: #2563eb;
 }
 
+/* ── Toolbar ── */
+.toolbar {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.toolbar__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.toolbar__btn:hover:not(:disabled) {
+  border-color: #6366f1;
+  color: #6366f1;
+  background: #fafbff;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.08);
+}
+
+.toolbar__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Stats Bar ── */
+.stats-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem 1.25rem;
+  background: white;
+  border-radius: 0.875rem;
+  border: 1px solid #eef2ff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
+  flex-wrap: wrap;
+}
+
+.stats-bar__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  min-width: 3rem;
+}
+
+.stats-bar__value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.stats-bar__label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+}
+
+.stats-bar__item--success .stats-bar__value { color: #16a34a; }
+.stats-bar__item--warning .stats-bar__value { color: #d97706; }
+.stats-bar__item--info .stats-bar__value { color: #6366f1; }
+
+.stats-bar__progress {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 8rem;
+  margin-left: auto;
+}
+
+.stats-bar__progress-track {
+  flex: 1;
+  height: 0.375rem;
+  background: #f1f5f9;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.stats-bar__progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  border-radius: 999px;
+  transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.stats-bar__progress-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+/* ── Cards ── */
 .card {
   background: white;
   border-radius: 1rem;
@@ -574,6 +1037,8 @@ function exportToPDF() {
   border-color: #bbf7d0;
   background: linear-gradient(to bottom, #fafefc, white);
   box-shadow: 0 4px 24px rgba(34, 197, 94, 0.08);
+  position: relative;
+  overflow: hidden;
 }
 
 .card--history {
@@ -690,6 +1155,7 @@ function exportToPDF() {
   display: flex;
   gap: 0.5rem;
   padding: 0.35rem 0.5rem 0.15rem;
+  flex-wrap: wrap;
 }
 
 /* ── Buttons ── */
@@ -740,9 +1206,31 @@ function exportToPDF() {
   border-color: #fca5a5;
 }
 
+.btn--ghost-outline {
+  background: transparent;
+  color: #6366f1;
+  border: 1px solid #c7d2fe;
+}
+
+.btn--ghost-outline:hover:not(:disabled) {
+  background: #eef2ff;
+  border-color: #6366f1;
+}
+
+.btn--ghost-outline:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .btn--sm {
   padding: 0.4rem 0.75rem;
   font-size: 0.75rem;
+}
+
+.btn--xs {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.675rem;
+  border-radius: 0.5rem;
 }
 
 .btn--export {
@@ -790,13 +1278,24 @@ function exportToPDF() {
   border-color: var(--chip-color);
   background: color-mix(in srgb, var(--chip-color) 10%, white);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--chip-color) 18%, transparent);
-  transform: scale(1.05);
+  transform: scale(1.05) !important;
 }
 
 .chip--picked {
   border-color: var(--chip-color);
   background: color-mix(in srgb, var(--chip-color) 14%, white);
   border-width: 1.5px;
+}
+
+.chip--used {
+  opacity: 0.55;
+  border-color: #e2e8f0;
+  background: #f8fafc;
+}
+
+.chip--used .chip__name {
+  text-decoration: line-through;
+  text-decoration-color: #94a3b8;
 }
 
 .chip__avatar {
@@ -817,6 +1316,20 @@ function exportToPDF() {
   font-size: 0.8rem;
   font-weight: 500;
   color: #334155;
+}
+
+.chip__used-badge {
+  font-size: 0.55rem;
+  font-weight: 700;
+  color: #94a3b8;
+  background: #f1f5f9;
+  border-radius: 50%;
+  width: 1rem;
+  height: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .chip__remove {
@@ -876,6 +1389,37 @@ function exportToPDF() {
   font-size: 0.75rem;
   color: #b0bccf;
   margin: 0;
+}
+
+.empty__link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #6366f1;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.empty__link:hover {
+  color: #4f46e5;
+}
+
+/* ── All Picked Notice ── */
+.all-picked-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  background: #fefce8;
+  border: 1px solid #fde68a;
+  border-radius: 0.75rem;
+  color: #92400e;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
 }
 
 /* ── Picker Controls ── */
@@ -962,6 +1506,10 @@ function exportToPDF() {
   font-weight: 500;
 }
 
+.counter__hint--warn {
+  color: #d97706;
+}
+
 /* ── Pick Button ── */
 .pick-btn {
   display: inline-flex;
@@ -1028,11 +1576,49 @@ function exportToPDF() {
   to { transform: rotate(360deg); }
 }
 
+/* ── Confetti Burst ── */
+.confetti-burst {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.confetti-particle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  background: var(--confetti-color);
+  animation: confetti-fall 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+  animation-delay: calc(var(--i) * 0.04s);
+  opacity: 0;
+}
+
+@keyframes confetti-fall {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) translate(calc(cos(var(--i) * 15deg) * 0px), calc(sin(var(--i) * 15deg) * 0px)) rotate(0deg) scale(1);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -50%) translate(calc(cos(var(--i) * 15deg) * 80px), calc(sin(var(--i) * 15deg) * 60px - 40px)) rotate(180deg) scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translate(calc(cos(var(--i) * 15deg) * 160px), calc(sin(var(--i) * 15deg) * 120px + 200px)) rotate(720deg) scale(0.3);
+  }
+}
+
 /* ── Results Grid ── */
 .results-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
+  position: relative;
+  z-index: 1;
 }
 
 .result-tile {
@@ -1114,6 +1700,20 @@ function exportToPDF() {
   color: #334155;
 }
 
+.results-footer {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #f1f5f9;
+  position: relative;
+  z-index: 1;
+}
+
+.results-footer__text {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
 /* ── History ── */
 .history-total {
   margin-left: auto;
@@ -1190,6 +1790,74 @@ function exportToPDF() {
   font-size: 0.7rem;
   color: #94a3b8;
   font-weight: 500;
+}
+
+.history-footer {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: center;
+}
+
+/* ── Toast Notifications ── */
+.toast-container {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: white;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  pointer-events: auto;
+  max-width: 22rem;
+}
+
+.toast--success {
+  background: #16a34a;
+}
+
+.toast--info {
+  background: #6366f1;
+}
+
+.toast--warning {
+  background: #d97706;
+}
+
+.toast--error {
+  background: #dc2626;
+}
+
+.toast-enter-active {
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.toast-leave-active {
+  transition: all 0.25s ease;
+}
+
+.toast-enter-from {
+  opacity: 0;
+  transform: translateX(40px) scale(0.9);
+}
+
+.toast-leave-to {
+  opacity: 0;
+  transform: translateX(40px) scale(0.9);
 }
 
 /* ── Transitions ── */
@@ -1290,6 +1958,20 @@ function exportToPDF() {
     font-size: 0.6rem;
     padding: 0.2rem 0.5rem;
   }
+
+  .stats-bar {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .stats-bar__progress {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .toolbar {
+    justify-content: center;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1323,6 +2005,16 @@ function exportToPDF() {
 
   .result-tile {
     padding: 0.5rem 0.7rem 0.5rem 0.5rem;
+  }
+
+  .toast-container {
+    left: 1rem;
+    right: 1rem;
+    bottom: 1rem;
+  }
+
+  .toast {
+    max-width: 100%;
   }
 }
 </style>

@@ -72,6 +72,7 @@ const loadingProvinces = ref(false)
 const loadingSchools = ref(false)
 const showAddLocation = ref(false)
 const savingLocation = ref(false)
+const deletingLocation = ref(false)
 const locationError = ref('')
 const locationSuccess = ref('')
 
@@ -295,6 +296,37 @@ async function addLocationOption() {
       || 'Could not add this location.'
   } finally {
     savingLocation.value = false
+  }
+}
+
+async function deleteLocation() {
+  deletingLocation.value = true
+  locationError.value = ''
+  locationSuccess.value = ''
+
+  try {
+    const country = selectedCountry.value
+    if (country?.id) {
+      await api.delete(`/api/location-options/${country.id}`)
+    }
+
+    form.value.countryCode = ''
+    form.value.countryId = null
+    form.value.countryName = ''
+    form.value.province = ''
+    form.value.provinceId = null
+    form.value.schoolName = ''
+    form.value.schoolId = null
+    provinces.value = []
+    schools.value = []
+
+    locationSuccess.value = 'Location deleted.'
+    await fetchCountries()
+  } catch (err) {
+    const response = (err as { response?: { data?: { message?: string } } }).response
+    locationError.value = response?.data?.message || 'Could not delete this location.'
+  } finally {
+    deletingLocation.value = false
   }
 }
 
@@ -674,6 +706,16 @@ const stepErrors = computed(() => {
               <h2 class="auth-step-panel__title">Your Location</h2>
               <p class="auth-step-panel__desc">Select your location from the options below</p>
             </div>
+            <button type="button" class="auth-mini-btn auth-mini-btn--danger" @click="deleteLocation" :disabled="deletingLocation">
+              <svg v-if="deletingLocation" class="auth-spinner" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" />
+              </svg>
+              <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              </svg>
+              Delete location
+            </button>
             <button type="button" class="auth-mini-btn" @click="openAddLocation">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19" />

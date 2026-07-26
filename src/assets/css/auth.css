@@ -743,6 +743,22 @@ input.input--error:focus {
   border-color: #93c5fd;
 }
 
+.auth-mini-btn--danger {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+.auth-mini-btn--danger:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+
+.auth-mini-btn--danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .auth-icon-btn {
   width: 32px;
   height: 32px;
