@@ -236,6 +236,10 @@ onUnmounted(() => {
 <template>
   <section class="timer-section">
     <div class="timer-card">
+      <RouterLink to="/tools" class="back-button">
+        <span class="back-icon">←</span>
+        <span class="back-text">Back</span>
+      </RouterLink>
       <button
         type="button"
         class="fullscreen-btn"
@@ -405,6 +409,40 @@ onUnmounted(() => {
 <style scoped>
 .timer-section {
   padding: 8px 0 16px;
+}
+
+.back-button {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  border: 1.5px solid #e2e8f0;
+  color: #475569;
+  background: #f8fafc;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+  z-index: 2;
+}
+
+.back-button:hover {
+  border-color: #6366f1;
+  color: #4f46e5;
+  background: #eef2ff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.12);
+}
+
+.back-icon {
+  font-size: 16px;
+  line-height: 1;
 }
 
 .fullscreen-btn {

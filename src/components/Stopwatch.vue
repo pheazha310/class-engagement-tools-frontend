@@ -85,6 +85,10 @@ onUnmounted(() => {
 <template>
   <section class="stopwatch-section">
     <div class="stopwatch-card">
+      <RouterLink to="/tools" class="back-button">
+        <span class="back-icon">←</span>
+        <span class="back-text">Back</span>
+      </RouterLink>
       <div class="stopwatch-display">
         <div class="stopwatch-time">{{ formattedElapsedTime }}</div>
         <div class="stopwatch-label">Elapsed Time</div>
