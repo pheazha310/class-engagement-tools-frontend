@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useClassroomQuizStore } from '@/stores/classroomQuizStore'
 import { useAuthStore } from '@/stores/auth'
@@ -16,26 +16,48 @@ const showNameModal = ref(false)
 onMounted(() => {
   store.init()
 
-  // For logged-in students: auto-fill and never show modal again
-  if (authStore.user?.name && authStore.user?.email?.includes('@student')) {
-    if (!store.currentStudentName) {
-      const loggedInName = authStore.user.name
-      const loggedInClass = authStore.user.school || ''
-      studentName.value = loggedInName
-      studentClass.value = loggedInClass
-      store.setStudentInfo(studentName.value, studentClass.value)
+  // Wait for auth to be initialized before checking
+  if (!authStore.initialized) {
+    authStore.fetchUser().finally(() => {
+      syncUser()
+    })
+  } else {
+    syncUser()
+  }
+})
+
+// Watch for user login/logout changes
+watch(
+  () => authStore.user?.name,
+  (newName) => {
+    if (newName) {
+      // User logged in - sync immediately
+      syncUser()
     }
+  }
+)
+
+function syncUser() {
+  // For ANY logged-in user: always sync with their account (clear old localStorage data)
+  if (authStore.user?.name) {
+    const loggedInName = authStore.user.name
+    const loggedInClass = authStore.user.school || ''
+
+    // Always override localStorage with logged-in user's info
+    studentName.value = loggedInName
+    studentClass.value = loggedInClass
+    store.setStudentInfo(studentName.value, studentClass.value)
     showNameModal.value = false
     return
   }
 
-  // For non-logged-in users: show modal only if no stored name exists
+  // For non-logged-in users: show modal only if no stored name
   if (store.currentStudentName) {
     showNameModal.value = false
   } else {
     showNameModal.value = true
   }
-})
+}
 
 const filteredQuizzes = computed(() => {
   let result = store.quizzes
