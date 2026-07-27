@@ -29,21 +29,19 @@ onMounted(() => {
 // Watch for user login/logout changes
 watch(
   () => authStore.user?.name,
-  (newName) => {
-    if (newName) {
-      // User logged in - sync immediately
-      syncUser()
-    }
+  () => {
+    // User logged in or logged out - sync immediately
+    syncUser()
   }
 )
 
 function syncUser() {
-  // For ANY logged-in user: always sync with their account (clear old localStorage data)
+  // For ANY logged-in user: always sync with their account
   if (authStore.user?.name) {
     const loggedInName = authStore.user.name
     const loggedInClass = authStore.user.school || ''
 
-    // Always override localStorage with logged-in user's info
+    // Override localStorage with logged-in user's info
     studentName.value = loggedInName
     studentClass.value = loggedInClass
     store.setStudentInfo(studentName.value, studentClass.value)
@@ -51,10 +49,16 @@ function syncUser() {
     return
   }
 
-  // For non-logged-in users: show modal only if no stored name
+  // For logged-out users: use stored name if available, don't clear it
   if (store.currentStudentName) {
+    // Has existing name - don't show modal, let them take quiz easily
+    studentName.value = store.currentStudentName
+    studentClass.value = store.currentStudentClass
     showNameModal.value = false
   } else {
+    // No stored name - show the form
+    studentName.value = ''
+    studentClass.value = ''
     showNameModal.value = true
   }
 }
