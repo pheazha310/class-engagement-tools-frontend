@@ -12,7 +12,9 @@ const quizId = computed(() => route.params.quizId as string)
 const quiz = computed(() => store.getQuizById(quizId.value))
 const submission = computed(() =>
   store.submissions.find(
-    s => s.quizId === quizId.value && s.studentName === store.currentStudentName
+    s => s.quizId === quizId.value &&
+         s.studentName === store.currentStudentName &&
+         s.class_name === store.currentStudentClass
   )
 )
 

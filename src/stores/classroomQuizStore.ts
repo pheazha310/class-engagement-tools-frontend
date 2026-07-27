@@ -102,7 +102,7 @@ export const useClassroomQuizStore = defineStore('classroomQuiz', () => {
     const allStudentSubmissions: Record<string, { name: string; class_name: string; submissions: QuizSubmission[] }> = {}
 
     for (const sub of submissions.value) {
-      const key = `${sub.studentName}-${sub.quizId}`
+      const key = `${sub.studentName}-${sub.class_name}-${sub.quizId}`
       if (!allStudentSubmissions[key]) {
         allStudentSubmissions[key] = {
           name: sub.studentName,
@@ -149,9 +149,11 @@ export const useClassroomQuizStore = defineStore('classroomQuiz', () => {
     return rankingsForQuizzes.value[quizId] || []
   }
 
-  function hasStudentSubmitted(quizId: string, studentName: string): boolean {
+  function hasStudentSubmitted(quizId: string, studentName: string, studentClass: string): boolean {
     return submissions.value.some(
-      s => s.quizId === quizId && s.studentName.toLowerCase() === studentName.toLowerCase()
+      s => s.quizId === quizId &&
+           s.studentName.toLowerCase() === studentName.toLowerCase() &&
+           s.class_name.toLowerCase() === studentClass.toLowerCase()
     )
   }
 

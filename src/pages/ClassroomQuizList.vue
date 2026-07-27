@@ -16,20 +16,22 @@ const showNameModal = ref(false)
 onMounted(() => {
   store.init()
 
+  // For logged-in students: auto-fill and never show modal again
   if (authStore.user?.name && authStore.user?.email?.includes('@student')) {
-    const loggedInName = authStore.user.name
-    const loggedInClass = authStore.user.school || ''
-
-    if (store.currentStudentName) {
-      showNameModal.value = false
-    } else {
+    if (!store.currentStudentName) {
+      const loggedInName = authStore.user.name
+      const loggedInClass = authStore.user.school || ''
       studentName.value = loggedInName
       studentClass.value = loggedInClass
-      setTimeout(() => {
-        store.setStudentInfo(studentName.value, studentClass.value)
-        showNameModal.value = false
-      }, 100)
+      store.setStudentInfo(studentName.value, studentClass.value)
     }
+    showNameModal.value = false
+    return
+  }
+
+  // For non-logged-in users: show modal only if no stored name exists
+  if (store.currentStudentName) {
+    showNameModal.value = false
   } else {
     showNameModal.value = true
   }
@@ -68,8 +70,8 @@ function viewRankings(quizId: string) {
 }
 
 function hasSubmitted(quizId: string): boolean {
-  if (!store.currentStudentName) return false
-  return store.hasStudentSubmitted(quizId, store.currentStudentName)
+  if (!store.currentStudentName || !store.currentStudentClass) return false
+  return store.hasStudentSubmitted(quizId, store.currentStudentName, store.currentStudentClass)
 }
 
 function getTotalQuestions(quizId: string): number {
@@ -667,8 +669,7 @@ function getTotalQuestions(quizId: string): number {
 /* Actions */
 .quiz-card-actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: 0.35rem;
   padding-top: 0.75rem;
   border-top: 1px solid #f1f5f9;
 }
@@ -696,8 +697,8 @@ function getTotalQuestions(quizId: string): number {
 }
 
 .btn-icon {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
 }
 
 .btn-primary {
@@ -730,8 +731,11 @@ function getTotalQuestions(quizId: string): number {
   background: transparent;
   color: #64748b;
   border: 1px solid #cbd5e1;
-  padding: 0.45rem 0.8rem;
-  font-size: 0.8rem;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.65rem;
+  border-radius: 6px;
+  flex: 1;
+  min-width: 0;
 }
 
 .btn-rankings:hover {
@@ -743,15 +747,17 @@ function getTotalQuestions(quizId: string): number {
 .completed-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.45rem 0.8rem;
-  border-radius: 8px;
-  font-size: 0.8rem;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.65rem;
   font-weight: 600;
   background: #d1fae5;
   color: #065f46;
   flex: 1;
-  justify-content: center;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .btn-create-quiz {
@@ -767,24 +773,27 @@ function getTotalQuestions(quizId: string): number {
 }
 
 .completed-icon {
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
 }
 
 .btn-review-small {
-  padding: 0.45rem 0.8rem;
+  padding: 0.35rem 0.5rem;
   background: #ffffff;
   color: #2563eb;
   border: 1px solid #2563eb;
-  font-size: 0.8rem;
+  font-size: 0.65rem;
   font-weight: 600;
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
+  justify-content: center;
+  gap: 0.2rem;
   transition: all 0.2s ease;
   white-space: nowrap;
+  flex: 1;
+  min-width: 0;
 }
 
 .btn-review-small:hover {
