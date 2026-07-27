@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { RouterLink, useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
+import { RouterLink } from 'vue-router'
 import { onMounted, onBeforeUnmount, ref } from 'vue'
 import { categories } from '@/data/toolsData'
 import SiteFooter from '@/components/SiteFooter.vue'
@@ -8,9 +7,6 @@ import SiteFooter from '@/components/SiteFooter.vue'
 defineOptions({
   name: 'HomePage',
 })
-
-const router = useRouter()
-const auth = useAuthStore()
 
 const observer = ref<IntersectionObserver | null>(null)
 const countersAnimated = ref(false)
@@ -41,11 +37,6 @@ const animateCounters = () => {
 }
 
 onMounted(() => {
-  if (auth.isAuthenticated) {
-    const targetRoute = auth.user?.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard'
-    router.replace(targetRoute)
-  }
-
   observer.value = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
