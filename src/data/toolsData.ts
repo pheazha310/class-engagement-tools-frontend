@@ -32,8 +32,9 @@ export const categories: Category[] = [
     slug: 'quiz',
     tools: [
       { title: 'Classroom Quiz', slug: 'classroom-quiz', icon: '📝', description: 'Create quizzes with multiple formats and display live rankings.', category: 'Quiz & Assessment', route: '/Classroom' },
-      { title: 'Live Voting', slug: 'live-voting', icon: '🗳️', description: 'Collect instant feedback with polls that work on any device.', category: 'Quiz & Assessment', route: '/live-voting/entry' },
-      { title: 'Exit Ticket', slug: 'exit-ticket', icon: '🎫', description: 'Quick formative assessments to check student understanding.', category: 'Quiz & Assessment', route: '/tools/exit-ticket' },
+      { title: 'Icebreakers', slug: 'icebreakers', icon: '✨', description: 'Warm up your class with energizing prompts and team-building exercises.', category: 'Quiz & Assessment', route: '/icebreakers' },
+      { title: 'Mood Check', slug: 'mood-check', icon: '😊', description: 'Check student mood and engagement levels.', category: 'Quiz & Assessment', route: '/tools/mood-check' },
+      { title: 'Word Cloud', slug: 'word-cloud', icon: '☁️', description: 'Visualize word frequency and student responses.', category: 'Quiz & Assessment', route: '/tools/word-cloud' },
     ]
   },
   {
@@ -55,26 +56,6 @@ export const categories: Category[] = [
       { title: 'Vocabulary Race', slug: 'vocabulary-race', icon: '📚', description: 'Fun vocabulary building races for the classroom.', category: 'Games', route: '/games/create' },
       { title: 'Quiz Battle', slug: 'quiz-battle', icon: '⚔️', description: 'Competitive quiz battles to engage students.', category: 'Games', route: '/games/create' },
       { title: 'Memory Game', slug: 'memory-game', icon: '🧠', description: 'Memory matching games for learning reinforcement.', category: 'Games', route: '/games/create' },
-    ]
-  },
-  {
-    name: 'Engagement',
-    icon: '📊',
-    slug: 'engagement',
-    tools: [
-      { title: 'Mood Check', slug: 'mood-check', icon: '😊', description: 'Check student mood and engagement levels.', category: 'Engagement', route: '/tools/mood-check' },
-      { title: 'Word Cloud', slug: 'word-cloud', icon: '☁️', description: 'Visualize word frequency and student responses.', category: 'Engagement', route: '/tools/word-cloud' },
-      { title: 'Leaderboard', slug: 'leaderboard', icon: '🏆', description: 'Track and display student achievement rankings.', category: 'Engagement', route: '/tools/leaderboard' },
-    ]
-  },
-  {
-    name: 'Fun Activities',
-    icon: '🎉',
-    slug: 'fun-activities',
-    tools: [
-      { title: 'Icebreakers', slug: 'icebreakers', icon: '✨', description: 'Warm up your class with energizing prompts and team-building exercises.', category: 'Fun Activities', route: '/icebreakers' },
-      { title: 'Bingo Generator', slug: 'bingo-generator', icon: '🎱', description: 'Create custom bingo games for any subject.', category: 'Fun Activities' },
-      { title: 'Flashcards', slug: 'flashcards', icon: '📖', description: 'Interactive flashcards for vocabulary and concept review.', category: 'Fun Activities' },
     ]
   },
 ]

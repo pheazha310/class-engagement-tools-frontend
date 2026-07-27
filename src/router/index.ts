@@ -169,37 +169,6 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/ReportView.vue'),
   },
 
-  // Polls
-  {
-    path: '/polls',
-    name: 'teacher-polls',
-    component: () => import('@/pages/TeacherPollList.vue'),
-    meta: { requiresAuth: true },
-  },
-  {
-    path: '/polls/create',
-    name: 'create-poll',
-    component: () => import('@/pages/CreatePoll.vue'),
-    meta: { requiresAuth: true },
-  },
-  {
-    path: '/polls/:id/edit',
-    name: 'edit-poll',
-    component: () => import('@/pages/CreatePoll.vue'),
-    meta: { requiresAuth: true },
-  },
-  {
-    path: '/polls/:id/results',
-    name: 'poll-results',
-    component: () => import('@/pages/LiveResults.vue'),
-    meta: { requiresAuth: true },
-  },
-  {
-    path: '/active-poll',
-    name: 'active-poll',
-    component: () => import('@/pages/ActivePoll.vue'),
-  },
-
   // Admin
   {
     path: '/admin/users',
@@ -220,7 +189,7 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true, role: 'admin' },
   },
 
-  // Other pages from your friend
+  // Other pages
   {
     path: '/about',
     name: 'about',
@@ -303,11 +272,6 @@ const routes: RouteRecordRaw[] = [
   },
   // Tools pages (individual)
   {
-    path: '/tools/exit-ticket',
-    name: 'tool-exit-ticket',
-    component: () => import('@/pages/tools/ExitTicketTool.vue'),
-  },
-  {
     path: '/tools/soundboard',
     name: 'tool-soundboard',
     component: () => import('@/pages/tools/SoundboardTool.vue'),
@@ -323,24 +287,9 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/pages/tools/WordCloudTool.vue'),
   },
   {
-    path: '/tools/leaderboard',
-    name: 'tool-leaderboard',
-    component: () => import('@/pages/tools/LeaderboardTool.vue'),
-  },
-  {
     path: '/tools/icebreakers',
     name: 'tool-icebreakers',
     component: () => import('@/views/Icebreakers.vue'),
-  },
-  {
-    path: '/tools/bingo-generator',
-    name: 'tool-bingo-generator',
-    component: () => import('@/pages/tools/BingoGeneratorTool.vue'),
-  },
-  {
-    path: '/tools/flashcards',
-    name: 'tool-flashcards',
-    component: () => import('@/pages/tools/FlashcardsTool.vue'),
   },
   {
     path: '/tools/:slug',
@@ -348,84 +297,11 @@ const routes: RouteRecordRaw[] = [
     component: ToolDetailPage,
   },
 
-  // Live Polls (API-backed)
-  {
-    path: '/teacher/live-polls',
-    name: 'live-poll-list',
-    component: () => import('@/pages/teacher/LivePollList.vue'),
-    meta: { requiresAuth: true, role: 'teacher' },
-  },
-  {
-    path: '/teacher/live-polls/create',
-    name: 'live-poll-create',
-    component: () => import('@/pages/teacher/LivePollCreate.vue'),
-    meta: { requiresAuth: true, role: 'teacher' },
-  },
-  {
-    path: '/teacher/live-polls/:id/edit',
-    name: 'live-poll-edit',
-    component: () => import('@/pages/teacher/LivePollCreate.vue'),
-    meta: { requiresAuth: true, role: 'teacher' },
-  },
-  {
-    path: '/teacher/live-polls/:id/results',
-    name: 'live-poll-results',
-    component: () => import('@/pages/teacher/LivePollResults.vue'),
-    meta: { requiresAuth: true, role: 'teacher' },
-  },
-  {
-    path: '/vote/:token',
-    name: 'live-vote-public',
-    component: () => import('@/pages/public/LiveVote.vue'),
-  },
-  {
-    path: '/polls/active',
-    name: 'active-polls-list',
-    component: () => import('@/pages/public/ActivePolls.vue'),
-  },
-
   // 404
   {
     path: '/group-generator',
     name: 'group-generator',
     component: GroupGeneratorView,
-  },
-  {
-    path: '/vote',
-    name: 'vote',
-    component: () => import('@/pages/VotePage.vue'),
-  },
-  {
-    path: '/results',
-    name: 'results',
-    component: () => import('@/pages/ResultsPage.vue'),
-  },
-  {
-    path: '/live-voting',
-    name: 'live-voting-list',
-    component: () => import('@/pages/VotingList.vue'),
-  },
-  {
-    path: '/live-voting/entry',
-    name: 'live-voting-entry',
-    component: () => import('@/pages/LiveVotingEntry.vue'),
-  },
-  {
-    path: '/live-voting/create',
-    name: 'live-voting-create',
-    component: () => import('@/pages/CreateLiveVoting.vue'),
-    meta: { requiresAuth: true, role: 'teacher' },
-  },
-  {
-    path: '/live-voting/:id/edit',
-    name: 'live-voting-edit',
-    component: () => import('@/pages/CreateLiveVoting.vue'),
-    meta: { requiresAuth: true, role: 'teacher' },
-  },
-  {
-    path: '/vote/live',
-    name: 'student-live-vote',
-    component: () => import('@/pages/StudentLiveVote.vue'),
   },
   {
     path: '/tools/icebreakers',
@@ -465,29 +341,6 @@ const routes: RouteRecordRaw[] = [
     path: '/tools/icebreakers/mystery-box',
     name: 'mystery-box',
     component: MysteryBox,
-  },
-  {
-    path: '/create-voting-poll',
-    name: 'create-voting-poll',
-    component: () => import('@/pages/CreateVotingPoll.vue'),
-    meta: { requiresAuth: true, role: 'teacher' },
-  },
-  {
-    path: '/teacher/polls',
-    name: 'teacher-polls',
-    component: () => import('@/pages/teacher/PollDashboard.vue'),
-    meta: { requiresAuth: true, role: 'teacher' },
-  },
-  {
-    path: '/teacher/polls/create',
-    name: 'teacher-polls-create',
-    component: () => import('@/pages/teacher/PollCreatePage.vue'),
-    meta: { requiresAuth: true, role: 'teacher' },
-  },
-  {
-    path: '/student/polls/:id',
-    name: 'student-poll-vote',
-    component: () => import('@/pages/student/PollVotePage.vue'),
   },
   {
     path: '/profile',
@@ -557,7 +410,7 @@ router.beforeEach((to) => {
       case 'student':
         return '/student/dashboard'
       default:
-        return '/polls'
+        return '/'
     }
   }
 
@@ -570,7 +423,7 @@ router.beforeEach((to) => {
       case 'student':
         return '/student/dashboard'
       default:
-        return '/polls'
+        return '/'
     }
   }
 

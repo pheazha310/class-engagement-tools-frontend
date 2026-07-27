@@ -2,20 +2,17 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { useLivePollStore } from '@/stores/livePollStore'
 import api from '@/services/api'
-import type { ActivePollItem } from '@/types/livePoll'
 
 const router = useRouter()
 const authStore = useAuthStore()
-const pollStore = useLivePollStore()
 
 // ── Reactive State ─────────────────────────────────────────────
 const currentHour = ref(new Date().getHours())
 const loading = ref(true)
 const refreshing = ref(false)
 const error = ref<string | null>(null)
-const activePolls = ref<ActivePollItem[]>([])
+const activePolls = ref<any[]>([])
 const gameHistory = ref<{ name: string; score: string; date: string; type: string }[]>([])
 const stats = ref({
   activePollCount: 0,
@@ -104,14 +101,11 @@ function calculateStreak(dates: string[]): number {
 // ── Data Fetching ──────────────────────────────────────────────
 async function fetchData() {
   try {
-    const [pollsRes, historyRes] = await Promise.allSettled([
-      pollStore.fetchActivePolls(),
+    const [historyRes] = await Promise.allSettled([
       api.get('/api/game-histories').catch(() => ({ data: { data: [] } })),
     ])
 
-    if (pollsRes.status === 'fulfilled') {
-      activePolls.value = pollStore.activePolls
-    }
+    activePolls.value = []
 
     let streakDays = 0
 
@@ -162,7 +156,7 @@ async function refreshData() {
   refreshing.value = false
 }
 
-function vote(poll: ActivePollItem) {
+function vote(poll: any) {
   if (poll.public_token) {
     router.push({ name: 'live-vote-public', params: { token: poll.public_token } })
   }
