@@ -79,11 +79,9 @@ onUnmounted(() => {
           <div class="dropdown-menu" :class="{ active: activeDropdown }">
             <RouterLink to="/tools" class="dropdown-item" @click="closeMobileMenu">All Tools</RouterLink>
             <RouterLink to="/tools/category/random" class="dropdown-item" @click="closeMobileMenu">Random Tools</RouterLink>
-            <RouterLink to="/tools/category/quiz" class="dropdown-item" @click="closeMobileMenu">Quiz &amp; Assessment</RouterLink>
+            <RouterLink to="/tools/category/student-engagement" class="dropdown-item" @click="closeMobileMenu">Student Engagement</RouterLink>
             <RouterLink to="/tools/category/classroom" class="dropdown-item" @click="closeMobileMenu">Classroom Control</RouterLink>
             <RouterLink to="/tools/category/games" class="dropdown-item" @click="closeMobileMenu">Games</RouterLink>
-            <RouterLink to="/tools/category/engagement" class="dropdown-item" @click="closeMobileMenu">Engagement</RouterLink>
-            <RouterLink to="/tools/category/fun-activities" class="dropdown-item" @click="closeMobileMenu">Fun Activities</RouterLink>
             <div class="dropdown-divider" />
           </div>
         </li>

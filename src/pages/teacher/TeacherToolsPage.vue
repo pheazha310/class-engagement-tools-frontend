@@ -5,6 +5,7 @@ import { categories, allTools } from '@/data/toolsData'
 import { useToolOrganizerStore } from '@/stores/toolOrganizerStore'
 import TeacherLayout from '@/components/teacher/TeacherLayout.vue'
 import TeacherIcon from '@/components/teacher/TeacherIcon.vue'
+import ToolIcon from '@/components/ToolIcon.vue'
 
 const router = useRouter()
 const organizer = useToolOrganizerStore()
@@ -140,7 +141,7 @@ function getCategoryIcon(categoryName: string): string {
         @click="navigateToTool(tool)"
       >
         <div class="tool-card-top">
-          <div class="tool-emoji">{{ tool.icon }}</div>
+          <div class="tool-emoji"><ToolIcon :name="tool.icon" :size="25" /></div>
           <div v-if="tool.route" class="tool-badge">Launchable</div>
         </div>
         <div class="tool-card-body">
@@ -148,7 +149,7 @@ function getCategoryIcon(categoryName: string): string {
           <p class="tool-desc">{{ tool.description }}</p>
         </div>
         <div class="tool-card-footer">
-          <span class="tool-category-tag">{{ getCategoryIcon(tool.category) }} {{ tool.category }}</span>
+          <span class="tool-category-tag"><ToolIcon :name="getCategoryIcon(tool.category)" :size="14" /> {{ tool.category }}</span>
           <span v-if="tool.route" class="tool-launch">
             Launch
             <TeacherIcon icon="chevronRight" :size="14" />
@@ -175,7 +176,7 @@ function getCategoryIcon(categoryName: string): string {
           :class="{ clickable: !!tool.route }"
           @click="navigateToTool(tool)"
         >
-          <span class="lcol-icon"><span class="list-emoji">{{ tool.icon }}</span></span>
+          <span class="lcol-icon"><span class="list-emoji"><ToolIcon :name="tool.icon" :size="20" /></span></span>
           <span class="lcol-name"><strong>{{ tool.title }}</strong></span>
           <span class="lcol-desc">{{ tool.description }}</span>
           <span class="lcol-cat"><code>{{ tool.category }}</code></span>

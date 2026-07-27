@@ -6,6 +6,7 @@ import { useTeacherDashboardStore } from '@/stores/teacherDashboardStore'
 import { useToolOrganizerStore } from '@/stores/toolOrganizerStore'
 import TeacherLayout from '@/components/teacher/TeacherLayout.vue'
 import TeacherIcon from '@/components/teacher/TeacherIcon.vue'
+import ToolIcon from '@/components/ToolIcon.vue'
 
 type TrendPoint = { label: string; value: number }
 
@@ -366,7 +367,7 @@ const goTo = (route?: string) => {
               type="button"
               @click="goTo(tool.route)"
             >
-              <span class="favtool-emoji">{{ tool.icon }}</span>
+              <span class="favtool-emoji"><ToolIcon :name="tool.icon" :size="24" /></span>
               <span class="favtool-name">{{ tool.label }}</span>
               <span class="favtool-hint">Open tool</span>
             </button>

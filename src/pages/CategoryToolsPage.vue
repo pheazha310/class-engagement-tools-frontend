@@ -3,6 +3,7 @@ import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { computed } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { categories } from '@/data/toolsData'
+import ToolIcon from '@/components/ToolIcon.vue'
 
 const route = useRoute()
 
@@ -44,7 +45,7 @@ onBeforeUnmount(() => {
       <div class="container">
         <div class="category-hero-content">
           <span class="hero-eyebrow reveal">CATEGORY</span>
-          <div class="category-icon reveal">{{ category.icon }}</div>
+          <div class="category-icon reveal"><ToolIcon :name="category.icon" :size="60" /></div>
           <h1 class="category-hero-title reveal">{{ category.name }}</h1>
           <p class="category-hero-subtitle reveal">{{ category.tools.length }} tools in this category</p>
         </div>
@@ -61,7 +62,7 @@ onBeforeUnmount(() => {
           class="tool-card"
           :style="{ animationDelay: `${idx * 0.1}s` }"
         >
-          <div class="tool-card-icon">{{ tool.icon }}</div>
+          <div class="tool-card-icon"><ToolIcon :name="tool.icon" :size="28" /></div>
           <div class="tool-card-content">
             <h2 class="tool-card-title">{{ tool.title }}</h2>
             <p class="tool-card-description">{{ tool.description }}</p>
