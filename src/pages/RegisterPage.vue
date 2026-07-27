@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
@@ -28,6 +28,23 @@ const form = ref<FormData>({
 
 const step = ref(1)
 const error = ref('')
+const fieldErrors = ref<Record<string, string>>({})
+
+// Clear field errors when user types
+watch(() => form.value.name, () => {
+  if (error.value) error.value = ''
+  delete fieldErrors.value.name
+})
+watch(() => form.value.email, () => {
+  if (error.value) error.value = ''
+  delete fieldErrors.value.email
+})
+watch(() => form.value.password, () => {
+  delete fieldErrors.value.password
+})
+watch(() => form.value.role, () => {
+  delete fieldErrors.value.role
+})
 const submitting = ref(false)
 const success = ref(false)
 const showPassword = ref(false)
@@ -64,15 +81,7 @@ const passwordStrengthColor = computed(() => {
   return '#10b981'
 })
 
-const step1Valid = computed(
-  () =>
-    form.value.name.trim() !== '' &&
-    form.value.email.trim() !== '' &&
-    form.value.password.length >= 8 &&
-    passwordMatch.value
-)
 
-const step2Valid = computed(() => form.value.role !== '')
 
 const steps = [
   { number: 1, label: 'Account', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
@@ -80,9 +89,51 @@ const steps = [
   { number: 3, label: 'Review', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
 ]
 
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+function validateStep1(): boolean {
+  fieldErrors.value = {}
+  
+  const errs: Record<string, string> = {}
+  
+  if (!form.value.name.trim()) {
+    errs.name = 'Please enter your full name.'
+  }
+  if (!form.value.email.trim()) {
+    errs.email = 'Please enter your email address.'
+  } else if (!emailRegex.test(form.value.email.trim())) {
+    errs.email = 'Please enter a valid email address.'
+  }
+  if (!form.value.password) {
+    errs.password = 'Please enter a password.'
+  } else if (form.value.password.length < 8) {
+    errs.password = 'Password must be at least 8 characters.'
+  }
+  if (!form.value.passwordConfirmation) {
+    errs.confirm = 'Please confirm your password.'
+  } else if (form.value.password !== form.value.passwordConfirmation) {
+    errs.confirm = 'Passwords do not match.'
+  }
+  
+  fieldErrors.value = errs
+  return Object.keys(errs).length === 0
+}
+
+function validateStep2(): boolean {
+  const errs: Record<string, string> = {}
+  if (!form.value.role) {
+    errs.role = 'Please select your role.'
+  }
+  fieldErrors.value = errs
+  return Object.keys(errs).length === 0
+}
+
 function nextStep() {
-  if (step.value === 1 && step1Valid.value) step.value = 2
-  else if (step.value === 2 && step2Valid.value) step.value = 3
+  if (step.value === 1 && validateStep1()) {
+    step.value = 2
+  } else if (step.value === 2 && validateStep2()) {
+    step.value = 3
+  }
 }
 
 function prevStep() {
@@ -96,6 +147,7 @@ function goToStep(n: number) {
 
 async function submit() {
   error.value = ''
+  fieldErrors.value = {}
   submitting.value = true
 
   const err = await auth.register({
@@ -107,7 +159,23 @@ async function submit() {
   })
 
   if (err) {
-    error.value = err
+    // Classify error to show on the right field
+    const lower = err.toLowerCase()
+    if (lower.includes('name')) {
+      fieldErrors.value.name = err
+      step.value = 1
+    } else if (lower.includes('email') || lower.includes('registered') || lower.includes('exists') || lower.includes('taken')) {
+      fieldErrors.value.email = err
+      step.value = 1
+    } else if (lower.includes('password') || lower.includes('confirm') || lower.includes('match') || lower.includes('character') || lower.includes('min')) {
+      fieldErrors.value.password = err
+      step.value = 1
+    } else if (lower.includes('role')) {
+      fieldErrors.value.role = err
+      step.value = 2
+    } else {
+      error.value = err
+    }
     submitting.value = false
     return
   }
@@ -138,7 +206,7 @@ const roleOptions: { value: Role; label: string; icon: string; desc: string; fea
 const stepErrors = computed(() => {
   const errs: Record<string, string> = {}
   if (step.value === 1) {
-    if (form.value.password.length > 0 && form.value.password.length < 6) errs.password = 'At least 6 characters'
+    if (form.value.password.length > 0 && form.value.password.length < 8) errs.password = 'At least 8 characters'
     if (form.value.passwordConfirmation && !passwordMatch.value) errs.confirm = 'Passwords do not match'
   }
   return errs
@@ -282,17 +350,17 @@ const stepErrors = computed(() => {
                   v-model="form.name"
                   type="text"
                   class="input"
-                  :class="{ 'input--error': stepErrors.name }"
+                  :class="{ 'input--error': stepErrors.name || fieldErrors.name }"
                   placeholder="John Doe"
                   required
                 />
-                <svg v-if="form.name.trim() && !stepErrors.name" class="input-valid" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <svg v-if="form.name.trim() && !stepErrors.name && !fieldErrors.name" class="input-valid" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
                   <polyline points="22 4 12 14.01 9 11.01" />
                 </svg>
               </div>
               <Transition name="fade">
-                <span v-if="stepErrors.name" class="field-error">{{ stepErrors.name }}</span>
+                <span v-if="stepErrors.name || fieldErrors.name" class="field-error">{{ fieldErrors.name || stepErrors.name }}</span>
               </Transition>
             </label>
 
@@ -307,17 +375,17 @@ const stepErrors = computed(() => {
                   v-model="form.email"
                   type="email"
                   class="input"
-                  :class="{ 'input--error': stepErrors.email }"
+                  :class="{ 'input--error': stepErrors.email || fieldErrors.email }"
                   placeholder="john@example.com"
                   required
                 />
-                <svg v-if="form.email.trim() && !stepErrors.email" class="input-valid" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <svg v-if="form.email.trim() && !stepErrors.email && !fieldErrors.email" class="input-valid" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
                   <polyline points="22 4 12 14.01 9 11.01" />
                 </svg>
               </div>
               <Transition name="fade">
-                <span v-if="stepErrors.email" class="field-error">{{ stepErrors.email }}</span>
+                <span v-if="stepErrors.email || fieldErrors.email" class="field-error">{{ fieldErrors.email || stepErrors.email }}</span>
               </Transition>
             </label>
 
@@ -333,8 +401,8 @@ const stepErrors = computed(() => {
                     v-model="form.password"
                     :type="showPassword ? 'text' : 'password'"
                     class="input"
-                    :class="{ 'input--error': stepErrors.password }"
-                     placeholder="At least 8 characters"
+                    :class="{ 'input--error': stepErrors.password || fieldErrors.password }"
+                    placeholder="At least 8 characters"
                     required
                   />
                   <button type="button" class="password-toggle" @click="showPassword = !showPassword" tabindex="-1">
@@ -361,7 +429,7 @@ const stepErrors = computed(() => {
                   </span>
                 </div>
                 <Transition name="fade">
-                  <span v-if="stepErrors.password" class="field-error">{{ stepErrors.password }}</span>
+                  <span v-if="stepErrors.password || fieldErrors.password" class="field-error">{{ fieldErrors.password || stepErrors.password }}</span>
                 </Transition>
               </label>
 
@@ -376,7 +444,7 @@ const stepErrors = computed(() => {
                     v-model="form.passwordConfirmation"
                     :type="showConfirmPassword ? 'text' : 'password'"
                     class="input"
-                    :class="{ 'input--error': form.passwordConfirmation && !passwordMatch }"
+                    :class="{ 'input--error': (form.passwordConfirmation && !passwordMatch) || fieldErrors.confirm }"
                     placeholder="Repeat password"
                     required
                   />
@@ -392,7 +460,7 @@ const stepErrors = computed(() => {
                   </button>
                 </div>
                 <Transition name="fade">
-                  <span v-if="stepErrors.confirm" class="field-error">{{ stepErrors.confirm }}</span>
+                  <span v-if="stepErrors.confirm || fieldErrors.confirm" class="field-error">{{ fieldErrors.confirm || stepErrors.confirm }}</span>
                 </Transition>
               </label>
             </div>
@@ -400,6 +468,16 @@ const stepErrors = computed(() => {
         </div>
 
         <!-- Step 2: Role -->
+        <Transition name="fade">
+          <div v-if="fieldErrors.role" class="alert" style="margin-bottom: 16px">
+            <svg class="alert-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="15" y1="9" x2="9" y2="15" />
+              <line x1="9" y1="9" x2="15" y2="15" />
+            </svg>
+            <span>{{ fieldErrors.role }}</span>
+          </div>
+        </Transition>
         <div v-show="step === 2" class="auth-step-panel">
           <div class="auth-step-panel__header">
             <h2 class="auth-step-panel__title">Select Your Role</h2>
@@ -535,11 +613,7 @@ const stepErrors = computed(() => {
           <button
             type="button"
             class="auth-btn auth-btn--primary"
-            :disabled="
-              submitting ||
-              (step === 1 && !step1Valid) ||
-              (step === 2 && !step2Valid)
-            "
+            :disabled="submitting"
             @click="step < 3 ? nextStep() : submit()"
           >
             <template v-if="submitting">
