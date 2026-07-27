@@ -105,7 +105,6 @@ onUnmounted(() => {
       <div class="nav-buttons">
         <template v-if="auth.isAuthenticated">
           <ProfileDropdown />
-          <button class="btn btn-logout" type="button" @click="handleLogout">Logout</button>
         </template>
         <template v-else>
           <RouterLink to="/login" class="btn btn-login">Login</RouterLink>

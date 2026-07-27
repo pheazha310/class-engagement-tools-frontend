@@ -78,6 +78,20 @@ function getTotalQuestions(quizId: string): number {
   const quiz = store.getQuizById(quizId)
   return quiz ? quiz.questions.length : 0
 }
+
+function isCustomQuiz(quizId: string): boolean {
+  return quizId.startsWith('custom-')
+}
+
+function editQuiz(quizId: string) {
+  router.push(`/classroom/create?edit=${quizId}`)
+}
+
+function deleteQuiz(quizId: string) {
+  if (confirm('Are you sure you want to delete this quiz? This cannot be undone.')) {
+    store.deleteCustomQuiz(quizId)
+  }
+}
 </script>
 
 <template>
@@ -201,9 +215,34 @@ function getTotalQuestions(quizId: string): number {
           class="quiz-card"
         >
           <div class="quiz-card-top">
-            <div class="quiz-card-badge-row">
-              <span class="badge badge--subject">{{ quiz.subject }}</span>
-              <span class="badge badge--class">{{ quiz.class_name }}</span>
+            <div class="quiz-card-header-row">
+              <div class="quiz-card-badge-row">
+                <span class="badge badge--subject">{{ quiz.subject }}</span>
+                <span class="badge badge--class">{{ quiz.class_name }}</span>
+              </div>
+              <!-- Edit/Delete icons for custom quizzes -->
+              <div v-if="isCustomQuiz(quiz.id)" class="quiz-card-actions-top">
+                <button
+                  class="btn-icon-action"
+                  @click="editQuiz(quiz.id)"
+                  title="Edit quiz"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
+                </button>
+                <button
+                  class="btn-icon-action btn-icon-action--delete"
+                  @click="deleteQuiz(quiz.id)"
+                  title="Delete quiz"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                  </svg>
+                </button>
+              </div>
             </div>
             <h3 class="quiz-card-title">{{ quiz.title }}</h3>
             <p class="quiz-card-desc">{{ quiz.description }}</p>
@@ -594,11 +633,57 @@ function getTotalQuestions(quizId: string): number {
   flex: 1;
 }
 
+.quiz-card-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
 .quiz-card-badge-row {
   display: flex;
   gap: 0.5rem;
-  margin-bottom: 0.75rem;
   flex-wrap: wrap;
+  flex: 1;
+}
+
+.quiz-card-actions-top {
+  display: flex;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.btn-icon-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.btn-icon-action svg {
+  width: 16px;
+  height: 16px;
+}
+
+.btn-icon-action:hover {
+  border-color: #f59e0b;
+  color: #f59e0b;
+  background: #fffbeb;
+}
+
+.btn-icon-action--delete:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+  background: #fef2f2;
 }
 
 .badge {

@@ -216,6 +216,22 @@ export const useClassroomQuizStore = defineStore('classroomQuiz', () => {
     saveToStorage()
   }
 
+  function updateCustomQuiz(quizId: string, updates: Partial<SeededQuiz> & { questions?: SeededQuestion[] }) {
+    const index = quizzes.value.findIndex(q => q.id === quizId)
+    if (index !== -1) {
+      quizzes.value[index] = { ...quizzes.value[index], ...updates }
+      saveToStorage()
+    }
+  }
+
+  function deleteCustomQuiz(quizId: string) {
+    const index = quizzes.value.findIndex(q => q.id === quizId)
+    if (index !== -1) {
+      quizzes.value.splice(index, 1)
+      saveToStorage()
+    }
+  }
+
   function resetAllData() {
     submissions.value = []
     localStorage.removeItem('classroom-submissions')
@@ -234,6 +250,8 @@ export const useClassroomQuizStore = defineStore('classroomQuiz', () => {
     setStudentInfo,
     submitQuiz,
     createCustomQuiz,
+    updateCustomQuiz,
+    deleteCustomQuiz,
     resetAllData,
   }
 })
