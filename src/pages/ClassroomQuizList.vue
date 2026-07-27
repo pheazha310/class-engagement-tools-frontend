@@ -15,11 +15,11 @@ const showNameModal = ref(false)
 
 onMounted(() => {
   store.init()
-  
+
   if (authStore.user?.name && authStore.user?.email?.includes('@student')) {
     const loggedInName = authStore.user.name
     const loggedInClass = authStore.user.school || ''
-    
+
     if (store.currentStudentName) {
       showNameModal.value = false
     } else {
@@ -281,7 +281,7 @@ function getTotalQuestions(quizId: string): number {
 .classroom-page {
   position: relative;
   min-height: 100vh;
-  padding: 2rem 1rem 4rem;
+  padding: 7rem 1rem 4rem;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
@@ -667,6 +667,7 @@ function getTotalQuestions(quizId: string): number {
 /* Actions */
 .quiz-card-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.4rem;
   padding-top: 0.75rem;
   border-top: 1px solid #f1f5f9;
@@ -685,8 +686,8 @@ function getTotalQuestions(quizId: string): number {
   cursor: pointer;
   transition: all 0.2s ease;
   text-decoration: none;
-  flex: 1;
   justify-content: center;
+  white-space: nowrap;
 }
 
 .btn:disabled {
@@ -827,7 +828,7 @@ function getTotalQuestions(quizId: string): number {
    ============================================================ */
 @media (max-width: 768px) {
   .classroom-page {
-    padding: 1.25rem 0.75rem 3rem;
+    padding: 6rem 0.75rem 3rem;
   }
 
   .classroom-header {
