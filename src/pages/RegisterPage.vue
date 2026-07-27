@@ -41,12 +41,11 @@ const passwordStrength = computed(() => {
   const pwd = form.value.password
   if (!pwd) return 0
   let score = 0
-  if (pwd.length >= 8) score += 25
-  if (pwd.length >= 12) score += 15
-  if (/[A-Z]/.test(pwd)) score += 20
-  if (/[a-z]/.test(pwd)) score += 15
-  if (/[0-9]/.test(pwd)) score += 15
-  if (/[^A-Za-z0-9]/.test(pwd)) score += 10
+  if (pwd.length >= 8) score += 30
+  if (pwd.length >= 12) score += 10
+  if (/[a-z]/.test(pwd)) score += 10
+  if (/[0-9]/.test(pwd)) score += 40
+  if (/[Za-z0-9]/.test(pwd)) score += 10
   return Math.min(score, 100)
 })
 
@@ -139,9 +138,6 @@ const roleOptions: { value: Role; label: string; icon: string; desc: string; fea
 const stepErrors = computed(() => {
   const errs: Record<string, string> = {}
   if (step.value === 1) {
-    if (!form.value.name.trim()) errs.name = 'Name is required'
-    if (!form.value.email.trim()) errs.email = 'Email is required'
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.value.email)) errs.email = 'Invalid email format'
     if (form.value.password.length > 0 && form.value.password.length < 6) errs.password = 'At least 6 characters'
     if (form.value.passwordConfirmation && !passwordMatch.value) errs.confirm = 'Passwords do not match'
   }
