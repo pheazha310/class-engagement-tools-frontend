@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useClassroomQuizStore } from '@/stores/classroomQuizStore'
 import { useAuthStore } from '@/stores/auth'
@@ -952,3 +952,4 @@ function cancel() {
   .btn { width: 100%; justify-content: center; }
 }
 </style>
+const isNotAuthenticated = computed(() => !authStore.isAuthenticated)
