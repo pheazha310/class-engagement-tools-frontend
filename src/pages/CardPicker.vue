@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { RouterLink } from 'vue-router'
+import * as XLSX from 'xlsx'
 
 interface Student {
   id: number
@@ -16,24 +17,10 @@ const AVATAR_COLORS = [
   '#7C3AED', '#0891B2', '#DB2777', '#CA8A04', '#059669',
 ]
 
-const classes = [
-  'Grade 10 - A',
-  'Grade 10 - B',
-  'Grade 11 - A',
-  'Grade 11 - B',
-  'Grade 12 - A',
-]
-
 const students = ref<Student[]>(
   [
     'Alice Johnson', 'Bob Smith', 'Carol Williams', 'David Brown',
-    'Eve Davis', 'Frank Miller', 'Grace Wilson', 'Henry Moore',
-    'Ivy Taylor', 'Jack Anderson', 'Kate Thomas', 'Leo Jackson',
-    'Mia White', 'Noah Harris', 'Olivia Martin', 'Peter Garcia',
-    'Quinn Robinson', 'Rachel Clark', 'Sam Lewis', 'Tina Walker',
-    'Uma Hall', 'Victor Young', 'Wendy King', 'Xander Wright',
-    'Yara Lopez', 'Zachary Scott', 'Amelia Hill', 'Benjamin Green',
-    'Chloe Adams', 'Daniel Baker',
+    'Emma Davis',
   ].map((name, i) => ({
     id: i + 1,
     name,
@@ -44,18 +31,73 @@ const students = ref<Student[]>(
 
 const selectedIds = ref<Set<number>>(new Set())
 const searchQuery = ref('')
-const selectedClass = ref(classes[0])
 const isPicking = ref(false)
 const isPickingGroup = ref(false)
 const pickedId = ref<number | null>(null)
 const pickedGroupIds = ref<Set<number>>(new Set())
 const lastPickedIds = ref<Set<number>>(new Set())
 const groupSize = ref(2)
+const fileInputRef = ref<HTMLInputElement | null>(null)
+const pickedHistory = ref<Set<number>>(new Set())
 let pickTimeout: ReturnType<typeof setTimeout> | null = null
 let groupTimeouts: ReturnType<typeof setTimeout>[] = []
 let pickSoundContext: AudioContext | null = null
 let pickSoundOscillator: OscillatorNode | null = null
 let pickSoundGain: GainNode | null = null
+
+// ─── Toast notifications ───
+interface Toast {
+  id: number
+  message: string
+  type: 'success' | 'info' | 'warning'
+}
+const toasts = ref<Toast[]>([])
+let toastCounter = 0
+
+function addToast(message: string, type: Toast['type'] = 'info') {
+  const id = ++toastCounter
+  toasts.value.push({ id, message, type })
+  setTimeout(() => {
+    toasts.value = toasts.value.filter(t => t.id !== id)
+  }, 3000)
+}
+
+// ─── Confetti particles ───
+interface ConfettiParticle {
+  id: number
+  x: number
+  color: string
+  delay: number
+  rotation: number
+}
+const confettiParticles = ref<ConfettiParticle[]>([])
+let confettiCounter = 0
+
+function burstConfetti(count = 24) {
+  const colors = ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#06B6D4', '#22C55E']
+  const particles: ConfettiParticle[] = []
+  for (let i = 0; i < count; i++) {
+    particles.push({
+      id: ++confettiCounter,
+      x: 10 + Math.random() * 80,
+      color: colors[i % colors.length]!,
+      delay: Math.random() * 0.4,
+      rotation: Math.random() * 360,
+    })
+  }
+  confettiParticles.value = particles
+  setTimeout(() => { confettiParticles.value = [] }, 2500)
+}
+
+// ─── New student IDs for entrance animation ───
+const newStudentIds = ref<Set<number>>(new Set())
+
+function markStudentsAsNew(ids: number[]) {
+  ids.forEach(id => newStudentIds.value.add(id))
+  setTimeout(() => {
+    ids.forEach(id => newStudentIds.value.delete(id))
+  }, 1200)
+}
 
 const filteredStudents = computed(() => {
   let list = students.value
@@ -67,7 +109,7 @@ const filteredStudents = computed(() => {
 })
 
 const selectedCount = computed(() => selectedIds.value.size)
-const classDropdownOpen = ref(false)
+const pickedCount = computed(() => pickedHistory.value.size)
 const groupSizeOpen = ref(false)
 
 const maxGroupSize = computed(() => Math.min(filteredStudents.value.length, 10))
@@ -90,6 +132,16 @@ function toggleCard(id: number) {
   selectedIds.value = set
 }
 
+function deleteStudent(id: number) {
+  const student = students.value.find(s => s.id === id)
+  students.value = students.value.filter(s => s.id !== id)
+  selectedIds.value = new Set([...selectedIds.value].filter(sid => sid !== id))
+  pickedGroupIds.value = new Set([...pickedGroupIds.value].filter(pid => pid !== id))
+  lastPickedIds.value = new Set([...lastPickedIds.value].filter(lid => lid !== id))
+  if (pickedId.value === id) pickedId.value = null
+  if (student) addToast(`Removed ${student.name}`, 'info')
+}
+
 function shuffleArray<T>(arr: T[]): T[] {
   const shuffled = [...arr]
   for (let i = shuffled.length - 1; i > 0; i--) {
@@ -101,6 +153,43 @@ function shuffleArray<T>(arr: T[]): T[] {
   }
   return shuffled
 }
+
+const STORAGE_KEY = 'card-picker-picked-history'
+
+function loadPickedHistory() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    if (saved) {
+      const parsed = JSON.parse(saved)
+      pickedHistory.value = new Set(parsed)
+    }
+  } catch {
+    // ignore parse errors
+  }
+}
+
+function savePickedHistory() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify([...pickedHistory.value]))
+}
+
+function addToPickedHistory(ids: number[]) {
+  ids.forEach(id => pickedHistory.value.add(id))
+  savePickedHistory()
+}
+
+function resetPickedHistory() {
+  pickedHistory.value = new Set()
+  savePickedHistory()
+  addToast('Pick history reset — all students can be picked again', 'info')
+}
+
+function isPickedBefore(id: number): boolean {
+  return pickedHistory.value.has(id)
+}
+
+watch(pickedHistory, () => {
+  savePickedHistory()
+}, { deep: true })
 
 function stopPickSound() {
   if (!pickSoundContext || !pickSoundGain || !pickSoundOscillator) return
@@ -116,8 +205,22 @@ function stopPickSound() {
 }
 
 function startPickSound(frequency: number) {
-  // Long pick sound removed per request.
-  return
+  if (!window.AudioContext && !(window as any).webkitAudioContext) return
+  const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
+  pickSoundContext = ctx
+  const osc = ctx.createOscillator()
+  const gain = ctx.createGain()
+  pickSoundOscillator = osc
+  pickSoundGain = gain
+
+  osc.type = 'triangle'
+  osc.frequency.value = frequency
+  gain.gain.setValueAtTime(0.08, ctx.currentTime)
+  gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.08)
+
+  osc.connect(gain)
+  gain.connect(ctx.destination)
+  osc.start()
 }
 
 function playEndSound(frequency: number, duration = 180) {
@@ -162,6 +265,27 @@ function playEndSound(frequency: number, duration = 180) {
   }
 }
 
+function playTickSound() {
+  try {
+    const AudioContext = window.AudioContext || (window as any).webkitAudioContext
+    if (!AudioContext) return
+    const ctx = new AudioContext()
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+    osc.frequency.value = 600 + Math.random() * 300
+    osc.type = 'sine'
+    gain.gain.setValueAtTime(0.04, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.03)
+    osc.start(ctx.currentTime)
+    osc.stop(ctx.currentTime + 0.03)
+    setTimeout(() => ctx.close().catch(() => {}), 100)
+  } catch {
+    // ignore
+  }
+}
+
 async function pickRandom() {
   if (isPicking.value || filteredStudents.value.length === 0) return
   isPicking.value = true
@@ -187,6 +311,7 @@ async function pickRandom() {
       const randomIdx = Math.floor(Math.random() * list.length)
       const student = list[randomIdx]!
       pickedId.value = student.id
+      if (Math.random() > 0.6) playTickSound()
     }, 60)
   })
 
@@ -197,11 +322,15 @@ async function pickRandom() {
   set.add(finalStudent.id)
   selectedIds.value = set
 
+  addToPickedHistory([finalStudent.id])
+
   isPicking.value = false
   if (pickTimeout) clearTimeout(pickTimeout)
   pickTimeout = setTimeout(() => { pickedId.value = null }, 2000)
   lastPickedIds.value = new Set([finalStudent.id])
   playEndSound(1080, 190)
+  burstConfetti(24)
+  addToast(`🎯 Picked: ${finalStudent.name}`, 'success')
 }
 
 async function pickGroup() {
@@ -240,6 +369,7 @@ async function pickGroup() {
         previewSet.add(student.id)
       }
       pickedGroupIds.value = previewSet
+      if (Math.random() > 0.5) playTickSound()
     }, 80)
   })
 
@@ -260,6 +390,11 @@ async function pickGroup() {
 
   const finalSet = new Set(picked.map(s => s.id))
   pickedGroupIds.value = finalSet
+  addToPickedHistory([...finalSet])
+
+  const pickedNames = picked.map(s => s.name).join(', ')
+  burstConfetti(32)
+  addToast(`🎯 Group picked: ${pickedNames}`, 'success')
 
   groupTimeouts.push(setTimeout(() => {
     stopPickSound()
@@ -277,11 +412,109 @@ function setGroupSize(size: number) {
 
 function deleteSelected() {
   if (selectedIds.value.size === 0) return
+  const count = selectedIds.value.size
   students.value = students.value.filter(student => !selectedIds.value.has(student.id))
   selectedIds.value = new Set()
   pickedGroupIds.value = new Set()
   lastPickedIds.value = new Set()
   pickedId.value = null
+  addToast(`Deleted ${count} student${count !== 1 ? 's' : ''}`, 'warning')
+}
+
+function triggerFileImport() {
+  fileInputRef.value?.click()
+}
+
+function handleFileImport(event: Event) {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+
+  const reader = new FileReader()
+  const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls')
+
+  reader.onload = (e) => {
+    try {
+      const data = e.target?.result
+      if (!data) return
+
+      let names: string[] = []
+
+      if (isExcel) {
+        // Read Excel files as array buffer for proper parsing
+        const workbook = XLSX.read(data, { type: 'array' })
+        const firstSheetName = workbook.SheetNames[0]
+        if (firstSheetName) {
+          const firstSheet = workbook.Sheets[firstSheetName]
+          if (firstSheet) {
+            // Parse as array of arrays, take first column only (skip headers)
+            const jsonData = XLSX.utils.sheet_to_json<string[]>(firstSheet, { header: 1 })
+            names = jsonData
+              .map((row: any) => {
+                const cell = Array.isArray(row) ? row[0] : row
+                return cell != null ? String(cell).trim() : ''
+              })
+              .filter((name: string) => {
+                if (!name || name.length === 0) return false
+                // Only filter exact header matches like "Name", "Student Name", "Full Name", "ID"
+                return !/^(name|student name|full name|fullname|id|student id|no\.?|#)$/i.test(name)
+              })
+          }
+        }
+      } else if (file.name.endsWith('.csv') || file.type === 'text/csv' || file.type === 'text/plain') {
+        // Read CSV / TXT files
+        const text = data as string
+        const lines = text.split(/\r?\n/)
+        names = lines
+          .map(line => line.trim())
+          .filter(line => {
+            if (line.length === 0) return false
+            // Only filter exact header matches
+            return !/^(name|student name|full name|fullname|id|student id|no\.?|#)$/i.test(line)
+          })
+      } else if (file.type === 'application/json') {
+        const json = JSON.parse(data as string)
+        const arr = Array.isArray(json) ? json : [json]
+        names = arr
+          .map((item: any) => item.name || item.student || item.participant || item.fullName || item.firstName || '')
+          .filter((name: string) => name.trim().length > 0)
+      }
+
+      if (names.length > 0) {
+        const maxId = students.value.length > 0 ? Math.max(...students.value.map(s => s.id)) : 0
+        const newStudents = names.map((name, i) => ({
+          id: maxId + i + 1,
+          name,
+          initials: name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2),
+          studentId: `STU-${String(maxId + i + 1).padStart(3, '0')}`,
+        }))
+        const newIds = newStudents.map(s => s.id)
+        students.value.push(...newStudents)
+        markStudentsAsNew(newIds)
+        addToast(`Imported ${names.length} student${names.length !== 1 ? 's' : ''}`, 'success')
+        // Make new card elements visible immediately (they start with opacity:0)
+        nextTick(() => {
+          document.querySelectorAll('.card:not(.in-view)').forEach((el) => {
+            el.classList.add('in-view')
+            observer.value?.observe(el)
+          })
+        })
+      } else {
+        addToast('No student names found in file. Check that names are in the first column.', 'warning')
+      }
+    } catch (err) {
+      console.error('Failed to import file:', err)
+      addToast('Failed to read file. Make sure it is a valid .csv or .xlsx file.', 'warning')
+    } finally {
+      target.value = ''
+    }
+  }
+
+  if (isExcel) {
+    reader.readAsArrayBuffer(file)
+  } else {
+    reader.readAsText(file)
+  }
 }
 
 function clearAll() {
@@ -309,11 +542,6 @@ function confirmSelection() {
   alert(`Selected ${selectedCount.value} student${selectedCount.value !== 1 ? 's' : ''}`)
 }
 
-function selectClass(cls: string) {
-  selectedClass.value = cls
-  classDropdownOpen.value = false
-}
-
 function getAvatarColor(id: number): string {
   return AVATAR_COLORS[(id - 1) % AVATAR_COLORS.length] ?? '#3B82F6'
 }
@@ -321,6 +549,7 @@ function getAvatarColor(id: number): string {
 const observer = ref<IntersectionObserver | null>(null)
 
 onMounted(() => {
+  loadPickedHistory()
   observer.value = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
@@ -340,6 +569,7 @@ onBeforeUnmount(() => {
   if (pickTimeout) clearTimeout(pickTimeout)
   groupTimeouts.forEach(t => clearTimeout(t))
   groupTimeouts = []
+  stopPickSound()
 })
 </script>
 
@@ -357,104 +587,112 @@ onBeforeUnmount(() => {
             <p class="header__desc anim-fade-in-up" style="animation-delay: 0.08s">Select one or more students by tapping their cards.</p>
           </div>
         </div>
-        <div class="header__right anim-fade-in-up" style="animation-delay: 0.16s">
-          <RouterLink to="/tools" class="btn-back">← Back to all tools</RouterLink>
-          <div class="header__actions">
-            <div class="header__counter" v-if="selectedCount > 0">
-              <span class="header__count">{{ selectedCount }}</span>
-              <span class="header__count-label">selected</span>
-            </div>
-          </div>
-        </div>
+         <div class="header__right anim-fade-in-up" style="animation-delay: 0.16s">
+           <RouterLink to="/tools" class="btn-back">← Back to all tools</RouterLink>
+           <div class="header__actions">
+             <div class="header__counter" v-if="selectedCount > 0">
+               <span class="header__count">{{ selectedCount }}</span>
+               <span class="header__count-label">selected</span>
+             </div>
+             <div class="header__counter header__counter--picked" v-if="pickedCount > 0">
+               <span class="header__count">{{ pickedCount }}</span>
+               <span class="header__count-label">picked</span>
+             </div>
+           </div>
+         </div>
       </div>
     </div>
 
-    <!-- ─── Toolbar ─── -->
-    <div class="toolbar">
-      <div class="toolbar__inner">
-        <!-- Class -->
-        <div class="toolbar__dropdown" @click="classDropdownOpen = !classDropdownOpen" @mouseleave="classDropdownOpen = false">
-          <button class="toolbar__dropdown-btn" type="button">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
-              <path d="M6 12v5c3 3 9 3 12 0v-5" />
-            </svg>
-            <span>{{ selectedClass }}</span>
-            <svg class="toolbar__chevron" :class="{ open: classDropdownOpen }" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </button>
-          <Transition name="drop">
-            <div v-if="classDropdownOpen" class="toolbar__menu">
-              <button v-for="cls in classes" :key="cls" class="toolbar__menu-item" :class="{ active: cls === selectedClass }" @click="selectClass(cls)">{{ cls }}</button>
-            </div>
-          </Transition>
-        </div>
+     <!-- ─── Toolbar ─── -->
+     <div class="toolbar">
+       <div class="toolbar__inner">
+         <!-- Search -->
+         <div class="toolbar__search">
+           <svg class="toolbar__search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+             <circle cx="11" cy="11" r="8" />
+             <path d="m21 21-4.3-4.3" />
+           </svg>
+           <input v-model="searchQuery" type="text" class="toolbar__input" placeholder="Search student..." aria-label="Search student" />
+           <button v-if="searchQuery" class="toolbar__clear" @click="searchQuery = ''" aria-label="Clear search">
+             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+           </button>
+         </div>
 
-        <!-- Search -->
-        <div class="toolbar__search">
-          <svg class="toolbar__search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="11" cy="11" r="8" />
-            <path d="m21 21-4.3-4.3" />
-          </svg>
-          <input v-model="searchQuery" type="text" class="toolbar__input" placeholder="Search student..." aria-label="Search student" />
-          <button v-if="searchQuery" class="toolbar__clear" @click="searchQuery = ''" aria-label="Clear search">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-          </button>
-        </div>
+         <!-- Actions -->
+         <div class="toolbar__actions">
+           <button class="toolbar__btn toolbar__btn--primary" @click="pickRandom" :disabled="isPicking || isPickingGroup || filteredStudents.length === 0" aria-label="Pick random student">
+             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+               <circle cx="12" cy="12" r="10" />
+               <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
+               <path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z" />
+             </svg>
+             <span>{{ isPicking ? 'Picking...' : 'Pick' }}</span>
+           </button>
 
-        <!-- Actions -->
-        <div class="toolbar__actions">
-          <button class="toolbar__btn toolbar__btn--primary" @click="pickRandom" :disabled="isPicking || isPickingGroup || filteredStudents.length === 0" aria-label="Pick random student">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
-              <path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z" />
-            </svg>
-            <span>{{ isPicking ? 'Picking...' : 'Pick' }}</span>
-          </button>
+           <div class="toolbar__group" v-if="filteredStudents.length >= 2">
+             <div class="toolbar__group-size" @click.stop="groupSizeOpen = !groupSizeOpen" @mouseleave="groupSizeOpen = false">
+               <button class="toolbar__group-btn" type="button" :disabled="isPickingGroup" aria-label="Group size">
+                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                   <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                   <circle cx="9" cy="7" r="4" />
+                   <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                   <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                 </svg>
+                 <span class="toolbar__group-val">{{ groupSize }}</span>
+                 <svg class="toolbar__chevron" :class="{ open: groupSizeOpen }" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                   <polyline points="6 9 12 15 18 9" />
+                 </svg>
+               </button>
+               <Transition name="drop">
+                 <div v-if="groupSizeOpen" class="toolbar__menu toolbar__menu--right">
+                   <button v-for="size in groupSizeOptions" :key="size" class="toolbar__menu-item" :class="{ active: size === groupSize }" @click="setGroupSize(size)">{{ size }} Students</button>
+                 </div>
+               </Transition>
+             </div>
+             <button class="toolbar__btn toolbar__btn--outline" @click="pickGroup" :disabled="isPickingGroup || isPicking || filteredStudents.length < groupSize" aria-label="Pick group of students">
+               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                 <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                 <circle cx="9" cy="7" r="4" />
+                 <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                 <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                 <line x1="16" y1="8" x2="16" y2="14" />
+                 <line x1="19" y1="11" x2="13" y2="11" />
+               </svg>
+               <span>{{ isPickingGroup ? 'Picking...' : 'Group' }}</span>
+             </button>
+           </div>
+           <button v-if="selectedCount > 0" class="toolbar__btn toolbar__btn--ghost" @click="clearAll" aria-label="Clear selection">
+             Clear
+           </button>
+           <button v-if="selectedCount > 0" class="toolbar__btn toolbar__btn--danger" @click="deleteSelected" aria-label="Delete selected students">
+             Delete Selected
+           </button>
+           <button class="toolbar__btn toolbar__btn--secondary" @click="triggerFileImport" aria-label="Import students">
+             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+               <polyline points="17 8 12 3 7 8" />
+               <line x1="12" y1="3" x2="12" y2="15" />
+             </svg>
+             Import
+           </button>
+           <button v-if="pickedCount > 0" class="toolbar__btn toolbar__btn--warn" @click="resetPickedHistory" aria-label="Reset picked history">
+             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+               <polyline points="1 4 1 10 7 10" />
+               <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+             </svg>
+             Reset Picked
+           </button>
+         </div>
+       </div>
+     </div>
 
-          <div class="toolbar__group" v-if="filteredStudents.length >= 2">
-            <div class="toolbar__group-size" @click.stop="groupSizeOpen = !groupSizeOpen" @mouseleave="groupSizeOpen = false">
-              <button class="toolbar__group-btn" type="button" :disabled="isPickingGroup" aria-label="Group size">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                </svg>
-                <span class="toolbar__group-val">{{ groupSize }}</span>
-                <svg class="toolbar__chevron" :class="{ open: groupSizeOpen }" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
-              </button>
-              <Transition name="drop">
-                <div v-if="groupSizeOpen" class="toolbar__menu toolbar__menu--right">
-                  <button v-for="size in groupSizeOptions" :key="size" class="toolbar__menu-item" :class="{ active: size === groupSize }" @click="setGroupSize(size)">{{ size }} Students</button>
-                </div>
-              </Transition>
-            </div>
-            <button class="toolbar__btn toolbar__btn--outline" @click="pickGroup" :disabled="isPickingGroup || isPicking || filteredStudents.length < groupSize" aria-label="Pick group of students">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                <line x1="16" y1="8" x2="16" y2="14" />
-                <line x1="19" y1="11" x2="13" y2="11" />
-              </svg>
-              <span>{{ isPickingGroup ? 'Picking...' : 'Group' }}</span>
-            </button>
-          </div>
-          <button v-if="selectedCount > 0" class="toolbar__btn toolbar__btn--ghost" @click="clearAll" aria-label="Clear selection">
-            Clear
-          </button>
-          <button v-if="selectedCount > 0" class="toolbar__btn toolbar__btn--danger" @click="deleteSelected" aria-label="Delete selected students">
-            Delete Selected
-          </button>
-        </div>
-      </div>
-    </div>
+     <input
+       ref="fileInputRef"
+       type="file"
+       accept=".csv,.xlsx,.xls,.json,.txt"
+       style="display: none"
+       @change="handleFileImport"
+     />
 
     <!-- ─── Grid ─── -->
     <main class="main">
@@ -468,11 +706,19 @@ onBeforeUnmount(() => {
             'card--sel': selectedIds.has(student.id),
             'card--pick': pickedId === student.id,
             'card--group': pickedGroupIds.has(student.id),
+            'card--picked': isPickedBefore(student.id),
+            'card--new': newStudentIds.has(student.id),
           }"
           @click="toggleCard(student.id)"
           :aria-label="'Select ' + student.name"
           :aria-pressed="selectedIds.has(student.id)"
         >
+          <button class="card__delete" @click.stop="deleteStudent(student.id)" aria-label="Delete student" title="Remove student">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
           <div class="card__check" v-if="selectedIds.has(student.id)">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
           </div>
@@ -483,9 +729,12 @@ onBeforeUnmount(() => {
             <h3 class="card__name">{{ student.name }}</h3>
             <span class="card__id">{{ student.studentId }}</span>
           </div>
+          <div v-if="isPickedBefore(student.id) && !newStudentIds.has(student.id)" class="card__picked-badge">Picked</div>
+          <div v-if="newStudentIds.has(student.id)" class="card__new-badge">New!</div>
         </button>
       </TransitionGroup>
 
+      <!-- Empty State -->
       <Transition name="fade">
         <div v-if="filteredStudents.length === 0" class="empty">
           <div class="empty__icon">
@@ -495,11 +744,67 @@ onBeforeUnmount(() => {
               <line x1="8" y1="11" x2="14" y2="11" />
             </svg>
           </div>
-          <h3 class="empty__title">No students found</h3>
-          <p class="empty__text">Try a different search term</p>
+          <h3 class="empty__title">{{ searchQuery ? 'No students found' : 'No students yet' }}</h3>
+          <p class="empty__text">
+            <template v-if="searchQuery">Try a different search term</template>
+            <template v-else>Import a student list to get started, or add them one by one</template>
+          </p>
+          <button v-if="!searchQuery" class="empty__btn" @click="triggerFileImport">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            Import Students
+          </button>
         </div>
       </Transition>
     </main>
+
+    <!-- ─── Confetti Overlay ─── -->
+    <Transition name="confetti-fade">
+      <div v-if="confettiParticles.length > 0" class="confetti-overlay">
+        <div
+          v-for="p in confettiParticles"
+          :key="p.id"
+          class="confetti-particle"
+          :style="{
+            '--x': p.x,
+            '--color': p.color,
+            '--delay': p.delay,
+            '--rotation': p.rotation,
+          }"
+        />
+      </div>
+    </Transition>
+
+    <!-- ─── Toast Container ─── -->
+    <div class="toast-container">
+      <TransitionGroup name="toast">
+        <div
+          v-for="toast in toasts"
+          :key="toast.id"
+          class="toast"
+          :class="`toast--${toast.type}`"
+        >
+          <svg v-if="toast.type === 'success'" class="toast__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+            <polyline points="22 4 12 14.01 9 11.01" />
+          </svg>
+          <svg v-else-if="toast.type === 'warning'" class="toast__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+          <svg v-else class="toast__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="16" x2="12" y2="12" />
+            <line x1="12" y1="8" x2="12.01" y2="8" />
+          </svg>
+          <span class="toast__msg">{{ toast.message }}</span>
+        </div>
+      </TransitionGroup>
+    </div>
 
   </div>
 </template>
@@ -519,8 +824,8 @@ onBeforeUnmount(() => {
    Header
    ═══════════════════════════════════ */
 .header {
-  background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
-  border-bottom: 1px solid #334155;
+  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #3b82f6 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   position: relative;
   overflow: hidden;
   padding: 0;
@@ -638,15 +943,15 @@ onBeforeUnmount(() => {
   text-decoration: none;
   font-weight: 600;
   font-size: 14px;
-  border: 1.5px solid #e2e8f0;
-  color: #334155;
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.9);
   transition: all 0.2s ease;
   white-space: nowrap;
 }
 
 .btn-back:hover {
-  border-color: #2563eb;
-  color: #2563eb;
+  border-color: #22d3ee;
+  color: #22d3ee;
 }
 
 .header__counter {
@@ -672,6 +977,19 @@ onBeforeUnmount(() => {
   font-size: 0.8rem;
   font-weight: 500;
   color: #CBD5E1;
+}
+
+.header__counter--picked {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.header__counter--picked .header__count {
+  color: #FBBF24;
+}
+
+.header__counter--picked .header__count-label {
+  color: #FCD34D;
 }
 
 /* ═══════════════════════════════════
@@ -927,6 +1245,42 @@ onBeforeUnmount(() => {
   color: #B91C1C;
 }
 
+.toolbar__btn--secondary {
+  background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
+  color: #475569;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+.toolbar__btn--secondary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  border-color: #CBD5E1;
+}
+
+.toolbar__btn--secondary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.toolbar__btn--warn {
+  background: #FFFBEB;
+  color: #B45309;
+  border: 1px solid #FDE68A;
+}
+
+.toolbar__btn--warn:hover:not(:disabled) {
+  background: #FEF3C7;
+  border-color: #FCD34D;
+  color: #92400E;
+}
+
+.toolbar__btn--warn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 /* ── Group size ── */
 .toolbar__group {
   display: flex;
@@ -1131,7 +1485,8 @@ onBeforeUnmount(() => {
 
 .card--sel .card__avatar,
 .card--pick .card__avatar,
-.card--group .card__avatar {
+.card--group .card__avatar,
+.card--picked .card__avatar {
   transform: scale(1.1);
   box-shadow: 0 6px 16px rgba(0,0,0,0.18);
 }
@@ -1176,6 +1531,122 @@ onBeforeUnmount(() => {
   font-variant-numeric: tabular-nums;
 }
 
+/* Picked badge */
+.card--picked {
+  opacity: 0.7;
+  border-style: dashed;
+  border-color: #CBD5E1;
+  background: #F8FAFC;
+}
+
+.card--picked:hover {
+  border-color: #94A3B8;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.05);
+}
+
+.card--picked .card__name {
+  color: #64748B;
+}
+
+.card--picked .card__avatar {
+  filter: grayscale(0.4);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.card__picked-badge {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #64748B;
+  background: #E2E8F0;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  z-index: 2;
+}
+
+/* New badge */
+.card--new {
+  animation: card-entrance 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border-color: #22C55E !important;
+  background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%) !important;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.25), 0 8px 20px rgba(34, 197, 94, 0.12) !important;
+  transform: translateY(-4px) !important;
+}
+
+.card--new .card__name {
+  color: #16A34A;
+}
+
+.card--new .card__avatar {
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(34, 197, 94, 0.3);
+}
+
+@keyframes card-entrance {
+  0% { transform: translateY(20px) scale(0.9); opacity: 0; }
+  50% { transform: translateY(-6px) scale(1.05); opacity: 1; }
+  100% { transform: translateY(-4px) scale(1); opacity: 1; }
+}
+
+.card__new-badge {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  font-size: 0.6rem;
+  font-weight: 800;
+  color: white;
+  background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%);
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  z-index: 2;
+  box-shadow: 0 2px 6px rgba(34, 197, 94, 0.4);
+  animation: badge-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes badge-pop {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.3); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Delete button */
+.card__delete {
+  position: absolute;
+  bottom: 0.5rem;
+  right: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.3rem;
+  height: 1.3rem;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #94A3B8;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.15s;
+  padding: 0;
+  z-index: 2;
+}
+
+.card:hover .card__delete {
+  opacity: 1;
+}
+
+.card__delete:hover {
+  background: #FEE2E2;
+  color: #EF4444;
+  transform: scale(1.1);
+}
+
 /* ═══════════════════════════════════
    Empty
    ═══════════════════════════════════ */
@@ -1211,6 +1682,193 @@ onBeforeUnmount(() => {
   font-size: 0.85rem;
   color: #9CA3AF;
   margin: 0;
+}
+
+.empty__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding: 0.65rem 1.25rem;
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.empty__btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(59, 130, 246, 0.4);
+}
+
+.empty__btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* ═══════════════════════════════════
+   Confetti
+   ═══════════════════════════════════ */
+.confetti-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.confetti-particle {
+  position: absolute;
+  top: -10px;
+  left: calc(var(--x) * 1%);
+  width: 8px;
+  height: 8px;
+  background: var(--color);
+  border-radius: 2px;
+  animation: confetti-fall 2s cubic-bezier(0.25, 0.46, 0.45, 0.94) var(--delay) both;
+  transform: rotate(var(--rotation));
+}
+
+@keyframes confetti-fall {
+  0% {
+    opacity: 1;
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(40vh) rotate(calc(var(--rotation) + 360deg)) scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(100vh) rotate(calc(var(--rotation) + 720deg)) scale(0.5);
+  }
+}
+
+.confetti-fade-enter-active {
+  transition: opacity 0.2s;
+}
+.confetti-fade-leave-active {
+  transition: opacity 0.4s;
+}
+.confetti-fade-enter-from,
+.confetti-fade-leave-to {
+  opacity: 0;
+}
+
+/* ═══════════════════════════════════
+   Toast Notifications
+   ═══════════════════════════════════ */
+.toast-container {
+  position: fixed;
+  top: 5rem;
+  right: 1.5rem;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 22rem;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.04);
+  animation: toast-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.toast--success {
+  border-left: 3px solid #22C55E;
+}
+
+.toast--warning {
+  border-left: 3px solid #F59E0B;
+}
+
+.toast--info {
+  border-left: 3px solid #3B82F6;
+}
+
+.toast__icon {
+  flex-shrink: 0;
+}
+
+.toast--success .toast__icon { color: #22C55E; }
+.toast--warning .toast__icon { color: #F59E0B; }
+.toast--info .toast__icon { color: #3B82F6; }
+
+.toast__msg {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #1F2937;
+  line-height: 1.3;
+}
+
+@keyframes toast-in {
+  0% {
+    opacity: 0;
+    transform: translateX(40px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+.toast-enter-active {
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.toast-leave-active {
+  transition: all 0.2s;
+}
+.toast-enter-from {
+  opacity: 0;
+  transform: translateX(40px) scale(0.95);
+}
+.toast-leave-to {
+  opacity: 0;
+  transform: translateX(40px) scale(0.95);
+}
+
+/* ═══════════════════════════════════
+   Grid entrance for new students
+   ═══════════════════════════════════ */
+.grid-enter-active {
+  animation: grid-entrance 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.grid-leave-active {
+  animation: grid-leave 0.3s ease-in;
+}
+
+@keyframes grid-entrance {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes grid-leave {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
 }
 
 /* ═══════════════════════════════════

@@ -268,9 +268,17 @@ const goTo = (route?: string) => {
           <p>Start a poll to watch responses update here in real time.</p>
         </template>
 
-        <button class="primary-button close-poll-button" type="button" @click="goTo('/teacher/live-polls')">
-          Open Live Polls
-        </button>
+        <div class="live-poll-actions">
+          <button class="primary-button close-poll-button" type="button" @click="goTo('/teacher/live-polls/create')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 4v16m8-8H4" />
+            </svg>
+            <span>Create Poll</span>
+          </button>
+          <button class="outline-button close-poll-button-secondary" type="button" @click="goTo('/teacher/live-polls')">
+            Open Live Polls
+          </button>
+        </div>
       </aside>
 
       <section class="panel trends-panel">
@@ -738,10 +746,57 @@ mark.live {
   box-shadow: 80px 0 0 #dbe6fb;
 }
 
-.close-poll-button {
-  width: calc(100% - 52px);
-  min-height: 48px;
+.live-poll-actions {
+  display: flex;
+  gap: 10px;
   margin: 22px 26px 0;
+  width: calc(100% - 52px);
+}
+
+.close-poll-button {
+  flex: 1;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  border-radius: 10px;
+  background: var(--primary);
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.close-poll-button:hover {
+  background: #0019a0;
+  transform: translateY(-1px);
+}
+
+.close-poll-button-secondary {
+  flex: 1;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--primary);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.close-poll-button-secondary:hover {
+  background: var(--primary-soft);
+  transform: translateY(-1px);
 }
 
 .trends-panel,

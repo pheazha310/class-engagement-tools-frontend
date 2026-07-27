@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { RouterLink } from 'vue-router'
 import { getPolls, deletePoll, updatePoll, type LivePoll } from '@/utils/pollStorage'
+import { getResults, getTotalVotes, type PollResult } from '@/utils/voteStorage'
 import { useAuthStore } from '@/stores/auth'
 import ToastNotification from '@/components/ToastNotification.vue'
 import ConfirmationDialog from '@/components/ConfirmationDialog.vue'
@@ -17,6 +18,13 @@ const toastMessage = ref<string | null>(null)
 const toastType = ref<'success' | 'error'>('success')
 const showDeleteDialog = ref(false)
 const pollToDelete = ref<string | null>(null)
+
+// ── Results Modal ──
+const showResultsModal = ref(false)
+const resultsPoll = ref<LivePoll | null>(null)
+const resultsData = ref<PollResult[]>([])
+const resultsTotalVotes = ref(0)
+const resultsRefreshInterval = ref<ReturnType<typeof setInterval> | null>(null)
 
 // ── Share Modal ──
 const showShareModal = ref(false)
@@ -163,6 +171,72 @@ function getDurationLabel(minutes: number) {
   const m = minutes % 60
   return m > 0 ? `${h}h ${m}m` : `${h}h`
 }
+
+// ── Results Modal ──
+function openResults(poll: LivePoll) {
+  resultsPoll.value = poll
+  loadResults()
+  showResultsModal.value = true
+
+  // Auto-refresh results every 3 seconds for live polls
+  if (poll.status === 'active') {
+    resultsRefreshInterval.value = setInterval(() => {
+      if (resultsPoll.value && resultsPoll.value.status === 'active') {
+        loadResults()
+      }
+    }, 3000)
+  }
+}
+
+function closeResults() {
+  showResultsModal.value = false
+  resultsPoll.value = null
+  resultsData.value = []
+  resultsTotalVotes.value = 0
+  if (resultsRefreshInterval.value) {
+    clearInterval(resultsRefreshInterval.value)
+    resultsRefreshInterval.value = null
+  }
+}
+
+function loadResults() {
+  if (!resultsPoll.value) return
+  resultsData.value = getResults(resultsPoll.value.id, resultsPoll.value.options)
+  resultsTotalVotes.value = getTotalVotes(resultsPoll.value.id)
+}
+
+function getTotalVotesForPoll(pollId: string): number {
+  return getTotalVotes(pollId)
+}
+
+// Clean up on unmount
+onUnmounted(() => {
+  if (resultsRefreshInterval.value) {
+    clearInterval(resultsRefreshInterval.value)
+  }
+})
+
+// ── Result bar color ──
+function getBarColor(index: number): string {
+  const colors = [
+    'linear-gradient(135deg, #6366F1, #818CF8)',
+    'linear-gradient(135deg, #22C55E, #4ADE80)',
+    'linear-gradient(135deg, #F59E0B, #FBBF24)',
+    'linear-gradient(135deg, #EF4444, #F87171)',
+    'linear-gradient(135deg, #EC4899, #F472B6)',
+    'linear-gradient(135deg, #14B8A6, #2DD4BF)',
+    'linear-gradient(135deg, #8B5CF6, #A78BFA)',
+    'linear-gradient(135deg, #F97316, #FB923C)',
+  ]
+  return colors[index % colors.length] ?? 'linear-gradient(135deg, #6366F1, #818CF8)'
+}
+
+function getWinnerIndex(): number {
+  if (resultsData.value.length === 0) return -1
+  const maxVotes = Math.max(...resultsData.value.map((r) => r.votes))
+  if (maxVotes === 0) return -1
+  return resultsData.value.findIndex((r) => r.votes === maxVotes)
+}
 </script>
 
 <template>
@@ -284,8 +358,21 @@ function getDurationLabel(minutes: number) {
                 <p class="vl-card-question">{{ poll.question }}</p>
               </div>
               <div class="vl-card-footer">
-                <div class="vl-card-date">{{ formatDate(poll.createdAt) }}</div>
+                <div class="vl-card-footer-left">
+                  <div class="vl-card-date">{{ formatDate(poll.createdAt) }}</div>
+                  <span class="vl-card-votes">
+                    <svg class="vl-card-votes-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                    </svg>
+                    {{ getTotalVotesForPoll(poll.id) }} vote{{ getTotalVotesForPoll(poll.id) !== 1 ? 's' : '' }}
+                  </span>
+                </div>
                 <div v-if="isTeacher" class="vl-card-actions">
+                  <button class="vl-action-btn vl-action-btn--results" title="View Results" @click="openResults(poll)">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  </button>
                   <button class="vl-action-btn vl-action-btn--share" title="Share Voting Link" @click="openShareModal(poll)">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98" />
@@ -390,8 +477,21 @@ function getDurationLabel(minutes: number) {
                 <p class="vl-card-question">{{ poll.question }}</p>
               </div>
               <div class="vl-card-footer">
-                <div class="vl-card-date">{{ formatDate(poll.createdAt) }}</div>
+                <div class="vl-card-footer-left">
+                  <div class="vl-card-date">{{ formatDate(poll.createdAt) }}</div>
+                  <span class="vl-card-votes">
+                    <svg class="vl-card-votes-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                    </svg>
+                    {{ getTotalVotesForPoll(poll.id) }} vote{{ getTotalVotesForPoll(poll.id) !== 1 ? 's' : '' }}
+                  </span>
+                </div>
                 <div v-if="isTeacher" class="vl-card-actions">
+                  <button class="vl-action-btn vl-action-btn--results" title="View Results" @click="openResults(poll)">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  </button>
                   <button class="vl-action-btn vl-action-btn--delete" title="Delete" @click="confirmDelete(poll.id)">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
@@ -412,6 +512,111 @@ function getDurationLabel(minutes: number) {
         </div>
       </div>
     </div>
+
+    <!-- Results Modal -->
+    <Teleport to="body">
+      <Transition name="share-fade">
+        <div v-if="showResultsModal" class="vl-share-overlay vl-results-overlay" @click.self="closeResults">
+          <div class="vl-results-modal">
+            <!-- Header -->
+            <div class="vl-results-header">
+              <div class="vl-results-header-left">
+                <div class="vl-results-icon-wrap">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="vl-results-title">Poll Results</h3>
+                  <p class="vl-results-subtitle" v-if="resultsPoll">
+                    {{ resultsPoll.title }}
+                    <span v-if="resultsPoll.status === 'active'" class="vl-results-live-badge">
+                      <span class="vl-results-live-dot" />
+                      Live
+                    </span>
+                  </p>
+                </div>
+              </div>
+              <button class="vl-results-close-btn" @click="closeResults">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <!-- Question -->
+            <div class="vl-results-question" v-if="resultsPoll">
+              {{ resultsPoll.question }}
+            </div>
+
+            <!-- Stats row -->
+            <div class="vl-results-stats">
+              <div class="vl-results-stat">
+                <span class="vl-results-stat-value">{{ resultsTotalVotes }}</span>
+                <span class="vl-results-stat-label">Total Votes</span>
+              </div>
+              <div class="vl-results-stat">
+                <span class="vl-results-stat-value">{{ resultsData.length }}</span>
+                <span class="vl-results-stat-label">Options</span>
+              </div>
+              <div class="vl-results-stat">
+                <span class="vl-results-stat-value" :class="resultsPoll?.status === 'active' ? 'text-green-600' : 'text-gray-600'">
+                  {{ resultsPoll?.status === 'active' ? 'Active' : 'Ended' }}
+                </span>
+                <span class="vl-results-stat-label">Status</span>
+              </div>
+            </div>
+
+            <!-- Vote bars -->
+            <div class="vl-results-bars">
+              <div v-if="resultsTotalVotes === 0" class="vl-results-empty">
+                <svg class="vl-results-empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p>No votes yet. Share the poll link with your students!</p>
+              </div>
+              <div
+                v-for="(result, index) in resultsData"
+                :key="index"
+                class="vl-results-bar-row"
+                :class="{ 'vl-results-bar-row--winner': index === getWinnerIndex() && resultsTotalVotes > 0 }"
+              >
+                <div class="vl-results-bar-label">
+                  <span class="vl-results-bar-option">
+                    <span v-if="index === getWinnerIndex() && resultsTotalVotes > 0" class="vl-results-crown" title="Leading option">👑</span>
+                    {{ result.option }}
+                  </span>
+                  <span class="vl-results-bar-stats">
+                    <strong>{{ result.votes }}</strong>
+                    <span class="vl-results-bar-pct">({{ result.percentage }}%)</span>
+                  </span>
+                </div>
+                <div class="vl-results-bar-track">
+                  <div
+                    class="vl-results-bar-fill"
+                    :style="{
+                      width: result.percentage + '%',
+                      background: getBarColor(index),
+                    }"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="vl-results-footer">
+              <div v-if="resultsPoll?.status === 'active'" class="vl-results-auto-refresh">
+                <div class="vl-results-pulse-loader" />
+                <span>Auto-updating every 3s</span>
+              </div>
+              <button class="vl-results-close-btn-text" @click="closeResults">
+                Close Results
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
 
     <!-- Share Modal -->
     <Teleport to="body">
@@ -961,9 +1166,34 @@ function getDurationLabel(minutes: number) {
   border-top: 1px solid #F1F5F9;
 }
 
+.vl-card-footer-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
 .vl-card-date {
   font-size: 12px;
   color: #94A3B8;
+}
+
+.vl-card-votes {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6366F1;
+  background: #EEF2FF;
+  padding: 2px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.vl-card-votes-icon {
+  width: 12px;
+  height: 12px;
 }
 
 .vl-card-actions {
@@ -988,6 +1218,15 @@ function getDurationLabel(minutes: number) {
 .vl-action-btn svg {
   width: 16px;
   height: 16px;
+}
+
+.vl-action-btn--results {
+  color: #8B5CF6;
+}
+
+.vl-action-btn--results:hover {
+  background: #F5F3FF;
+  color: #7C3AED;
 }
 
 .vl-action-btn--end {
@@ -1220,6 +1459,318 @@ function getDurationLabel(minutes: number) {
 }
 
 /* ── Responsive ── */
+/* ── Results Modal ── */
+.vl-results-overlay {
+  z-index: 3000 !important;
+}
+
+.vl-results-modal {
+  background: white;
+  border-radius: 20px;
+  max-width: 560px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.15);
+  animation: vl-results-in 0.25s ease-out;
+}
+
+@keyframes vl-results-in {
+  from { opacity: 0; transform: scale(0.95) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.vl-results-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 28px 0;
+}
+
+.vl-results-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.vl-results-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #F5F3FF, #EDE9FE);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #7C3AED;
+  flex-shrink: 0;
+}
+
+.vl-results-icon-wrap svg {
+  width: 22px;
+  height: 22px;
+}
+
+.vl-results-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0;
+}
+
+.vl-results-subtitle {
+  font-size: 13px;
+  color: #64748B;
+  margin: 2px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vl-results-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: #DCFCE7;
+  color: #16A34A;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.vl-results-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #16A34A;
+  animation: vl-pulse-dot 1.5s infinite;
+}
+
+@keyframes vl-pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+.vl-results-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #94A3B8;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.vl-results-close-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.vl-results-close-btn:hover {
+  background: #F1F5F9;
+  color: #475569;
+}
+
+.vl-results-question {
+  padding: 16px 28px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0F172A;
+  line-height: 1.4;
+}
+
+.vl-results-stats {
+  display: flex;
+  gap: 12px;
+  padding: 16px 28px 0;
+}
+
+.vl-results-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 12px 8px;
+  background: #F8FAFC;
+  border-radius: 12px;
+  border: 1px solid #F1F5F9;
+}
+
+.vl-results-stat-value {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0F172A;
+  line-height: 1.2;
+}
+
+.vl-results-stat-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #94A3B8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.text-green-600 {
+  color: #16A34A !important;
+}
+
+.text-gray-600 {
+  color: #475569 !important;
+}
+
+.vl-results-bars {
+  padding: 20px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.vl-results-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 16px;
+  text-align: center;
+  color: #94A3B8;
+  font-size: 14px;
+}
+
+.vl-results-empty-icon {
+  width: 40px;
+  height: 40px;
+  color: #CBD5E1;
+}
+
+.vl-results-bar-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.vl-results-bar-row--winner .vl-results-bar-option {
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.vl-results-bar-row--winner .vl-results-bar-track {
+  background: #FEF3C7;
+}
+
+.vl-results-bar-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  gap: 12px;
+}
+
+.vl-results-bar-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #1E293B;
+  font-weight: 500;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.vl-results-crown {
+  font-size: 16px;
+  animation: vl-bounce 1s ease-in-out infinite;
+}
+
+@keyframes vl-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.vl-results-bar-stats {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #64748B;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.vl-results-bar-stats strong {
+  font-size: 15px;
+  color: #0F172A;
+}
+
+.vl-results-bar-pct {
+  font-size: 12px;
+  color: #94A3B8;
+}
+
+.vl-results-bar-track {
+  height: 28px;
+  background: #F1F5F9;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.vl-results-bar-fill {
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  min-width: 4px;
+}
+
+.vl-results-footer {
+  padding: 16px 28px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.vl-results-auto-refresh {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #94A3B8;
+}
+
+.vl-results-pulse-loader {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22C55E;
+  animation: vl-pulse-dot 1.5s infinite;
+}
+
+.vl-results-close-btn-text {
+  padding: 8px 20px;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  background: white;
+  color: #64748B;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.vl-results-close-btn-text:hover {
+  background: #F8FAFC;
+  color: #475569;
+  border-color: #CBD5E1;
+}
+
 @media (max-width: 768px) {
   .vl-page {
     padding: 80px 16px 40px;
