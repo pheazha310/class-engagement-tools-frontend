@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
+import ToolIcon from '@/components/ToolIcon.vue'
 
 const route = useRoute()
 const showBackToTop = ref(false)
@@ -31,7 +32,7 @@ onUnmounted(() => {
       <div class="site-footer-content">
         <div class="site-footer-brand">
           <RouterLink to="/" class="site-footer-logo" aria-label="ClassTools home">
-            <span class="logo-icon" aria-hidden="true">🎓</span>
+            <span class="logo-icon" aria-hidden="true"><ToolIcon name="cap" :size="25" /></span>
             <span class="logo-text">EngageClassKH</span>
           </RouterLink>
           <p class="site-footer-description">
@@ -39,19 +40,19 @@ onUnmounted(() => {
           </p>
           <div class="site-footer-social">
             <a href="https://facebook.com/classtools" target="_blank" rel="noopener noreferrer" class="social-icon-link" aria-label="Facebook">
-              <span aria-hidden="true">📘</span>
+              <ToolIcon name="facebook" :size="21" aria-hidden="true" />
             </a>
             <a href="https://twitter.com/classtools" target="_blank" rel="noopener noreferrer" class="social-icon-link" aria-label="Twitter">
-              <span aria-hidden="true">🐦</span>
+              <ToolIcon name="twitter" :size="21" aria-hidden="true" />
             </a>
             <a href="https://linkedin.com/company/classtools" target="_blank" rel="noopener noreferrer" class="social-icon-link" aria-label="LinkedIn">
-              <span aria-hidden="true">💼</span>
+              <ToolIcon name="linkedin" :size="21" aria-hidden="true" />
             </a>
             <a href="https://instagram.com/classtools" target="_blank" rel="noopener noreferrer" class="social-icon-link" aria-label="Instagram">
-              <span aria-hidden="true">📷</span>
+              <ToolIcon name="instagram" :size="21" aria-hidden="true" />
             </a>
             <a href="https://youtube.com/classtools" target="_blank" rel="noopener noreferrer" class="social-icon-link" aria-label="YouTube">
-              <span aria-hidden="true">📺</span>
+              <ToolIcon name="youtube" :size="21" aria-hidden="true" />
             </a>
           </div>
         </div>
@@ -160,7 +161,12 @@ onUnmounted(() => {
 }
 
 .logo-icon {
-  font-size: 24px;
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .site-footer-description {
@@ -186,12 +192,11 @@ onUnmounted(() => {
   background: #374151;
   border-radius: 8px;
   text-decoration: none;
-  font-size: 20px;
   transition: all 0.3s ease;
 }
 
 .social-icon-link:hover {
-  background: #2563eb;
+  background: #475569;
   transform: translateY(-2px);
 }
 
