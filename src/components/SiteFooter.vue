@@ -124,6 +124,12 @@ onUnmounted(() => {
   position: relative;
 }
 
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
 .site-footer-accent {
   position: absolute;
   top: 0;
@@ -134,14 +140,23 @@ onUnmounted(() => {
 }
 
 .site-footer-content {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   gap: 48px;
   margin-bottom: 40px;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.site-footer-nav {
+  display: flex;
+  gap: 48px;
 }
 
 .site-footer-brand {
-  padding-right: 20px;
+  padding-right: 0;
 }
 
 .site-footer-logo {
