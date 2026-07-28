@@ -143,7 +143,7 @@ const activities = [
 .module-header {
   background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
   color: white;
-  padding: 80px 20px;
+  padding: 50px 20px;
   text-align: center;
 }
 
@@ -156,43 +156,44 @@ const activities = [
   display: inline-block;
   background: rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(10px);
-  padding: 8px 20px;
+  padding: 6px 16px;
   border-radius: 20px;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .module-number {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
 
 .module-title {
-  font-size: 48px;
+  font-size: 42px;
   font-weight: 800;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
   line-height: 1.2;
 }
 
 .module-description {
-  font-size: 18px;
+  font-size: 16px;
   opacity: 0.9;
   line-height: 1.6;
+  margin-bottom: 8px;
 }
 
 .btn-back {
   display: inline-flex;
   align-items: center;
-  padding: 10px 20px;
+  padding: 8px 16px;
   border-radius: 8px;
   text-decoration: none;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13px;
   border: 1.5px solid rgba(255, 255, 255, 0.3);
   color: rgba(255, 255, 255, 0.9);
   transition: all 0.2s ease;
-  margin-top: 16px;
+  margin-top: 12px;
 }
 
 .btn-back:hover {
@@ -207,18 +208,23 @@ const activities = [
 
 .activities-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .activity-card {
-  border-radius: 20px;
-  padding: 32px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   display: flex;
   flex-direction: column;
   border: 1px solid rgba(0, 0, 0, 0.04);
+  min-height: 240px;
+  max-width: 280px;
+  justify-self: center;
 }
 
 .activity-card:hover {
@@ -227,14 +233,14 @@ const activities = [
 }
 
 .activity-icon {
-  width: 80px;
-  height: 80px;
-  border-radius: 20px;
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 20px;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.25);
+  margin-bottom: 16px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   overflow: hidden;
@@ -289,34 +295,35 @@ const activities = [
 }
 
 .activity-title {
-  font-size: 22px;
+  font-size: 17px;
   font-weight: 700;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   color: #1f2937;
   line-height: 1.3;
 }
 
 .activity-description {
   color: #4b5563;
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.7;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   flex: 1;
 }
 
 .launch-btn,
 .results-btn {
-  padding: 12px 24px;
+  padding: 10px 18px;
   border: none;
-  border-radius: 10px;
+  border-radius: 8px;
   color: white;
   font-weight: 600;
-  font-size: 15px;
+  font-size: 13px;
   cursor: pointer;
   transition: all 0.3s ease;
   align-self: flex-start;
   text-decoration: none;
   display: inline-block;
+  margin-top: auto;
 }
 
 .launch-btn:hover,
@@ -325,15 +332,17 @@ const activities = [
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
 
-.activities-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 24px;
+@media (max-width: 1200px) {
+  .activities-grid {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 600px;
+  }
 }
 
 @media (max-width: 768px) {
   .activities-grid {
     grid-template-columns: 1fr;
+    max-width: 400px;
   }
 }
 
