@@ -186,10 +186,35 @@ onBeforeUnmount(() => {
               </p>
             </div>
           </div>
-          <div class="about-stats reveal">
-            <div class="stat-item reveal" v-for="(stat, idx) in stats" :key="stat.label" :style="{ transitionDelay: `${idx * 0.07}s` }">
-              <div class="stat-value">{{ stat.value }}</div>
-              <div class="stat-label">{{ stat.label }}</div>
+          <div class="about-visual reveal">
+            <div class="visual-card">
+              <div class="floating-shapes">
+                <div class="floating-shape"></div>
+                <div class="floating-shape"></div>
+                <div class="floating-shape"></div>
+              </div>
+              <div class="visual-icon"><ToolIcon name="target" :size="48" /></div>
+              <div class="visual-content">
+                <h3>Our Impact</h3>
+                <div class="impact-items">
+                  <div class="impact-item">
+                    <div class="impact-icon"><ToolIcon name="chart" :size="28" /></div>
+                    <span class="impact-text">Increased Engagement</span>
+                  </div>
+                  <div class="impact-item">
+                    <div class="impact-icon"><ToolIcon name="bulb" :size="28" /></div>
+                    <span class="impact-text">Active Learning</span>
+                  </div>
+                  <div class="impact-item">
+                    <div class="impact-icon"><ToolIcon name="rocket" :size="28" /></div>
+                    <span class="impact-text">Easy Implementation</span>
+                  </div>
+                  <div class="impact-item">
+                    <div class="impact-icon"><ToolIcon name="teacher" :size="28" /></div>
+                    <span class="impact-text">Teacher Approved</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -295,15 +320,6 @@ import SanImage from '@/assets/images/San.jpg'
 import MaryImage from '@/assets/images/Mary.jpg'
 import VannaImage from '@/assets/images/Vanna.jpg'
 import ChrounImage from '@/assets/images/Nita.jpg'
-
-const stats = [
-  { value: '10K+', label: 'Active Teachers' },
-  { value: '50K+', label: 'Students Engaged' },
-  { value: '15+', label: 'Interactive Tools' },
-  { value: '98%', label: 'Satisfaction Rate' },
-  { value: '24/7', label: 'Support Available' },
-  { value: '100%', label: 'Free to Use' },
-]
 
 const features = [
   { icon: 'target', title: 'Easy to Use', desc: 'Intuitive interface designed for educators. No technical skills required — start using tools in seconds.' },
@@ -861,6 +877,206 @@ const team = [
   color: var(--home-muted);
   font-weight: 600;
   letter-spacing: 0.02em;
+}
+
+.about-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.visual-card {
+  background: linear-gradient(135deg, #f5f7ff 0%, #e5ecff 100%);
+  border-radius: 24px;
+  padding: 40px 32px;
+  border: 1px solid rgba(129, 140, 248, 0.15);
+  box-shadow: 0 12px 32px rgba(99, 102, 241, 0.12);
+  width: 100%;
+  max-width: 400px;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.visual-card:hover {
+  transform: translateY(-8px) rotate(2deg);
+  box-shadow: 0 20px 48px rgba(99, 102, 241, 0.2);
+}
+
+.visual-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+  animation: rotateGlow 8s linear infinite;
+}
+
+@keyframes rotateGlow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.visual-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 24px;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 28px rgba(99, 102, 241, 0.3);
+  animation: iconPulse 3s ease-in-out infinite;
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes iconPulse {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+  }
+  50% {
+    transform: scale(1.05) rotate(3deg);
+  }
+}
+
+.visual-content h3 {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--home-primary);
+  margin-bottom: 20px;
+  text-align: center;
+  letter-spacing: -0.01em;
+  position: relative;
+  z-index: 1;
+}
+
+.impact-items {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: relative;
+  z-index: 1;
+}
+
+.impact-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid rgba(129, 140, 248, 0.1);
+  transition: all 0.3s ease;
+  cursor: default;
+  position: relative;
+  overflow: hidden;
+}
+
+.impact-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  transform: scaleY(0);
+  transition: transform 0.3s ease;
+}
+
+.impact-item:hover::before {
+  transform: scaleY(1);
+}
+
+.impact-item:hover {
+  transform: translateX(6px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+  border-color: rgba(129, 140, 248, 0.3);
+}
+
+.impact-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+  animation: iconBounce 2s ease-in-out infinite;
+  position: relative;
+  z-index: 1;
+}
+
+.impact-item:nth-child(1) .impact-icon { animation-delay: 0s; }
+.impact-item:nth-child(2) .impact-icon { animation-delay: 0.3s; }
+.impact-item:nth-child(3) .impact-icon { animation-delay: 0.6s; }
+.impact-item:nth-child(4) .impact-icon { animation-delay: 0.9s; }
+
+@keyframes iconBounce {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-4px) scale(1.1);
+  }
+}
+
+.impact-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--home-ink);
+  letter-spacing: -0.01em;
+  position: relative;
+  z-index: 1;
+}
+
+.floating-shapes {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.floating-shape {
+  position: absolute;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
+  border-radius: 50%;
+  animation: floatShape 6s ease-in-out infinite;
+}
+
+.floating-shape:nth-child(1) {
+  width: 60px;
+  height: 60px;
+  top: 10%;
+  right: 10%;
+  animation-delay: 0s;
+}
+
+.floating-shape:nth-child(2) {
+  width: 40px;
+  height: 40px;
+  bottom: 20%;
+  left: 5%;
+  animation-delay: 2s;
+}
+
+.floating-shape:nth-child(3) {
+  width: 50px;
+  height: 50px;
+  top: 50%;
+  right: 5%;
+  animation-delay: 4s;
+}
+
+@keyframes floatShape {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translateY(-20px) scale(1.2);
+    opacity: 0.6;
+  }
 }
 
 /* Features */
