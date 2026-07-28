@@ -23,7 +23,7 @@ onMounted(async () => {
   if (auth.isAuthenticated && auth.user?.role === 'teacher') {
     router.replace('/live-voting')
   } else {
-    router.replace('/vote/live')
+    router.replace('/polls/active')
   }
 })
 </script>

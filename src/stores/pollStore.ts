@@ -27,7 +27,7 @@ export const usePollStore = defineStore('poll-service', () => {
     }
   }
 
-  async function fetchPoll(id: number) {
+  async function fetchPoll(id: string) {
     loading.value = true
     error.value = null
     try {
@@ -56,7 +56,7 @@ export const usePollStore = defineStore('poll-service', () => {
     }
   }
 
-  async function getQrCode(pollId: number) {
+  async function getQrCode(pollId: string) {
     try {
       return await pollService.getQrCode(pollId)
     } catch (e: any) {
@@ -65,7 +65,7 @@ export const usePollStore = defineStore('poll-service', () => {
     }
   }
 
-  async function updatePoll(id: number, data: Partial<PollFormData>) {
+  async function updatePoll(id: string, data: Partial<PollFormData>) {
     loading.value = true
     error.value = null
     try {
@@ -82,7 +82,7 @@ export const usePollStore = defineStore('poll-service', () => {
     }
   }
 
-  async function deletePoll(id: number) {
+  async function deletePoll(id: string) {
     loading.value = true
     error.value = null
     try {
@@ -96,14 +96,18 @@ export const usePollStore = defineStore('poll-service', () => {
     }
   }
 
-  async function startPoll(id: number) {
+  async function startPoll(id: string) {
     loading.value = true
     error.value = null
     try {
       const response = await pollService.startPoll(id)
-      const index = polls.value.findIndex((p) => p.id === id)
-      if (index !== -1) polls.value[index] = response.poll
-      if (currentPoll.value?.id === id) currentPoll.value = response.poll
+      // Re-fetch the poll to get properly mapped data
+      const mappedPoll = await pollService.getPoll(id).catch(() => null)
+      if (mappedPoll) {
+        const index = polls.value.findIndex((p) => p.id === id)
+        if (index !== -1) polls.value[index] = mappedPoll
+        if (currentPoll.value?.id === id) currentPoll.value = mappedPoll
+      }
       return response
     } catch (e: any) {
       error.value = e.response?.data?.message || 'Failed to start poll.'
@@ -113,14 +117,18 @@ export const usePollStore = defineStore('poll-service', () => {
     }
   }
 
-  async function endPoll(id: number) {
+  async function endPoll(id: string) {
     loading.value = true
     error.value = null
     try {
       const response = await pollService.endPoll(id)
-      const index = polls.value.findIndex((p) => p.id === id)
-      if (index !== -1) polls.value[index] = response.poll
-      if (currentPoll.value?.id === id) currentPoll.value = response.poll
+      // Re-fetch the poll to get properly mapped data
+      const mappedPoll = await pollService.getPoll(id).catch(() => null)
+      if (mappedPoll) {
+        const index = polls.value.findIndex((p) => p.id === id)
+        if (index !== -1) polls.value[index] = mappedPoll
+        if (currentPoll.value?.id === id) currentPoll.value = mappedPoll
+      }
       return response
     } catch (e: any) {
       error.value = e.response?.data?.message || 'Failed to end poll.'
@@ -135,8 +143,17 @@ export const usePollStore = defineStore('poll-service', () => {
     error.value = null
     try {
       const response = await pollService.getActivePoll()
-      activePoll.value = response.poll
-      hasVoted.value = response.hasVoted
+      // Handle both { poll, hasVoted } and { polls: [...] } response formats
+      if (response.poll) {
+        activePoll.value = response.poll
+        hasVoted.value = response.hasVoted || false
+      } else if (response.polls && response.polls.length > 0) {
+        activePoll.value = response.polls[0]
+        hasVoted.value = false
+      } else {
+        activePoll.value = null
+        hasVoted.value = false
+      }
       return response
     } catch (e: any) {
       if (e.response?.status !== 404) {
@@ -149,12 +166,12 @@ export const usePollStore = defineStore('poll-service', () => {
     }
   }
 
-  async function submitVote(pollId: number, optionId: number | null, points?: number, textResponse?: string) {
+  async function submitVote(pollId: string, optionId: string | null, points?: number, textResponse?: string) {
     loading.value = true
     error.value = null
     try {
       const result = await pollService.vote(pollId, optionId, points, textResponse)
-      results.value = result
+      results.value = result.data || result
       hasVoted.value = true
       return result
     } catch (e: any) {
@@ -165,12 +182,12 @@ export const usePollStore = defineStore('poll-service', () => {
     }
   }
 
-  async function fetchResults(pollId: number) {
+  async function fetchResults(pollId: string) {
     loading.value = true
     error.value = null
     try {
       const result = await pollService.getResults(pollId)
-      results.value = result
+      results.value = result.data || result
       return result
     } catch (e: any) {
       error.value = e.response?.data?.message || 'Failed to fetch results.'

@@ -34,7 +34,7 @@ onMounted(async () => {
   }
 })
 
-async function handleVote(optionId: number | null, points?: number, textResponse?: string) {
+async function handleVote(optionId: string | null, points?: number, textResponse?: string) {
   if (!store.activePoll) return
   try {
     await store.submitVote(store.activePoll.id, optionId, points, textResponse)

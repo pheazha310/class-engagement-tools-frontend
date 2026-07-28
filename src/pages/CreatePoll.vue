@@ -12,7 +12,7 @@ const route = useRoute()
 const store = usePollStore()
 
 const isEditing = ref(false)
-const editId = ref<number | null>(null)
+const editId = ref<string | null>(null)
 const initialData = ref<Partial<PollFormData>>({})
 const toastMessage = ref<string | null>(null)
 const toastType = ref<'success' | 'error'>('success')
@@ -20,7 +20,7 @@ const toastType = ref<'success' | 'error'>('success')
 onMounted(async () => {
   if (route.params.id) {
     isEditing.value = true
-    editId.value = Number(route.params.id)
+    editId.value = route.params.id as string
     try {
       const poll = await store.fetchPoll(editId.value)
       if (poll.status !== 'draft') {
@@ -31,7 +31,7 @@ onMounted(async () => {
       }
       initialData.value = {
         question: poll.question,
-        options: poll.options.map((o) => o.option_text),
+        options: poll.options.map((o: any) => o.option_text),
       }
     } catch {
       toastMessage.value = 'Failed to load poll for editing.'
@@ -49,7 +49,11 @@ async function handleSubmit(data: PollFormData) {
     } else {
       const poll = await store.createPoll(data)
       toastMessage.value = 'Poll created successfully!'
-      router.push(`/polls/${poll.id}/results`)
+      if (poll && poll.id) {
+        router.push(`/polls/${poll.id}/results`)
+      } else {
+        router.push('/polls')
+      }
       return
     }
     router.push('/polls')

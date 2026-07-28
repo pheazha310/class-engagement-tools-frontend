@@ -13,7 +13,7 @@ import type { VoteUpdatedPayload, OpenTextResponse } from '@/types/poll'
 const route = useRoute()
 const store = usePollStore()
 
-const pollId = Number(route.params.id)
+const pollId = route.params.id as string
 const cleanup = ref<(() => void) | null>(null)
 
 const maxPercentage = computed(() => {

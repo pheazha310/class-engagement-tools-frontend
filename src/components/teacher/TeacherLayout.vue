@@ -1,44 +1,46 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
-import TeacherIcon from './TeacherIcon.vue'
+import { ref, computed, onMounted, onUnmounted } from "vue";
+import { useRouter } from "vue-router";
+import { useAuthStore } from "@/stores/auth";
+import TeacherIcon from "./TeacherIcon.vue";
 
-const router = useRouter()
-const authStore = useAuthStore()
+const router = useRouter();
+const authStore = useAuthStore();
 
 const props = withDefaults(
   defineProps<{
-    sidebarActive?: string
-    pageTitle?: string
-    pageSubtitle?: string
-    showSearch?: boolean
-    searchValue?: string
-    searchPlaceholder?: string
-    teacherName?: string
-    teacherRole?: string
-    hideTopbar?: boolean
+    sidebarActive?: string;
+    pageTitle?: string;
+    pageSubtitle?: string;
+    showSearch?: boolean;
+    searchValue?: string;
+    searchPlaceholder?: string;
+    teacherName?: string;
+    teacherRole?: string;
+    hideTopbar?: boolean;
   }>(),
   {
-    sidebarActive: 'dashboard',
-    pageTitle: '',
-    pageSubtitle: '',
+    sidebarActive: "dashboard",
+    pageTitle: "",
+    pageSubtitle: "",
     showSearch: true,
-    searchValue: '',
-    searchPlaceholder: 'Search...',
-    teacherName: '',
-    teacherRole: 'Senior Instructor',
+    searchValue: "",
+    searchPlaceholder: "Search...",
+    teacherName: "",
+    teacherRole: "Senior Instructor",
     hideTopbar: false,
-  },
-)
+  }
+);
 
 const emit = defineEmits<{
-  'update:searchValue': [value: string]
-}>()
+  "update:searchValue": [value: string];
+}>();
 
-const currentHour = ref(new Date().getHours())
+const currentHour = ref(new Date().getHours());
 
-const displayName = computed(() => props.teacherName || authStore.user?.name || 'Dr. Sarah Miller')
+const displayName = computed(
+  () => props.teacherName || authStore.user?.name || "Dr. Sarah Miller"
+);
 
 const initials = computed(() =>
   displayName.value
@@ -46,75 +48,123 @@ const initials = computed(() =>
     .filter(Boolean)
     .slice(-2)
     .map((p) => p[0])
-    .join('')
-    .toUpperCase(),
-)
+    .join("")
+    .toUpperCase()
+);
 
 const displayTitle = computed(() => {
-  if (props.pageTitle) return props.pageTitle
+  if (props.pageTitle) return props.pageTitle;
   const greeting =
     currentHour.value < 12
-      ? 'Good Morning'
+      ? "Good Morning"
       : currentHour.value < 18
-        ? 'Good Afternoon'
-        : 'Good Evening'
-  return `${greeting}, ${displayName.value}`
-})
+      ? "Good Afternoon"
+      : "Good Evening";
+  return `${greeting}, ${displayName.value}`;
+});
 
 // ── Profile dropdown state ────────────────────────────────────
-const profileOpen = ref(false)
+const profileOpen = ref(false);
 
 function toggleProfile() {
-  profileOpen.value = !profileOpen.value
+  profileOpen.value = !profileOpen.value;
 }
 
 function closeProfile() {
-  profileOpen.value = false
+  profileOpen.value = false;
 }
 
 function goToProfile() {
-  closeProfile()
-  router.push('/teacher/settings')
+  closeProfile();
+  router.push("/teacher/settings");
 }
 
 async function handleLogout() {
-  closeProfile()
-  await authStore.logout()
-  router.replace('/')
+  closeProfile();
+  await authStore.logout();
+  router.replace("/");
 }
 
 // Close dropdown on outside click
 function onDocumentClick(e: MouseEvent) {
-  const target = e.target as HTMLElement
-  if (!target.closest('.profile-trigger')) {
-    closeProfile()
+  const target = e.target as HTMLElement;
+  if (!target.closest(".profile-trigger")) {
+    closeProfile();
   }
 }
 
 onMounted(() => {
-  document.addEventListener('click', onDocumentClick)
-})
+  document.addEventListener("click", onDocumentClick);
+});
 
 onUnmounted(() => {
-  document.removeEventListener('click', onDocumentClick)
-})
+  document.removeEventListener("click", onDocumentClick);
+});
 
 const sidebarItems: Array<{ id: string; label: string; icon: string; route: string }> = [
-  { id: 'dashboard', label: 'Dashboard', icon: 'grid', route: '/teacher/dashboard' },
-  { id: 'classes', label: 'Classes', icon: 'cap', route: '/teacher/classes' },
-  { id: 'students', label: 'Students', icon: 'users', route: '/teacher/students' },
-  { id: 'tools', label: 'Tools', icon: 'zap', route: '/teacher/tools' },
-  { id: 'organize', label: 'Organize Tools', icon: 'picker', route: '/teacher/organize-tools' },
-  { id: 'history', label: 'Activity History', icon: 'history', route: '/teacher/activity-history' },
-]
+  { id: "dashboard", label: "Dashboard", icon: "grid", route: "/teacher/dashboard" },
+  { id: "classes", label: "Classes", icon: "cap", route: "/teacher/classes" },
+  { id: "students", label: "Students", icon: "users", route: "/teacher/students" },
+  { id: "tools", label: "Tools", icon: "zap", route: "/teacher/tools" },
+  {
+    id: "organize",
+    label: "Organize Tools",
+    icon: "picker",
+    route: "/teacher/organize-tools",
+  },
+  {
+    id: "history",
+    label: "Activity History",
+    icon: "history",
+    route: "/teacher/activity-history",
+  },
+];
+
+const siteItems: Array<{ id: string; label: string; icon: string; route: string }> = [
+  { id: "home", label: "Home", icon: "home", route: "/" },
+  { id: "about", label: "About", icon: "globe", route: "/about" },
+  { id: "all-tools", label: "All Tools", icon: "grid", route: "/tools" },
+  {
+    id: "random-tools",
+    label: "Random Tools",
+    icon: "picker",
+    route: "/tools/category/random",
+  },
+  {
+    id: "quiz-tools",
+    label: "Quiz & Assessment",
+    icon: "quiz",
+    route: "/tools/category/quiz",
+  },
+  {
+    id: "classroom-tools",
+    label: "Classroom Control",
+    icon: "users",
+    route: "/tools/category/classroom",
+  },
+  { id: "games-tools", label: "Games", icon: "trophy", route: "/tools/category/games" },
+  {
+    id: "engagement-tools",
+    label: "Engagement",
+    icon: "activity",
+    route: "/tools/category/engagement",
+  },
+  {
+    id: "fun-tools",
+    label: "Fun Activities",
+    icon: "star",
+    route: "/tools/category/fun-activities",
+  },
+  { id: "contact", label: "Contact", icon: "mail", route: "/contact" },
+];
 
 function navigateTo(route: string) {
-  router.push(route)
+  router.push(route);
 }
 
 function onSearchInput(e: Event) {
-  const target = e.target as HTMLInputElement
-  emit('update:searchValue', target.value)
+  const target = e.target as HTMLInputElement;
+  emit("update:searchValue", target.value);
 }
 </script>
 
@@ -150,6 +200,23 @@ function onSearchInput(e: Event) {
           <TeacherIcon :icon="item.icon" :size="22" />
           <span>{{ item.label }}</span>
         </button>
+
+        <div class="site-divider">
+          <span>Site Navigation</span>
+        </div>
+
+        <button
+          v-for="item in siteItems"
+          :key="item.id"
+          class="sidebar-link sidebar-link--site"
+          :class="{ active: sidebarActive === item.id }"
+          type="button"
+          @click="navigateTo(item.route)"
+        >
+          <TeacherIcon :icon="item.icon" :size="20" />
+          <span>{{ item.label }}</span>
+        </button>
+
         <slot name="sidebar-after" />
       </nav>
 
@@ -161,7 +228,11 @@ function onSearchInput(e: Event) {
             <span>{{ teacherRole }}</span>
           </div>
         </div>
-        <button class="settings-link" type="button" @click="navigateTo('/teacher/settings')">
+        <button
+          class="settings-link"
+          type="button"
+          @click="navigateTo('/teacher/settings')"
+        >
           <TeacherIcon icon="settings" :size="22" />
           <span>Settings</span>
         </button>
@@ -209,7 +280,11 @@ function onSearchInput(e: Event) {
           </button>
 
           <!-- Notifications -->
-          <button class="icon-button notification-button" type="button" aria-label="Notifications">
+          <button
+            class="icon-button notification-button"
+            type="button"
+            aria-label="Notifications"
+          >
             <TeacherIcon icon="bell" :size="22" />
             <span class="notification-dot"></span>
           </button>
@@ -225,7 +300,7 @@ function onSearchInput(e: Event) {
               @click="toggleProfile"
             >
               <span class="topbar-avatar">{{ initials }}</span>
-              <span class="topbar-name">{{ displayName.split(' ')[0] }}</span>
+              <span class="topbar-name">{{ displayName.split(" ")[0] }}</span>
               <TeacherIcon icon="chevron" :size="12" />
             </button>
 
@@ -237,7 +312,7 @@ function onSearchInput(e: Event) {
                   <div>
                     <p class="dropdown-name">{{ displayName }}</p>
                     <span class="dropdown-role">{{
-                      authStore.user?.role || props.teacherRole || 'Teacher'
+                      authStore.user?.role || props.teacherRole || "Teacher"
                     }}</span>
                     <span v-if="authStore.user?.email" class="dropdown-email">{{
                       authStore.user.email
@@ -261,7 +336,11 @@ function onSearchInput(e: Event) {
                   <span>Dashboard</span>
                 </button>
                 <div class="dropdown-divider"></div>
-                <button class="dropdown-item dropdown-logout" type="button" @click="handleLogout">
+                <button
+                  class="dropdown-item dropdown-logout"
+                  type="button"
+                  @click="handleLogout"
+                >
                   <TeacherIcon icon="logOut" :size="16" />
                   <span>Log Out</span>
                 </button>
@@ -303,18 +382,12 @@ function onSearchInput(e: Event) {
   display: flex;
   min-height: 100vh;
   background:
-    radial-gradient(circle at top left, rgba(37, 79, 203, 0.08), transparent 28%),
-    radial-gradient(circle at bottom right, rgba(13, 110, 253, 0.05), transparent 24%),
-    linear-gradient(180deg, #eef3ff 0%, #f7f9ff 34%, #eef2ff 100%);
+    radial-gradient(circle at top left, rgba(37, 79, 203, 0.06), transparent 26%),
+    radial-gradient(circle at bottom right, rgba(13, 110, 253, 0.04), transparent 24%),
+    linear-gradient(180deg, #f4f7ff 0%, #f8faff 44%, #eef3ff 100%);
   color: var(--ink);
-  font-family:
-    Inter,
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
 }
 
 button,
@@ -336,24 +409,25 @@ button {
 .teacher-sidebar {
   position: sticky;
   top: 0;
-  overflow: hidden;
+  overflow: clip;
   display: flex;
-  width: 263px;
-  min-width: 263px;
+  width: 252px;
+  min-width: 252px;
   height: 100vh;
   flex-direction: column;
-  background: linear-gradient(180deg, #2547bc 0%, #1838a9 54%, #173199 100%);
+  background:
+    radial-gradient(circle at 18% 14%, rgba(255, 255, 255, 0.12), transparent 22%),
+    linear-gradient(180deg, #274ac2 0%, #203cab 54%, #1b3295 100%);
   color: #ffffff;
-  box-shadow: 16px 0 36px rgba(12, 28, 95, 0.18);
+  box-shadow: 12px 0 28px rgba(12, 28, 95, 0.16);
 }
 
 .teacher-sidebar::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.14), transparent 18%),
-    radial-gradient(circle at 86% 88%, rgba(255, 255, 255, 0.08), transparent 16%);
+    radial-gradient(circle at 84% 88%, rgba(255, 255, 255, 0.08), transparent 16%);
   pointer-events: none;
 }
 
@@ -362,7 +436,7 @@ button {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 34px 26px 28px;
+  padding: 28px 22px 22px;
 }
 
 .brand-mark {
@@ -394,14 +468,16 @@ button {
 .brand-divider {
   height: 1px;
   background: rgba(255, 255, 255, 0.18);
-  margin: 0 24px 22px;
+  margin: 0 22px 18px;
   border-radius: 1px;
 }
 
 .sidebar-nav {
   display: grid;
   gap: 6px;
-  padding: 0 16px;
+  padding: 0 14px 18px;
+  overflow-y: auto;
+  flex: 1;
 }
 
 .sidebar-link,
@@ -417,37 +493,32 @@ button {
 }
 
 .sidebar-link {
-  min-height: 44px;
-  border-radius: 14px;
-  padding: 0 16px;
-  font-size: 14px;
+  min-height: 42px;
+  border-radius: 12px;
+  padding: 0 14px;
+  font-size: 13px;
   font-weight: 600;
   position: relative;
-  transition:
-    transform 0.18s ease,
-    background 0.18s ease,
-    box-shadow 0.18s ease,
+  transition: transform 0.18s ease, background 0.18s ease, box-shadow 0.18s ease,
     color 0.18s ease;
 }
 
 .sidebar-link.active,
 .sidebar-link:hover {
-  background: rgba(255, 255, 255, 0.18);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
-  transform: translateX(3px);
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  transform: translateX(2px);
 }
 
 .sidebar-link.active {
-  background: rgba(255, 255, 255, 0.26);
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.18),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
-    0 10px 20px rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.14),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06), 0 8px 18px rgba(0, 0, 0, 0.1);
   transform: translateX(0);
 }
 
 .sidebar-link.active::before {
-  content: '';
+  content: "";
   position: absolute;
   left: 0;
   top: 50%;
@@ -463,6 +534,46 @@ button {
   opacity: 0.85;
 }
 
+.sidebar-link--site {
+  min-height: 38px;
+  font-size: 13px;
+  opacity: 0.82;
+}
+
+.sidebar-link--site:hover {
+  opacity: 1;
+}
+
+.site-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 6px 4px;
+  user-select: none;
+}
+
+.site-divider::before,
+.site-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 1px;
+}
+
+.site-divider span {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+
+.sidebar-link.active svg {
+  opacity: 1;
+}
+
 .sidebar-link.active svg {
   opacity: 1;
 }
@@ -470,12 +581,12 @@ button {
 .sidebar-footer {
   margin-top: auto;
   border-top: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 18px 16px 24px;
+  padding: 16px 14px 20px;
   position: relative;
 }
 
 .sidebar-footer::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 24px;
@@ -491,8 +602,8 @@ button {
   gap: 10px;
   align-items: center;
   min-height: 58px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.1);
   padding: 8px;
   transition: background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
 }
@@ -540,7 +651,7 @@ button {
   margin-top: 14px;
   min-height: 34px;
   padding: 0 18px 0 14px;
-  font-size: 16px;
+  font-size: 14px;
   border-radius: 10px;
   transition: background 0.18s ease;
   font-weight: 600;
@@ -571,14 +682,12 @@ button {
   grid-template-columns: minmax(220px, 1fr) minmax(260px, 430px) auto;
   gap: 22px;
   align-items: center;
-  min-height: 82px;
+  min-height: 76px;
   border-bottom: 1px solid rgba(197, 203, 221, 0.7);
-  background: rgba(255, 255, 255, 0.84);
-  backdrop-filter: blur(16px);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.75) inset,
-    0 10px 30px rgba(21, 33, 72, 0.04);
-  padding: 0 42px;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.75) inset, 0 8px 20px rgba(21, 33, 72, 0.03);
+  padding: 0 34px;
   position: sticky;
   top: 0;
   z-index: 50;
@@ -616,9 +725,9 @@ button {
   gap: 10px;
   align-items: center;
   height: 44px;
-  border: 1px solid rgba(197, 203, 221, 0.9);
+  border: 1px solid rgba(197, 203, 221, 0.85);
   border-radius: 999px;
-  background: rgba(238, 243, 255, 0.9);
+  background: rgba(245, 248, 255, 0.92);
   color: #4e586b;
   padding: 0 14px;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
@@ -659,7 +768,7 @@ button {
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 10px rgba(0, 31, 158, 0.25);
+  box-shadow: 0 4px 10px rgba(0, 31, 158, 0.2);
 }
 
 .launch-btn:hover {
@@ -687,7 +796,7 @@ button {
 }
 
 .icon-button:hover {
-  background: #eef3ff;
+  background: #f0f4ff;
   color: var(--primary);
 }
 
@@ -728,7 +837,7 @@ button {
 }
 
 .profile-btn:hover {
-  background: #eef3ff;
+  background: #f0f4ff;
 }
 
 .topbar-avatar {
@@ -870,9 +979,9 @@ button {
 
 /* ── Shared Content ─────────────────────────────────────────── */
 .dashboard-content {
-  width: min(100%, 1180px);
+  width: min(100%, 1200px);
   margin: 0 auto;
-  padding: 48px 36px 48px;
+  padding: 36px 32px 40px;
 }
 
 /* ── Responsive ─────────────────────────────────────────────── */
@@ -884,7 +993,7 @@ button {
   .dashboard-topbar {
     grid-template-columns: 1fr;
     gap: 14px;
-    padding: 18px 28px;
+    padding: 16px 24px;
   }
 
   .topbar-actions {
@@ -914,7 +1023,7 @@ button {
   }
 
   .brand-lockup {
-    padding: 20px 20px 18px;
+    padding: 18px 18px 16px;
   }
 
   .sidebar-nav {
@@ -925,11 +1034,16 @@ button {
   .sidebar-footer {
     display: none;
   }
+
+  .site-divider,
+  .sidebar-link--site {
+    display: none;
+  }
 }
 
 @media (max-width: 720px) {
   .dashboard-content {
-    padding: 24px 16px;
+    padding: 22px 14px 28px;
   }
   .topbar-actions {
     display: grid;
@@ -1361,10 +1475,10 @@ mark.scheduled {
 .required {
   color: #c51313;
 }
-.form-group input[type='text'],
-.form-group input[type='email'],
-.form-group input[type='number'],
-.form-group input[type='password'],
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="number"],
+.form-group input[type="password"],
 .form-group textarea {
   width: 100%;
   min-height: 42px;
@@ -1400,7 +1514,7 @@ mark.scheduled {
   font-weight: 600;
   color: #0b1020;
 }
-.checkbox-label input[type='checkbox'] {
+.checkbox-label input[type="checkbox"] {
   width: 18px;
   height: 18px;
   accent-color: #001f9e;

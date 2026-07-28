@@ -15,7 +15,7 @@ const store = usePollStore()
 
 const searchQuery = ref('')
 const showDeleteDialog = ref(false)
-const pollToDelete = ref<number | null>(null)
+const pollToDelete = ref<string | null>(null)
 const toastMessage = ref<string | null>(null)
 const toastType = ref<'success' | 'error'>('success')
 const qrCodeData = ref<QrCodeData | null>(null)
@@ -44,11 +44,11 @@ function navigateToCreate() {
   router.push('/polls/create')
 }
 
-function editPoll(id: number) {
+function editPoll(id: string) {
   router.push(`/polls/${id}/edit`)
 }
 
-function confirmDelete(id: number) {
+function confirmDelete(id: string) {
   pollToDelete.value = id
   showDeleteDialog.value = true
 }
@@ -68,7 +68,7 @@ async function executeDelete() {
   }
 }
 
-async function startPoll(id: number) {
+async function startPoll(id: string) {
   try {
     await store.startPoll(id)
     toastMessage.value = 'Poll started successfully!'
@@ -80,7 +80,7 @@ async function startPoll(id: number) {
   }
 }
 
-async function endPoll(id: number) {
+async function endPoll(id: string) {
   try {
     await store.endPoll(id)
     toastMessage.value = 'Poll ended.'
@@ -91,11 +91,11 @@ async function endPoll(id: number) {
   }
 }
 
-function viewResults(id: number) {
+function viewResults(id: string) {
   router.push(`/polls/${id}/results`)
 }
 
-async function showQrCode(id: number) {
+async function showQrCode(id: string) {
   try {
     qrCodeData.value = await store.getQrCode(id)
     showQrModal.value = true

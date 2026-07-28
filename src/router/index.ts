@@ -384,6 +384,23 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/pages/public/ActivePolls.vue'),
   },
 
+  // New Live Classroom Voting UI
+  {
+    path: '/active-polls',
+    name: 'active-polls',
+    component: () => import('@/pages/ActivePollsPage.vue'),
+  },
+  {
+    path: '/live-vote/:token',
+    name: 'live-vote',
+    component: () => import('@/pages/VotingPage.vue'),
+  },
+  {
+    path: '/live-results/:token',
+    name: 'live-results-page',
+    component: () => import('@/pages/LiveResultsPage.vue'),
+  },
+
   // 404
   {
     path: '/group-generator',
@@ -533,7 +550,7 @@ const router = createRouter({
   routes,
 })
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   const authStore = useAuthStore()
 
   if (to.name === 'home') {
@@ -541,11 +558,11 @@ router.beforeEach((to) => {
   }
 
   if (to.meta.requiresAuth && !authStore.initialized) {
-    return true
+    return { path: '/login', query: { redirect: to.fullPath } }
   }
 
   if (to.meta.requiresAuth && !authStore.user) {
-    return '/login'
+    return { path: '/login', query: { redirect: to.fullPath } }
   }
 
   if (to.meta.guest && authStore.user) {

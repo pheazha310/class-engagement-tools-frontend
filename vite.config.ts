@@ -21,6 +21,17 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq, req) => {
+            // http-proxy's changeOrigin strips the Origin header, which
+            // breaks Sanctum's EnsureFrontendRequestsAreStateful middleware
+            // (it can't identify non-GET requests as stateful without it).
+            // Restore the original Origin so Sanctum works for all methods.
+            if (req.headers.origin) {
+              proxyReq.setHeader('Origin', req.headers.origin);
+            }
+          });
+        },
       },
       '/sanctum/csrf-cookie': {
         target: 'http://localhost:8000',

@@ -4,7 +4,7 @@ import api, { ensureCsrfCookie } from '@/services/api'
 import { AxiosError } from 'axios'
 
 export interface AuthUser {
-  id: number
+  id: string
   name: string
   email: string
   role: string
@@ -80,7 +80,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     return {
-      id: Number(rawId),
+      id: String(rawId),
       name: candidateRecord.name,
       email: candidateRecord.email,
       role: typeof candidateRecord.role === 'string' ? candidateRecord.role : 'student',

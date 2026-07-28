@@ -1,23 +1,33 @@
 export interface PollOption {
-  id: number
+  id: string
   option_text: string
+  display_order?: number
   is_correct?: boolean
-  created_at: string
+  created_at?: string
 }
 
 export interface Poll {
-  id: number
-  teacher_id: number
+  id: string
+  title?: string
+  description?: string | null
   question: string
+  teacher_id?: number
   room_code?: string
-  status: 'draft' | 'active' | 'ended'
+  status: 'draft' | 'active' | 'ended' | 'closed'
   is_multiple_choice?: boolean
   is_anonymous?: boolean
   is_quiz?: boolean
   is_open_text?: boolean
   max_points?: number | null
-  correct_option_id?: number | null
+  correct_option_id?: string | null
   duration_minutes?: number | null
+  // Backend field names
+  poll_type?: string
+  anonymous?: boolean
+  allow_multiple_votes?: boolean
+  show_results?: boolean
+  public_token?: string
+  created_by?: string
   started_at: string | null
   ended_at: string | null
   options: PollOption[]

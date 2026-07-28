@@ -1,7 +1,6 @@
-import axios from 'axios'
-import { useAuthStore } from '@/stores/auth'
 import { showNotification } from '@/utils/notifications'
 import api from './api'
+import { useAuthStore } from '@/stores/auth'
 
 // API Response Types
 export interface ApiResponse<T> {
@@ -80,8 +79,12 @@ class TeacherDashboardAPIService {
   }
 
   private async request<T>(promise: Promise<T>): Promise<T> {
-    this.retryCount = 0
-    return this.executeWithRetry(promise)
+    try {
+      return await promise
+    } catch (error: any) {
+      this.handleApiError(error)
+      throw error
+    }
   }
 
   private async executeWithRetry<T>(promise: Promise<T>): Promise<T> {
@@ -94,8 +97,8 @@ class TeacherDashboardAPIService {
           await this.refreshToken()
           return await this.executeWithRetry(promise)
         } catch {
-          const authStore = useAuthStore()
-          authStore.clearUser()
+          // Refresh failed — don't clear the user. The router guard will
+          // handle redirection on the next navigation if the session is truly gone.
           throw error
         }
       }

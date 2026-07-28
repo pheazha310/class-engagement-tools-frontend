@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { createPoll, updatePoll, getPollById } from '@/utils/pollStorage'
+import { useLivePollStore } from '@/stores/livePollStore'
 import { useAuthStore } from '@/stores/auth'
 import ToastNotification from '@/components/ToastNotification.vue'
-import type { LivePoll } from '@/utils/pollStorage'
+import TeacherLayout from '@/components/teacher/TeacherLayout.vue'
+import type { LivePollFormData } from '@/types/livePoll'
 
 const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
+const store = useLivePollStore()
 
 onMounted(() => {
   if (!auth.isAuthenticated || auth.user?.role !== 'teacher') {
@@ -25,7 +27,6 @@ const title = ref('')
 const description = ref('')
 const question = ref('')
 const pollType = ref<'multiple-choice' | 'yes-no' | 'rating-scale'>('multiple-choice')
-const duration = ref(10)
 const allowMultipleVotes = ref(false)
 const anonymous = ref(true)
 
@@ -39,13 +40,23 @@ const errors = ref<Record<string, string>>({})
 const toastMessage = ref<string | null>(null)
 const toastType = ref<'success' | 'error'>('success')
 
-// ── Duration Options ──
-const durationOptions = [1, 5, 10, 30, 60]
-
 // ── Poll Type Definitions ──
+const pollTypeMap: Record<string, string> = {
+  'multiple-choice': 'multiple_choice',
+  'yes-no': 'yes_no',
+  'rating-scale': 'rating',
+}
+
+const reversePollTypeMap: Record<string, string> = {
+  'multiple_choice': 'multiple-choice',
+  'yes_no': 'yes-no',
+  'rating': 'rating-scale',
+}
+
 const pollTypes = [
   {
     id: 'multiple-choice' as const,
+    apiId: 'multiple_choice' as const,
     label: 'Multiple Choice',
     description: 'Students select from custom options',
     icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
@@ -53,6 +64,7 @@ const pollTypes = [
   },
   {
     id: 'yes-no' as const,
+    apiId: 'yes_no' as const,
     label: 'Yes / No',
     description: 'Simple binary choice',
     icon: 'M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5',
@@ -60,6 +72,7 @@ const pollTypes = [
   },
   {
     id: 'rating-scale' as const,
+    apiId: 'rating' as const,
     label: 'Rating Scale (1–5)',
     description: 'Rate on a 1 to 5 scale',
     icon: 'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z',
@@ -127,7 +140,6 @@ function resetForm() {
   description.value = ''
   question.value = ''
   pollType.value = 'multiple-choice'
-  duration.value = 10
   allowMultipleVotes.value = false
   anonymous.value = true
   mcOptions.value = ['', '']
@@ -135,34 +147,46 @@ function resetForm() {
 }
 
 // ── Load poll for editing or reset for create ──
-watch(() => route.params.id, (pollId) => {
-  resetForm()
-
-  if (pollId && typeof pollId === 'string') {
-    const poll = getPollById(pollId)
-    if (poll && poll.status === 'draft') {
-      isEditing.value = true
-      editId.value = poll.id
-      title.value = poll.title
-      description.value = poll.description
-      question.value = poll.question
-      pollType.value = poll.type
-      duration.value = poll.duration
-      allowMultipleVotes.value = poll.allowMultipleVotes
-      anonymous.value = poll.anonymous
-
-      if (poll.type === 'multiple-choice') {
-        mcOptions.value = poll.options.length >= 2 ? [...poll.options] : ['', '']
-      }
-    } else if (poll) {
-      toastMessage.value = 'Only draft polls can be edited.'
-      toastType.value = 'error'
-      setTimeout(() => router.push('/live-voting'), 1500)
-    } else {
+async function loadPollForEdit(pollId: string) {
+  try {
+    const poll = await store.fetchPoll(pollId)
+    if (!poll) {
       toastMessage.value = 'Poll not found.'
       toastType.value = 'error'
       setTimeout(() => router.push('/live-voting'), 1500)
+      return
     }
+    if (poll.status !== 'draft') {
+      toastMessage.value = 'Only draft polls can be edited.'
+      toastType.value = 'error'
+      setTimeout(() => router.push('/live-voting'), 1500)
+      return
+    }
+    isEditing.value = true
+    editId.value = poll.id
+    title.value = poll.title
+    description.value = poll.description || ''
+    question.value = poll.question
+    const mappedType = reversePollTypeMap[poll.poll_type] || 'multiple-choice'
+    pollType.value = mappedType as 'multiple-choice' | 'yes-no' | 'rating-scale'
+    allowMultipleVotes.value = poll.allow_multiple_votes
+    anonymous.value = poll.anonymous
+
+    if (poll.poll_type === 'multiple_choice') {
+      mcOptions.value = poll.options.map((o) => o.option_text)
+      if (mcOptions.value.length < 2) mcOptions.value.push('')
+    }
+  } catch {
+    toastMessage.value = 'Failed to load poll for editing.'
+    toastType.value = 'error'
+    setTimeout(() => router.push('/live-voting'), 1500)
+  }
+}
+
+watch(() => route.params.id, async (pollId) => {
+  resetForm()
+  if (pollId && typeof pollId === 'string') {
+    await loadPollForEdit(pollId)
   }
 }, { immediate: true })
 
@@ -171,27 +195,32 @@ watch(pollType, () => {
   errors.value = {}
 })
 
-// ── Build Poll Data ──
-function buildPollData(status: 'draft' | 'active'): Omit<LivePoll, 'id' | 'createdAt' | 'updatedAt'> {
-  let options: string[]
-  if (pollType.value === 'yes-no') {
-    options = ['Yes', 'No']
-  } else if (pollType.value === 'rating-scale') {
-    options = ['1', '2', '3', '4', '5']
-  } else {
-    options = mcOptions.value.filter((o) => o.trim())
-  }
+// ── Map poll type to API format ──
+function getApiPollType(): string {
+  return pollTypeMap[pollType.value] || 'multiple_choice'
+}
 
+// ── Get options array ──
+function getOptionsArray(): string[] {
+  if (pollType.value === 'yes-no') {
+    return ['Yes', 'No']
+  } else if (pollType.value === 'rating-scale') {
+    return ['1', '2', '3', '4', '5']
+  }
+  return mcOptions.value.filter((o) => o.trim())
+}
+
+// ── Build Poll Data (API format) ──
+function buildPollData(): LivePollFormData {
   return {
     title: title.value.trim(),
-    description: description.value.trim(),
+    description: description.value.trim() || undefined,
     question: question.value.trim(),
-    type: pollType.value,
-    options,
-    duration: duration.value,
-    allowMultipleVotes: allowMultipleVotes.value,
+    poll_type: getApiPollType() as 'multiple_choice' | 'yes_no' | 'rating',
+    options: getOptionsArray(),
+    allow_multiple_votes: allowMultipleVotes.value,
     anonymous: anonymous.value,
-    status,
+    show_results: true,
   }
 }
 
@@ -200,46 +229,51 @@ function handleCancel() {
   router.push('/live-voting')
 }
 
-function handleSaveDraft() {
+async function handleSaveDraft() {
   if (!validate()) return
   isSaving.value = true
 
   try {
-    const data = buildPollData('draft')
+    const data = buildPollData()
     if (isEditing.value && editId.value) {
-      updatePoll(editId.value, data)
+      await store.updatePoll(editId.value, data)
       toastMessage.value = 'Poll draft updated!'
     } else {
-      createPoll(data)
+      await store.createPoll(data)
       toastMessage.value = 'Poll saved as draft!'
     }
     toastType.value = 'success'
     setTimeout(() => router.push('/live-voting'), 1000)
   } catch {
-    toastMessage.value = 'Failed to save draft.'
+    toastMessage.value = store.error || 'Failed to save draft.'
     toastType.value = 'error'
   } finally {
     isSaving.value = false
   }
 }
 
-function handleCreateAndStart() {
+async function handleCreateAndStart() {
   if (!validate()) return
   isStarting.value = true
 
   try {
-    const data = buildPollData('active')
+    const data = buildPollData()
     if (isEditing.value && editId.value) {
-      updatePoll(editId.value, data)
+      // Update draft then start
+      await store.updatePoll(editId.value, data)
+      await store.startPoll(editId.value)
       toastMessage.value = 'Poll updated and is now live!'
     } else {
-      createPoll(data)
+      const poll = await store.createPoll(data)
+      if (poll) {
+        await store.startPoll(poll.id)
+      }
       toastMessage.value = 'Poll is now live!'
     }
     toastType.value = 'success'
     setTimeout(() => router.push('/live-voting'), 1000)
   } catch {
-    toastMessage.value = 'Failed to start poll.'
+    toastMessage.value = store.error || 'Failed to start poll.'
     toastType.value = 'error'
   } finally {
     isStarting.value = false
@@ -248,12 +282,7 @@ function handleCreateAndStart() {
 </script>
 
 <template>
-  <div class="clv-page">
-    <!-- Background decorations -->
-    <div class="clv-bg-orb clv-bg-orb--1" aria-hidden="true" />
-    <div class="clv-bg-orb clv-bg-orb--2" aria-hidden="true" />
-    <div class="clv-bg-grid" aria-hidden="true" />
-
+  <TeacherLayout sidebar-active="tools" hide-topbar class="clv-page">
     <div class="clv-container">
       <!-- Header -->
       <header class="clv-header">
@@ -265,7 +294,7 @@ function handleCreateAndStart() {
             <span>Live Voting</span>
           </div>
           <h1 class="clv-title">{{ isEditing ? 'Edit Live Voting' : 'Create Live Voting' }}</h1>
-          <p class="clv-subtitle">{{ isEditing ? 'Update your draft poll settings and options.' : 'Design a live voting poll for your classroom. Configure options, set duration, and launch instantly.' }}</p>
+          <p class="clv-subtitle">{{ isEditing ? 'Update your draft poll settings and options.' : 'Design a live voting poll for your classroom. Configure options and launch instantly.' }}</p>
         </div>
         <button class="clv-back-btn" @click="handleCancel">
           <svg class="clv-back-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -530,28 +559,7 @@ function handleCreateAndStart() {
               </svg>
               <div>
                 <h2 class="clv-card-title">Settings</h2>
-                <p class="clv-card-desc">Configure duration and voting behavior</p>
-              </div>
-            </div>
-
-            <!-- Duration -->
-            <div class="clv-field">
-              <label class="clv-label">Duration</label>
-              <div class="clv-duration-grid">
-                <button
-                  v-for="d in durationOptions"
-                  :key="d"
-                  type="button"
-                  class="clv-duration-btn"
-                  :class="{ 'clv-duration-btn--active': duration === d }"
-                  @click="duration = d"
-                >
-                  <svg class="clv-duration-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10" />
-                    <polyline points="12 6 12 12 16 14" />
-                  </svg>
-                  <span>{{ d }} min</span>
-                </button>
+                <p class="clv-card-desc">Configure voting behavior</p>
               </div>
             </div>
 
@@ -764,15 +772,9 @@ function handleCreateAndStart() {
             </div>
 
             <!-- Summary Stats -->
-            <div class="clv-preview-stats">
-              <div class="clv-preview-stat">
+            <div class="clv-preview-stats">            <div class="clv-preview-stat">
                 <span class="clv-preview-stat-val">{{ computedOptions.length > 0 ? computedOptions.length : (pollType === 'rating-scale' ? 5 : '—') }}</span>
                 <span class="clv-preview-stat-label">Options</span>
-              </div>
-              <div class="clv-preview-stat-divider" />
-              <div class="clv-preview-stat">
-                <span class="clv-preview-stat-val">{{ duration }} min</span>
-                <span class="clv-preview-stat-label">Duration</span>
               </div>
               <div class="clv-preview-stat-divider" />
               <div class="clv-preview-stat">
@@ -786,18 +788,13 @@ function handleCreateAndStart() {
     </div>
 
     <ToastNotification :message="toastMessage" :type="toastType" @close="toastMessage = null" />
-  </div>
+  </TeacherLayout>
 </template>
 
 <style scoped>
 /* ── Page Layout ── */
 .clv-page {
   position: relative;
-  min-height: 100vh;
-  overflow: hidden;
-  background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 50%, #EEF2FF 100%);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  padding: 88px 24px 60px;
 }
 
 .clv-bg-orb {
@@ -1531,48 +1528,6 @@ function handleCreateAndStart() {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-/* ── Duration Selector ── */
-.clv-duration-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
-}
-
-.clv-duration-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 12px 8px;
-  border: 1.5px solid #E2E8F0;
-  border-radius: 10px;
-  background: #FAFBFC;
-  color: #64748B;
-  font-size: 12px;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.clv-duration-btn:hover {
-  border-color: #CBD5E1;
-  background: #F8FAFC;
-  transform: translateY(-1px);
-}
-
-.clv-duration-btn--active {
-  border-color: #6366F1;
-  background: linear-gradient(135deg, #EEF2FF, #E0E7FF);
-  color: #4F46E5;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-}
-
-.clv-duration-icon {
-  width: 16px;
-  height: 16px;
 }
 
 /* ── Toggle Switches ── */

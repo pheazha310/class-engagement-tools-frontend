@@ -38,12 +38,10 @@ const stats = computed(() => ({
 }))
 
 const statCards = computed(() => [
-  { label: 'Total Classes', value: stats.value.totalClasses, meta: 'Tracked', icon: 'cap', tone: 'blue' as const, route: '/teacher/classes' },
+  { label: 'Total Classes', value: stats.value.totalClasses, meta: 'Tracked classes', icon: 'cap', tone: 'blue' as const, route: '/teacher/classes' },
   { label: 'Students', value: stats.value.totalStudents, meta: `${stats.value.engagementPct}% engagement`, icon: 'users', tone: 'green' as const, route: '/teacher/students' },
-  { label: 'Active Polls', value: stats.value.activePolls, meta: 'Live', icon: 'poll', tone: 'red' as const, route: '/teacher/live-polls' },
-  { label: 'Scheduled', value: stats.value.scheduledSessions, meta: 'Upcoming', icon: 'calendar', tone: 'blue' as const, route: '/teacher/live-polls' },
-  { label: 'Live Now', value: stats.value.liveSessions, meta: 'On air', icon: 'zap', tone: 'red' as const, route: '/teacher/live-polls' },
-  { label: 'Activities', value: stats.value.totalActivities, meta: 'All time', icon: 'clipboard', tone: 'blue' as const, route: '/teacher/activity-history' },
+  { label: 'Active Polls', value: stats.value.activePolls, meta: 'Live activity', icon: 'poll', tone: 'orange' as const, route: '/teacher/live-polls' },
+  { label: 'Activities', value: stats.value.totalActivities, meta: 'All time', icon: 'clipboard', tone: 'violet' as const, route: '/teacher/activity-history' },
 ])
 
 const livePoll = computed(() => dashboardStore.livePoll)
@@ -159,6 +157,20 @@ const goTo = (route?: string) => {
         <p class="hero-text">
           Real-time counts from your polls, quizzes, sessions, and student activity.
         </p>
+        <div class="hero-chips" aria-label="Session status summary">
+          <span class="hero-chip">
+            <strong>{{ stats.scheduledSessions }}</strong>
+            <small>Scheduled</small>
+          </span>
+          <span class="hero-chip">
+            <strong>{{ stats.liveSessions }}</strong>
+            <small>Live now</small>
+          </span>
+          <span class="hero-chip hero-chip--muted">
+            <strong>{{ stats.engagementPct }}%</strong>
+            <small>Engagement</small>
+          </span>
+        </div>
       </div>
 
       <div class="hero-metrics">
@@ -409,11 +421,12 @@ const goTo = (route?: string) => {
   grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.9fr);
   gap: 18px;
   margin-bottom: 18px;
-  padding: 22px 24px;
-  border: 1px solid rgba(197, 203, 221, 0.8);
+  padding: 24px 26px;
+  border: 1px solid rgba(197, 203, 221, 0.78);
   border-radius: 20px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(249, 251, 255, 0.96) 100%);
-  box-shadow: 0 18px 38px rgba(21, 33, 72, 0.08);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 255, 0.98) 100%);
+  box-shadow: 0 12px 26px rgba(21, 33, 72, 0.06);
 }
 
 .hero-copy h2 {
@@ -442,6 +455,44 @@ const goTo = (route?: string) => {
   line-height: 1.6;
 }
 
+.hero-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.hero-chip {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 112px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid #dbe3fb;
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(21, 33, 72, 0.05);
+}
+
+.hero-chip strong {
+  color: var(--ink);
+  font-size: 22px;
+  line-height: 1;
+  font-weight: 900;
+}
+
+.hero-chip small {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.hero-chip--muted {
+  background: #f7f9ff;
+}
+
 .hero-metrics {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -455,8 +506,9 @@ const goTo = (route?: string) => {
   padding: 16px 12px;
   border: 1px solid #dbe3fb;
   border-radius: 16px;
-  background: linear-gradient(180deg, #ffffff 0%, #f5f8ff 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #f8faff 100%);
   text-align: center;
+  box-shadow: 0 8px 18px rgba(21, 33, 72, 0.05);
 }
 
 .hero-metric-icon {
@@ -486,7 +538,7 @@ const goTo = (route?: string) => {
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
   margin-bottom: 22px;
 }
@@ -496,8 +548,8 @@ const goTo = (route?: string) => {
   padding: 22px 20px 18px;
   border: 1px solid rgba(214, 221, 242, 0.95);
   border-radius: 18px;
-  background: linear-gradient(180deg, #ffffff 0%, #f8faff 100%);
-  box-shadow: 0 14px 30px rgba(21, 33, 72, 0.07);
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+  box-shadow: 0 10px 24px rgba(21, 33, 72, 0.05);
   cursor: pointer;
 }
 
@@ -527,9 +579,14 @@ const goTo = (route?: string) => {
   color: var(--green);
 }
 
-.stat-card.tone-red .stat-icon-badge {
-  background: var(--red-soft);
-  color: var(--red);
+.stat-card.tone-orange .stat-icon-badge {
+  background: var(--orange-soft);
+  color: var(--orange);
+}
+
+.stat-card.tone-violet .stat-icon-badge {
+  background: var(--violet-soft);
+  color: var(--violet);
 }
 
 .stat-value-row {
@@ -556,9 +613,14 @@ const goTo = (route?: string) => {
   color: var(--green);
 }
 
-.stat-card.tone-red .stat-number,
-.stat-card.tone-red .stat-meta-badge {
-  color: var(--red);
+.stat-card.tone-orange .stat-number,
+.stat-card.tone-orange .stat-meta-badge {
+  color: var(--orange);
+}
+
+.stat-card.tone-violet .stat-number,
+.stat-card.tone-violet .stat-meta-badge {
+  color: var(--violet);
 }
 
 .dashboard-grid {
@@ -571,8 +633,8 @@ const goTo = (route?: string) => {
   min-width: 0;
   border: 1px solid rgba(197, 203, 221, 0.9);
   border-radius: 18px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(250, 252, 255, 0.98) 100%);
-  box-shadow: 0 16px 30px rgba(21, 33, 72, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(250, 252, 255, 0.99) 100%);
+  box-shadow: 0 12px 24px rgba(21, 33, 72, 0.06);
   overflow: hidden;
 }
 
@@ -627,7 +689,7 @@ const goTo = (route?: string) => {
 .activity-heading,
 .session-heading {
   min-height: 48px;
-  background: #eef3ff;
+  background: #f4f7ff;
   color: #596072;
   font-size: 11px;
   font-weight: 800;
@@ -657,7 +719,7 @@ mark.live {
 
 .live-poll-panel {
   padding-bottom: 24px;
-  border-left: 4px solid var(--primary);
+  border-top: 4px solid var(--primary);
 }
 
 .live-poll-header {
@@ -686,7 +748,7 @@ mark.live {
   align-items: center;
   gap: 6px;
   border-radius: 999px;
-  background: #ffdde0;
+  background: #fff0f0;
   color: var(--red);
   font-size: 10px;
   font-weight: 800;
@@ -743,7 +805,7 @@ mark.live {
   margin-top: 7px;
   border-radius: 999px;
   background: var(--primary);
-  box-shadow: 80px 0 0 #dbe6fb;
+  box-shadow: 80px 0 0 #e4ebfb;
 }
 
 .live-poll-actions {
@@ -839,7 +901,7 @@ mark.live {
 }
 
 .chart-fill {
-  fill: rgba(0, 31, 158, 0.11);
+  fill: rgba(0, 31, 158, 0.08);
 }
 
 .chart-line {
@@ -982,9 +1044,9 @@ mark.live {
   padding: 18px 14px;
   border-radius: 16px;
   border: 1px solid #e6eaff;
-  background: linear-gradient(145deg, #ffffff 0%, #f8faff 100%);
+  background: linear-gradient(145deg, #ffffff 0%, #fbfcff 100%);
   color: var(--primary);
-  box-shadow: 0 4px 12px rgba(21, 33, 72, 0.05);
+  box-shadow: 0 8px 18px rgba(21, 33, 72, 0.05);
   cursor: pointer;
 }
 
@@ -1028,7 +1090,7 @@ mark.live {
 
 @media (max-width: 1280px) {
   .stats-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .dashboard-grid {
@@ -1049,6 +1111,11 @@ mark.live {
 @media (max-width: 720px) {
   .stats-grid,
   .hero-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-chips {
+    display: grid;
     grid-template-columns: 1fr;
   }
 
