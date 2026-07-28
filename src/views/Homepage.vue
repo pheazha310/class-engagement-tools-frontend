@@ -11,6 +11,11 @@ defineOptions({
 
 const observer = ref<IntersectionObserver | null>(null)
 const countersAnimated = ref(false)
+const activeDemo = ref('Random picker')
+const demoActivities = [
+  { label: 'Random picker', icon: 'wheel', color: 'orange', value: '24' },
+  { label: 'Quick quiz', icon: 'quiz', color: 'blue', value: '12' },
+]
 
 const animateCounters = () => {
   if (countersAnimated.value) return
@@ -67,18 +72,44 @@ onBeforeUnmount(() => {
       <div class="hero-orb hero-orb--3" />
       <div class="hero-grid" />
       <div class="container">
-        <div class="hero-content">
-          <span class="hero-eyebrow reveal">EDUCATION PLATFORM</span>
-          <h1 class="hero-title reveal">
-            Transform Your
-            <span class="hero-title-highlight">Classroom Engagement</span>
-          </h1>
-          <p class="hero-subtitle reveal">
-            Discover powerful tools designed for modern educators. Make learning interactive, fun, and fair for every student.
-          </p>
-          <div class="hero-buttons reveal">
-            <RouterLink to="/register" class="btn btn-primary btn-large">Get Started Free</RouterLink>
-            <RouterLink to="/tools" class="btn btn-ghost btn-large">Explore Tools</RouterLink>
+        <div class="hero-layout">
+          <div class="hero-content">
+            <span class="hero-eyebrow reveal"><span class="eyebrow-dot" /> MADE FOR MODERN EDUCATORS</span>
+              <h1 class="hero-title reveal">
+                Turn every lesson into an
+                <span class="hero-title-highlight">Active Experiences.</span>
+              </h1>
+            <p class="hero-subtitle reveal">
+              Bring energy, participation, and a little magic to your classroom with tools students love to use.
+            </p>
+            <div class="hero-buttons reveal">
+              <RouterLink to="/register" class="btn btn-primary btn-large">Start teaching for free <span aria-hidden="true">→</span></RouterLink>
+              <RouterLink to="/tools" class="btn btn-ghost btn-large">See all tools</RouterLink>
+            </div>
+          </div>
+
+          <div class="hero-demo reveal" aria-label="Interactive classroom activity preview">
+            <div class="demo-glow" />
+            <div class="demo-window">
+              <div class="demo-toolbar"><span /><span /><span /><b>Live classroom</b><i>● Live</i></div>
+              <div class="demo-main">
+                <div class="demo-topline"><span>Science · Grade 8</span><strong>Tuesday, 10:30 AM</strong></div>
+                <div class="demo-question">
+                  <span class="demo-question-icon"><ToolIcon :name="demoActivities.find((item) => item.label === activeDemo)?.icon || 'poll'" :size="24" /></span>
+                  <div><small>NOW PLAYING</small><h3>{{ activeDemo }}</h3></div>
+                  <span class="demo-score">{{ demoActivities.find((item) => item.label === activeDemo)?.value }}</span>
+                </div>
+                <div class="demo-chart"><i style="height: 42%" /><i style="height: 76%" /><i style="height: 58%" /><i style="height: 92%" /><i style="height: 67%" /><i style="height: 84%" /></div>
+                <div class="demo-participants"><span><b>●</b> 28 students joined</span><div class="participant-dots"><i /><i /><i /><i /><i /></div></div>
+              </div>
+              <div class="demo-tabs">
+                <button v-for="activity in demoActivities" :key="activity.label" :class="{ active: activeDemo === activity.label }" @click="activeDemo = activity.label">
+                  <ToolIcon :name="activity.icon" :size="17" /> {{ activity.label }}
+                </button>
+              </div>
+            </div>
+            <div class="floating-card floating-card--top"><ToolIcon name="sparkles" :size="20" /><span><b>+42%</b><small>more participation</small></span></div>
+            <div class="floating-card floating-card--bottom"><span class="live-dot" /> <b>Everyone is engaged</b></div>
           </div>
         </div>
       </div>
@@ -453,9 +484,12 @@ const team = [
   color: #001f9e;
   padding: 5px 14px;
   border-radius: 12px;
-  display: inline-block;
+  display: inline;
   transform: skewX(-2deg);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  white-space: normal;
 }
 
 .hero-subtitle {
@@ -473,6 +507,58 @@ const team = [
   justify-content: center;
   flex-wrap: wrap;
 }
+
+/* Hero experience */
+.hero {
+  min-height: 670px;
+  display: flex;
+  align-items: center;
+  padding: 108px 20px 90px;
+}
+
+.hero-layout {
+  position: relative;
+  z-index: 1;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(420px, 0.87fr);
+  gap: 54px;
+  align-items: center;
+}
+
+.hero-content {
+  max-width: 650px;
+  margin: 0;
+  text-align: left;
+}
+
+.hero-eyebrow { display: inline-flex; align-items: center; gap: 9px; }
+.eyebrow-dot { width: 8px; height: 8px; border-radius: 50%; background: #fbbf24; box-shadow: 0 0 0 5px rgba(251, 191, 36, .16); }
+
+.hero-title { font-size: clamp(45px, 4.8vw, 68px); max-width: 670px; margin-bottom: 24px; }
+.hero-title-highlight { display: table; margin-top: 8px; transform: rotate(-1.2deg); }
+.hero-subtitle { margin: 0 0 36px; max-width: 575px; font-size: 18px; }
+.hero-buttons { justify-content: flex-start; }
+.hero-buttons .btn-primary span { margin-left: 9px; font-size: 21px; line-height: 0; transition: transform .25s ease; }
+.hero-buttons .btn-primary:hover span { transform: translateX(4px); }
+
+
+.hero-demo { position: relative; min-height: 410px; display: flex; align-items: center; }
+.demo-glow { position: absolute; width: 380px; height: 350px; right: -30px; top: 20px; border-radius: 50%; background: #8b9dff; opacity: .28; filter: blur(52px); animation: demoGlow 4s ease-in-out infinite alternate; }
+.demo-window { position: relative; width: 100%; overflow: hidden; border: 1px solid rgba(255,255,255,.35); border-radius: 24px; background: rgba(255,255,255,.96); color: #172554; box-shadow: 0 28px 60px rgba(0, 19, 110, .34), inset 0 1px rgba(255,255,255,.8); transform: rotate(2deg); transition: transform .35s ease; }
+.hero-demo:hover .demo-window { transform: rotate(0deg) translateY(-5px); }
+.demo-toolbar { display: flex; align-items: center; gap: 6px; height: 43px; padding: 0 16px; background: #eff3ff; border-bottom: 1px solid #dbe4ff; }
+.demo-toolbar > span { width: 8px; height: 8px; border-radius: 50%; background: #fda4af; }.demo-toolbar > span:nth-child(2) { background: #fcd34d; }.demo-toolbar > span:nth-child(3) { background: #6ee7b7; }
+.demo-toolbar b { margin-left: 8px; font-size: 11px; }.demo-toolbar i { margin-left: auto; padding: 4px 8px; border-radius: 20px; background: #dcfce7; color: #15803d; font-size: 10px; font-style: normal; font-weight: 800; }
+.demo-main { padding: 19px 22px 17px; }.demo-topline { display: flex; justify-content: space-between; color: #64748b; font-size: 11px; }.demo-topline strong { font-weight: 700; }
+.demo-question { display: flex; align-items: center; gap: 10px; margin: 18px 0; }.demo-question-icon { display: grid; place-items: center; width: 45px; height: 45px; border-radius: 14px; background: linear-gradient(135deg,#ede9fe,#dbeafe); }.demo-question small { display: block; font-size: 9px; font-weight: 800; letter-spacing: .1em; color: #64748b; }.demo-question h3 { margin: 3px 0 0; font-size: 18px; text-transform: capitalize; }.demo-score { margin-left: auto; display: grid; place-items: center; min-width: 42px; height: 31px; border-radius: 9px; color: #4338ca; background: #e0e7ff; font-size: 13px; font-weight: 900; }
+.demo-chart { height: 102px; padding: 11px 10px 0; display: flex; align-items: end; gap: 11px; border-radius: 13px; background: repeating-linear-gradient(to bottom, transparent 0 24px, #eef2ff 25px 26px); }.demo-chart i { flex: 1; min-width: 14px; border-radius: 6px 6px 2px 2px; background: linear-gradient(to top, #4f46e5, #818cf8); animation: chartRise .8s cubic-bezier(.16,1,.3,1) both; }.demo-chart i:nth-child(2n) { background: linear-gradient(to top,#06b6d4,#67e8f9); }.demo-chart i:nth-child(2) { animation-delay:.1s }.demo-chart i:nth-child(3) { animation-delay:.2s }.demo-chart i:nth-child(4) { animation-delay:.3s }.demo-chart i:nth-child(5) { animation-delay:.4s }.demo-chart i:nth-child(6) { animation-delay:.5s }
+.demo-participants { display:flex; align-items:center; justify-content:space-between; margin-top:15px; font-size:11px; font-weight:700; color:#64748b; }.demo-participants b { color:#22c55e; }.participant-dots { display:flex; }.participant-dots i { width:17px; height:17px; margin-left:-5px; border:2px solid white; border-radius:50%; background:#fda4af; }.participant-dots i:nth-child(2) { background:#a5b4fc; }.participant-dots i:nth-child(3) { background:#67e8f9; }.participant-dots i:nth-child(4) { background:#fde68a; }.participant-dots i:nth-child(5) { background:#86efac; }
+.demo-tabs { display: grid; grid-template-columns: repeat(2,1fr); padding: 10px; gap: 7px; border-top: 1px solid #e2e8f0; background: #fafbff; }.demo-tabs button { display:flex; justify-content:center; align-items:center; gap:5px; border:0; border-radius:9px; padding:9px 4px; background:transparent; color:#64748b; font:700 10px inherit; cursor:pointer; transition:.2s ease; }.demo-tabs button:hover,.demo-tabs button.active { background:#e0e7ff; color:#3730a3; }
+.floating-card { position:absolute; z-index:2; display:flex; align-items:center; gap:9px; padding:10px 13px; border:1px solid rgba(255,255,255,.55); border-radius:13px; background:rgba(255,255,255,.94); color:#1e3a8a; box-shadow:0 14px 26px rgba(5,24,118,.2); animation: floatCard 3.8s ease-in-out infinite; }.floating-card span:not(.live-dot) { display:flex; flex-direction:column; }.floating-card b { font-size:12px; }.floating-card small { color:#64748b; font-size:9px; font-weight:600; }.floating-card--top { top: -16px; right: -20px; }.floating-card--bottom { bottom: 6px; left: -29px; animation-delay:-1.4s; }.live-dot { width:8px; height:8px; border-radius:50%; background:#22c55e; box-shadow:0 0 0 5px rgba(34,197,94,.14); }
+@keyframes floatCard { 50% { transform: translateY(-9px); } } @keyframes demoGlow { to { transform:scale(1.12); opacity:.4; } } @keyframes chartRise { from { transform:scaleY(.1); transform-origin:bottom; } to { transform:scaleY(1); transform-origin:bottom; } }
 
 /* Shared */
 .section-title {
@@ -1118,6 +1204,11 @@ const team = [
 }
 
 @media (max-width: 1024px) {
+  .hero-layout { gap: 32px; grid-template-columns: minmax(0, 1fr) minmax(355px, .82fr); }
+  .hero-title { font-size: 48px; }
+  .floating-card--top { right: -6px; }
+  .floating-card--bottom { left: -8px; }
+
   .about-content {
     gap: 48px;
   }
@@ -1129,12 +1220,17 @@ const team = [
 
 @media (max-width: 860px) {
   .hero {
-    padding: 120px 20px 100px;
+    padding: 112px 20px 84px;
+    min-height: auto;
   }
 
-  .hero-title {
-    font-size: 36px;
-  }
+  .hero-layout { grid-template-columns: 1fr; max-width: 620px; gap: 42px; }
+  .hero-content { text-align: center; margin: 0 auto; }
+  .hero-title-highlight { margin-left: auto; margin-right: auto; }
+  .hero-subtitle { margin-left: auto; margin-right: auto; }
+  .hero-buttons { justify-content: center; }
+  .hero-trust { justify-content: center; text-align: left; }
+  .hero-demo { max-width: 520px; width: 100%; min-height: 360px; margin: 0 auto; }
 
   .section-title {
     font-size: 30px;
@@ -1159,8 +1255,16 @@ const team = [
 
 @media (max-width: 640px) {
   .hero-title {
-    font-size: 32px;
+    font-size: 38px;
   }
+
+  .hero-title-highlight { display: inline-block; }
+  .hero-demo { min-height: 300px; }
+  .demo-main { padding: 15px; }
+  .floating-card--top { top: -13px; right: -5px; }
+  .floating-card--bottom { bottom: -8px; left: -4px; }
+  .floating-card--bottom b { font-size: 10px; }
+  .demo-tabs button { font-size: 9px; }
 
   .hero-buttons {
     flex-direction: column;

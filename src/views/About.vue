@@ -19,7 +19,6 @@ const featureIcon = (title: string) => ({
   'Random Selection Tools': 'wheel',
   'Classroom Timers': 'timer',
   'Group Management': 'users',
-  'Live Polling & Voting': 'poll',
   'Educational Games': 'gamepad',
   'Teacher Dashboard': 'chart',
 }[title] || 'quiz')
@@ -82,7 +81,7 @@ onBeforeUnmount(() => {
         <span class="hero-eyebrow reveal">ABOUT US</span>
         <h1 class="hero-title reveal">
           Shaping the future of
-          <span class="hero-title-highlight">classroom engagement</span>
+          <span class="hero-title-highlight">Active Experiences.</span>
         </h1>
         <p class="hero-subtitle reveal">
           We build tools that turn ordinary lessons into interactive, student-centered
@@ -170,7 +169,6 @@ onBeforeUnmount(() => {
             { icon: '🎡', title: 'Random Selection Tools', desc: 'Fair and fun ways to select students with spinning wheels and random pickers.' },
             { icon: '⏱️', title: 'Classroom Timers', desc: 'Countdowns, stopwatches, and Pomodoro sessions to manage classroom time.' },
             { icon: '👥', title: 'Group Management', desc: 'Create balanced groups quickly and share them with your class instantly.' },
-            { icon: '🗳️', title: 'Live Polling & Voting', desc: 'Collect instant feedback with interactive polls that work on any device.' },
             { icon: '🎮', title: 'Educational Games', desc: 'Add friendly competition with quizzes, vocabulary games, and more.' },
             { icon: '📊', title: 'Teacher Dashboard', desc: 'Organize classes, save lists, and track activity history in one place.' },
           ]" :key="f.title" :style="{ transitionDelay: `${idx * 0.08}s` }">
@@ -419,7 +417,7 @@ onBeforeUnmount(() => {
   position: relative;
   background: linear-gradient(135deg, #001f9e 0%, #2547bc 50%, #3b5bf6 100%);
   color: white;
-  padding: 120px 20px 140px;
+  padding: 160px 20px 140px;
   text-align: center;
   overflow: hidden;
 }
@@ -433,7 +431,7 @@ onBeforeUnmount(() => {
   background-size: 64px 64px;
   mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black 40%, transparent 100%);
   pointer-events: none;
-  animation: gridDrift 20s linear infinite;
+  animation: gridDrift 30s linear infinite;
 }
 
 .hero-orb {
@@ -485,24 +483,26 @@ onBeforeUnmount(() => {
 }
 
 .hero-eyebrow {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
   font-size: 12px;
   font-weight: 800;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   padding: 7px 16px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.16);
   color: rgba(255, 255, 255, 0.95);
   margin-bottom: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .hero-title {
   font-size: 52px;
   font-weight: 830;
   margin-bottom: 24px;
-  line-height: 1.12;
   letter-spacing: -0.03em;
+  line-height: 1.1;
   color: #ffffff;
 }
 
@@ -566,16 +566,6 @@ onBeforeUnmount(() => {
   overflow: hidden;
 }
 
-.overview-card-inner::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  right: -50%;
-  width: 120%;
-  height: 120%;
-  background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
-  pointer-events: none;
-}
 
 .overview-card:hover .overview-card-inner {
   transform: rotateY(8deg) rotateX(2deg) translateY(-8px);
@@ -750,8 +740,8 @@ onBeforeUnmount(() => {
 }
 
 .feature-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 22px 42px rgba(0, 31, 158, 0.12);
+  transform: translateY(-12px) scale(1.03);
+  box-shadow: 0 28px 56px rgba(0, 31, 158, 0.18);
   border-color: #cbd5e1;
 }
 
@@ -775,15 +765,16 @@ onBeforeUnmount(() => {
   display: grid;
   place-items: center;
   background: linear-gradient(135deg, #f5f7ff 0%, #e5ecff 55%, #f5edff 100%);
-  border: 1px solid rgba(129, 140, 248, 0.12);
+  border: 2px solid rgba(129, 140, 248, 0.2);
   border-radius: 18px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), 0 8px 18px rgba(99, 102, 241, .1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), 0 8px 18px rgba(99, 102, 241, .15), 0 0 0 0 rgba(99, 102, 241, 0.4);
   position: relative;
-  transition: transform 0.35s ease;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
 }
 
 .feature-card:hover .feature-card-icon {
-  transform: scale(1.1) translateY(-2px);
+  transform: scale(1.15) translateY(-4px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), 0 12px 24px rgba(99, 102, 241, .25), 0 0 0 8px rgba(99, 102, 241, 0.1);
 }
 
 .feature-card-title {
@@ -848,8 +839,8 @@ onBeforeUnmount(() => {
 }
 
 .stat-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.1);
+  transform: translateY(-10px) scale(1.05);
+  box-shadow: 0 24px 48px rgba(0, 31, 158, 0.15);
   border-color: #cbd5e1;
 }
 
@@ -934,7 +925,7 @@ onBeforeUnmount(() => {
 }
 
 .team-card:hover .team-avatar {
-  transform: scale(1.05);
+  transform: scale(1.1) rotate(3deg);
 }
 
 .team-avatar img {
