@@ -5,6 +5,8 @@ import SiteFooter from '@/components/SiteFooter.vue'
 import ToolIcon from '@/components/ToolIcon.vue'
 
 const observer = ref<IntersectionObserver | null>(null)
+const mouseX = ref(0)
+const mouseY = ref(0)
 
 const countersAnimated = ref(false)
 
@@ -22,6 +24,11 @@ const featureIcon = (title: string) => ({
   'Educational Games': 'gamepad',
   'Teacher Dashboard': 'chart',
 }[title] || 'quiz')
+
+const handleMouseMove = (e: MouseEvent) => {
+  mouseX.value = (e.clientX / window.innerWidth) * 100
+  mouseY.value = (e.clientY / window.innerHeight) * 100
+}
 
 const animateCounters = () => {
   if (countersAnimated.value) return
@@ -49,6 +56,8 @@ const animateCounters = () => {
 }
 
 onMounted(() => {
+  document.addEventListener('mousemove', handleMouseMove)
+
   observer.value = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
@@ -63,9 +72,23 @@ onMounted(() => {
   )
 
   document.querySelectorAll('.reveal').forEach((el) => observer.value?.observe(el))
+  
+  // Create floating particles
+  const particlesContainer = document.getElementById('hero-particles')
+  if (particlesContainer) {
+    for (let i = 0; i < 50; i++) {
+      const particle = document.createElement('div')
+      particle.className = 'hero-particle'
+      particle.style.left = Math.random() * 100 + '%'
+      particle.style.animationDelay = Math.random() * 25 + 's'
+      particle.style.animationDuration = (15 + Math.random() * 10) + 's'
+      particlesContainer.appendChild(particle)
+    }
+  }
 })
 
 onBeforeUnmount(() => {
+  document.removeEventListener('mousemove', handleMouseMove)
   observer.value?.disconnect()
 })
 </script>
@@ -74,22 +97,52 @@ onBeforeUnmount(() => {
   <div class="about-page">
     <!-- Hero Section -->
     <section class="hero">
-      <div class="hero-orb hero-orb--1" />
-      <div class="hero-orb hero-orb--2" />
-      <div class="hero-grid" />
+      <div class="hero-bg">
+        <div class="hero-orb hero-orb-1"></div>
+        <div class="hero-orb hero-orb-2"></div>
+        <div class="hero-orb hero-orb-3"></div>
+        <div class="hero-orb hero-orb-4"></div>
+      </div>
+      
+      <div class="hero-particles" id="hero-particles"></div>
+      
+      <div class="hero-grid"></div>
+      
       <div class="hero-content">
-        <span class="hero-eyebrow reveal">ABOUT US</span>
+        <div class="hero-badge reveal">
+          <span class="badge-dot"></span>
+          <span class="badge-text">ABOUT US</span>
+        </div>
+        
         <h1 class="hero-title reveal">
-          Shaping the future of
-          <span class="hero-title-highlight">Active Experiences.</span>
+          <span class="title-line">Shaping the future</span>
+          <span class="title-line">
+            of
+            <span class="title-highlight">
+              <span class="highlight-text">Active Experiences.</span>
+              <span class="highlight-glow"></span>
+            </span>
+          </span>
         </h1>
+        
         <p class="hero-subtitle reveal">
           We build tools that turn ordinary lessons into interactive, student-centered
           learning experiences—available anywhere, on any device.
         </p>
-        <div class="hero-actions reveal">
-          <RouterLink to="/register" class="btn btn-primary btn-large">Get Started Free</RouterLink>
-          <RouterLink to="/" class="btn btn-ghost btn-large">Explore Tools</RouterLink>
+        
+        <div class="hero-buttons reveal">
+          <RouterLink to="/register" class="btn btn-primary btn-animated">
+            <span class="btn-bg"></span>
+            <span class="btn-content">
+              <span class="btn-text">Get Started Free</span>
+            </span>
+            <span class="btn-shine"></span>
+          </RouterLink>
+          <RouterLink to="/" class="btn btn-outline btn-animated">
+            <span class="btn-content">
+              <span class="btn-text">Explore Tools</span>
+            </span>
+          </RouterLink>
         </div>
       </div>
     </section>
@@ -412,6 +465,35 @@ onBeforeUnmount(() => {
   transform: translateY(-3px);
 }
 
+.btn-animated {
+  overflow: hidden;
+}
+
+.btn-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+
+.btn-animated:hover .btn-bg {
+  transform: translateX(100%);
+}
+
+.btn-outline {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.btn-outline:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-3px);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
 /* Hero */
 .hero {
   position: relative;
@@ -420,116 +502,339 @@ onBeforeUnmount(() => {
   padding: 160px 20px 140px;
   text-align: center;
   overflow: hidden;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.4;
+  animation: orbFloat 20s ease-in-out infinite;
+}
+
+.hero-orb--1 {
+  width: 500px;
+  height: 500px;
+  background: rgba(59, 130, 246, 0.6);
+  top: -200px;
+  left: -150px;
+  animation-delay: 0s;
+}
+
+.hero-orb--2 {
+  width: 400px;
+  height: 400px;
+  background: rgba(139, 92, 246, 0.5);
+  bottom: -150px;
+  right: -100px;
+  animation-delay: -7s;
+  animation-direction: reverse;
+}
+
+.hero-orb--3 {
+  width: 350px;
+  height: 350px;
+  background: rgba(251, 191, 36, 0.4);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation-delay: -14s;
+  animation: orbPulse 15s ease-in-out infinite;
+}
+
+@keyframes orbFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(50px, -50px) scale(1.15); }
+  66% { transform: translate(-30px, 30px) scale(0.9); }
+}
+
+@keyframes orbPulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; }
+  50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.5; }
+}
+
+@keyframes gridDrift {
+  from { transform: translate(0, 0); }
+  to { transform: translate(60px, 60px); }
+}
+
+@keyframes fadeDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.hero-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.hero-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  animation: particleFloat 25s linear infinite;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+@keyframes particleFloat {
+  from { 
+    transform: translateY(100vh) translateX(0) scale(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+    transform: translateY(90vh) translateX(10px) scale(1);
+  }
+  90% {
+    opacity: 1;
+    transform: translateY(10vh) translateX(-10px) scale(1);
+  }
+  to { 
+    transform: translateY(-100px) translateX(20px) scale(0);
+    opacity: 0;
+  }
 }
 
 .hero-grid {
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
-  background-size: 64px 64px;
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 60px 60px;
   mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black 40%, transparent 100%);
   pointer-events: none;
-  animation: gridDrift 30s linear infinite;
+  animation: gridMove 30s linear infinite;
 }
 
-.hero-orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(70px);
-  pointer-events: none;
-  opacity: 0.2;
-}
-
-.hero-orb--1 {
-  width: 420px;
-  height: 420px;
-  background: #ffffff;
-  top: -120px;
-  left: -80px;
-  animation: orbFloat 10s ease-in-out infinite alternate;
-}
-
-.hero-orb--2 {
-  width: 360px;
-  height: 360px;
-  background: #93c5fd;
-  bottom: -120px;
-  right: -60px;
-  animation: orbFloat 12s ease-in-out infinite alternate-reverse;
-}
-
-@keyframes orbFloat {
-  from { transform: translate(0, 0) scale(1); }
-  to { transform: translate(32px, -28px) scale(1.08); }
-}
-
-@keyframes gridDrift {
+@keyframes gridMove {
   from { transform: translate(0, 0); }
-  to { transform: translate(64px, 64px); }
-}
-
-@keyframes fadeDown {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
+  to { transform: translate(60px, 60px); }
 }
 
 .hero-content {
   position: relative;
-  z-index: 1;
-  max-width: 820px;
+  z-index: 2;
+  max-width: 900px;
   margin: 0 auto;
 }
 
-.hero-eyebrow {
+.hero-badge {
   display: inline-flex;
   align-items: center;
-  gap: 9px;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  padding: 7px 16px;
+  gap: 10px;
+  padding: 10px 20px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.16);
-  color: rgba(255, 255, 255, 0.95);
-  margin-bottom: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  margin-bottom: 28px;
+  animation: fadeInDown 0.8s ease forwards;
+}
+
+.hero-badge-dot {
+  width: 8px;
+  height: 8px;
+  background: #10b981;
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  50% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+}
+
+.hero-badge-text {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
 }
 
 .hero-title {
-  font-size: 52px;
-  font-weight: 830;
-  margin-bottom: 24px;
-  letter-spacing: -0.03em;
-  line-height: 1.1;
+  font-size: 72px;
+  font-weight: 900;
+  margin-bottom: 32px;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
   color: #ffffff;
+  text-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
+}
+
+.hero-title-line {
+  display: block;
 }
 
 .hero-title-highlight {
-  background: linear-gradient(135deg, #bfdbfe, #ffffff);
-  color: #001f9e;
-  padding: 5px 14px;
-  border-radius: 12px;
+  position: relative;
   display: inline-block;
+  background: linear-gradient(135deg, #bfdbfe 0%, #ffffff 100%);
+  color: #001f9e;
+  padding: 8px 24px;
+  border-radius: 20px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
   transform: skewX(-2deg);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  isolation: isolate;
+}
+
+.hero-highlight-text {
+  position: relative;
+  z-index: 2;
+  display: inline-block;
+  transform: skewX(2deg);
+  font-size: 76px;
+  font-weight: 900;
+}
+
+.hero-highlight-glow {
+  position: absolute;
+  inset: -8px;
+  background: linear-gradient(135deg, #bfdbfe 0%, #ffffff 100%);
+  filter: blur(20px);
+  opacity: 0.7;
+  z-index: -1;
+  animation: glowPulse 3s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.05); }
 }
 
 .hero-subtitle {
-  font-size: 18px;
+  font-size: 20px;
   line-height: 1.7;
-  max-width: 640px;
-  margin: 0 auto 40px;
+  max-width: 700px;
+  margin: 0 auto 44px;
   color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
 }
 
 .hero-actions {
   display: inline-flex;
-  gap: 16px;
+  gap: 20px;
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
+  margin-bottom: 60px;
+}
+
+.btn-glow {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-shine {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+  z-index: 1;
+}
+
+.btn-primary:hover .btn-shine {
+  transform: translateX(100%);
+}
+
+.btn-content {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-icon {
+  font-size: 20px;
+  position: relative;
+  z-index: 2;
+}
+
+.btn-label {
+  position: relative;
+  z-index: 2;
+}
+
+.btn-glass {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.btn-glass:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-3px);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.scroll-indicator {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  animation: fadeIn 1s ease 1s backwards;
+  z-index: 2;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.scroll-mouse {
+  width: 28px;
+  height: 44px;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  border-radius: 14px;
+  position: relative;
+  backdrop-filter: blur(10px);
+}
+
+.scroll-wheel {
+  width: 4px;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 2px;
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: scrollAnim 2s ease-in-out infinite;
+}
+
+@keyframes scrollAnim {
+  0%, 100% { transform: translateX(-50%) translateY(0); opacity: 1; }
+  50% { transform: translateX(-50%) translateY(10px); opacity: 0.3; }
+}
+
+.scroll-text {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.8);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-weight: 600;
 }
 
 /* Overview */
