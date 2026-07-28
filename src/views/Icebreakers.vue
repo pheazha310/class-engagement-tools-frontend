@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import Navbar from '@/components/Navbar.vue'
+import ToolIcon from '@/components/ToolIcon.vue'
 
 const activities = [
   {
     id: 1,
     title: 'Two Truths and One Lie',
     description: 'The classic social game reimagined for the digital classroom. Students share three statements about themselves and classmates guess which one is false.',
-    icon: '🎯',
+    icon: 'gamepad',
     color: '#6366f1',
     colorDark: '#4f46e5',
     bgColor: '#eef2ff',
@@ -17,25 +17,16 @@ const activities = [
     id: 2,
     title: 'Would You Rather',
     description: 'Provocative and fun dilemmas to spark lively classroom debate. Perfect for breaking the ice and getting to know your students better.',
-    icon: '⚖️',
+    icon: 'brain',
     color: '#8b5cf6',
     colorDark: '#7c3aed',
     bgColor: '#f5f3ff',
   },
   {
-    id: 3,
-    title: 'Spin the Question',
-    description: 'A virtual wheel of thought-provoking questions to spark conversation and help students share about themselves in a fun way.',
-    icon: '🔄',
-    color: '#06b6d4',
-    colorDark: '#0891b2',
-    bgColor: '#ecfeff',
-  },
-  {
     id: 4,
     title: 'Random Challenge Generator',
     description: 'Quick 30-60 second challenges to boost energy and focus. Great for transitions between activities or waking up sleepy classes.',
-    icon: '⚡',
+    icon: 'timer',
     color: '#f59e0b',
     colorDark: '#d97706',
     bgColor: '#fffbeb',
@@ -44,17 +35,11 @@ const activities = [
     id: 5,
     title: 'Mystery Box',
     description: 'Hidden objects or prompts that reveal themselves based on student choice. Creates anticipation and excitement in the classroom.',
-    icon: '📦',
+    icon: 'book',
     color: '#ec4899',
     colorDark: '#db2777',
     bgColor: '#fdf2f8',
   },
-]
-
-const stats = [
-  { value: '12.4k', label: 'Activities Launched This Term' },
-  { value: '94%', label: 'Engagement Rate Average' },
-  { value: '15 Min', label: 'Average Session Time' },
 ]
 </script>
 
@@ -87,64 +72,44 @@ const stats = [
             :style="{ backgroundColor: activity.bgColor }"
           >
             <div class="activity-icon" :style="{ backgroundColor: activity.color }">
-              <span class="icon-emoji">{{ activity.icon }}</span>
+              <ToolIcon :name="activity.icon" :size="36" />
             </div>
-              <div class="activity-content">
-                <h3 class="activity-title">{{ activity.title }}</h3>
-                <p class="activity-description">{{ activity.description }}</p>
-                <RouterLink
-                  v-if="activity.id === 1"
-                  to="/tools/icebreakers/two-truths-one-lie"
-                  class="launch-btn"
-                  :style="{ backgroundColor: activity.color }"
-                >
-                  Launch
-                </RouterLink>
-                <RouterLink
-                  v-else-if="activity.id === 2"
-                  to="/tools/icebreakers/would-you-rather"
-                  class="launch-btn"
-                  :style="{ backgroundColor: activity.color }"
-                >
-                  Launch
-                </RouterLink>
-                <RouterLink
-                  v-else-if="activity.id === 3"
-                  to="/tools/icebreakers/spin-the-question/results"
-                  class="results-btn"
-                  :style="{ backgroundColor: activity.color }"
-                >
-                  See Results
-                </RouterLink>
-                <RouterLink
-                  v-else-if="activity.id === 4"
-                  to="/tools/icebreakers/random-challenge-generator"
-                  class="launch-btn"
-                  :style="{ backgroundColor: activity.color }"
-                >
-                  Launch
-                </RouterLink>
-                <RouterLink
-                  v-else-if="activity.id === 5"
-                  to="/tools/icebreakers/mystery-box"
-                  class="launch-btn"
-                  :style="{ backgroundColor: activity.color }"
-                >
-                  Launch
-                </RouterLink>
-              </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Stats Section -->
-    <section class="stats-section">
-      <div class="container">
-        <div class="stats-grid">
-          <div v-for="stat in stats" :key="stat.label" class="stat-card">
-            <div class="stat-value">{{ stat.value }}</div>
-            <div class="stat-label">{{ stat.label }}</div>
+            <div class="activity-content">
+              <h3 class="activity-title">{{ activity.title }}</h3>
+              <p class="activity-description">{{ activity.description }}</p>
+              <RouterLink
+                v-if="activity.id === 1"
+                to="/tools/icebreakers/two-truths-one-lie"
+                class="launch-btn"
+                :style="{ backgroundColor: activity.color }"
+              >
+                Launch
+              </RouterLink>
+              <RouterLink
+                v-else-if="activity.id === 2"
+                to="/tools/icebreakers/would-you-rather"
+                class="launch-btn"
+                :style="{ backgroundColor: activity.color }"
+              >
+                Launch
+              </RouterLink>
+              <RouterLink
+                v-else-if="activity.id === 4"
+                to="/tools/icebreakers/random-challenge-generator"
+                class="launch-btn"
+                :style="{ backgroundColor: activity.color }"
+              >
+                Launch
+              </RouterLink>
+              <RouterLink
+                v-else-if="activity.id === 5"
+                to="/tools/icebreakers/mystery-box"
+                class="launch-btn"
+                :style="{ backgroundColor: activity.color }"
+              >
+                Launch
+              </RouterLink>
+            </div>
           </div>
         </div>
       </div>
@@ -262,15 +227,59 @@ const stats = [
 }
 
 .activity-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 16px;
+  width: 80px;
+  height: 80px;
+  border-radius: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 20px;
-  color: white;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.25);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+  animation: iconFloat 3s ease-in-out infinite;
+  background: white;
+}
+
+.activity-icon::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.4));
+  opacity: 0.3;
+  border-radius: 20px;
+}
+
+.activity-icon::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.6) 0%, transparent 60%);
+  opacity: 0.8;
+  border-radius: 20px;
+}
+
+@keyframes iconFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(3deg); }
+}
+
+.activity-card:hover .activity-icon {
+  transform: translateY(-10px) scale(1.12) rotate(-5deg);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
+  animation-play-state: paused;
+}
+
+.tool-icon {
+  position: relative;
+  z-index: 2;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.25));
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.activity-card:hover .tool-icon {
+  transform: scale(1.1) rotate(-8deg);
 }
 
 .activity-content {
