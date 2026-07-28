@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import Navbar from '@/components/Navbar.vue'
 import TimerCountdown from '@/components/TimerCountdown.vue'
-import { RouterLink } from 'vue-router'
 </script>
 
 <template>
@@ -13,16 +12,12 @@ import { RouterLink } from 'vue-router'
       <div class="hero-orb hero-orb--2" />
       <div class="hero-grid" />
       <div class="container">
-        <RouterLink to="/tools" class="hero-back">
-          <span class="back-icon">←</span>
-          <span>Back to all tools</span>
-        </RouterLink>
         <div class="hero-copy">
-          <span class="hero-eyebrow reveal">CLASSROOM</span>
+          <!-- <span class="hero-eyebrow reveal">CLASSROOM</span>
           <h1 class="hero-title">Countdown Timer</h1>
           <p class="hero-subtitle reveal">
             Keep your class on track with animated countdowns, quick presets, and fullscreen mode.
-          </p>
+          </p> -->
         </div>
       </div>
     </section>
@@ -45,9 +40,7 @@ import { RouterLink } from 'vue-router'
 }
 
 .timer-hero {
-  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 50%, #818cf8 100%);
-  color: white;
-  padding: 100px 20px 80px;
+  padding: 100px 20px 60px;
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -99,39 +92,6 @@ import { RouterLink } from 'vue-router'
 @keyframes gridDrift {
   from { transform: translate(0, 0); }
   to { transform: translate(56px, 56px); }
-}
-
-.hero-back {
-  position: absolute;
-  left: 24px;
-  top: 24px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 16px;
-  border-radius: 999px;
-  text-decoration: none;
-  font-weight: 700;
-  font-size: 13px;
-  letter-spacing: 0.02em;
-  border: 1.5px solid rgba(255, 255, 255, 0.45);
-  color: rgba(255, 255, 255, 0.95);
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(8px);
-  transition: all 0.25s ease;
-  white-space: nowrap;
-}
-
-.hero-back:hover {
-  border-color: #22d3ee;
-  color: #22d3ee;
-  background: rgba(255, 255, 255, 0.16);
-  transform: translateY(-1px);
-}
-
-.back-icon {
-  font-size: 16px;
-  line-height: 1;
 }
 
 .hero-copy {

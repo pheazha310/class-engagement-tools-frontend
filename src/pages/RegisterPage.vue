@@ -181,8 +181,8 @@ async function submit() {
   }
 
   success.value = true
-  // Redirect based on user role
-  const targetRoute = auth.user?.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard'
+  // Students start on the public home page after registration rather than the student dashboard.
+  const targetRoute = auth.user?.role === 'teacher' ? '/teacher/dashboard' : auth.user?.role === 'admin' ? '/admin/users' : '/'
   setTimeout(() => router.replace(targetRoute), 2000)
 }
 

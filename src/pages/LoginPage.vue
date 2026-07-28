@@ -56,7 +56,8 @@ async function submit(event: Event) {
     return
   }
 
-  const targetRoute = auth.user?.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard'
+  // Students start on the public home page after login; their dashboard remains available only when they choose it.
+  const targetRoute = auth.user?.role === 'teacher' ? '/teacher/dashboard' : auth.user?.role === 'admin' ? '/admin/users' : '/'
   router.replace(targetRoute)
 }
 

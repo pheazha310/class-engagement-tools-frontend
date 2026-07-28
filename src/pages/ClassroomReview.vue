@@ -10,15 +10,30 @@ const store = useClassroomQuizStore()
 
 const quizId = computed(() => route.params.quizId as string)
 const quiz = computed(() => store.getQuizById(quizId.value))
-const submission = computed(() =>
-  store.submissions.find(
-    s => s.quizId === quizId.value && s.studentName === store.currentStudentName
+const submission = computed(() => {
+  // Try exact match first (name + class)
+  let found = store.submissions.find(
+    s => s.quizId === quizId.value &&
+         s.studentName.toLowerCase() === store.currentStudentName.toLowerCase() &&
+         (s.class_name.toLowerCase() === store.currentStudentClass.toLowerCase() || s.class_name === '')
   )
-)
+
+  // If no match, try matching by name only (for backwards compatibility)
+  if (!found) {
+    found = store.submissions.find(
+      s => s.quizId === quizId.value &&
+           s.studentName.toLowerCase() === store.currentStudentName.toLowerCase()
+    )
+  }
+
+  return found
+})
 
 onMounted(() => {
   store.init()
-  if (!quiz.value || !submission.value) {
+  // Only redirect if quiz doesn't exist
+  // Submission check happens in template with v-if
+  if (!quiz.value) {
     router.push('/classroom')
   }
 })
@@ -30,7 +45,8 @@ function getAnswerText(question: SeededQuestion, selectedChoiceId: string | null
 }
 
 function getCorrectAnswerText(question: SeededQuestion): string {
-  return question.correct_answer || ''
+  const correctChoice = question.choices.find(c => c.is_correct)
+  return correctChoice ? correctChoice.choice_text : 'No correct answer'
 }
 
 function isCorrect(question: SeededQuestion, selectedChoiceId: string | null | undefined): boolean {
@@ -183,7 +199,7 @@ function retakeQuiz() {
 .review-page {
   position: relative;
   min-height: 100vh;
-  padding: 3rem 1rem 4rem;
+  padding: 7rem 1rem 4rem;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
@@ -474,7 +490,7 @@ function retakeQuiz() {
    ============================================================ */
 @media (max-width: 768px) {
   .review-page {
-    padding: 2.5rem 0.75rem 3rem;
+    padding: 6rem 0.75rem 3rem;
   }
 
   .review-header {

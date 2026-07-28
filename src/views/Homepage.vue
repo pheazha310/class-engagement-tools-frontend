@@ -1,16 +1,13 @@
 <script setup lang="ts">
-import { RouterLink, useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
+import { RouterLink } from 'vue-router'
 import { onMounted, onBeforeUnmount, ref } from 'vue'
 import { categories } from '@/data/toolsData'
 import SiteFooter from '@/components/SiteFooter.vue'
+import ToolIcon from '@/components/ToolIcon.vue'
 
 defineOptions({
   name: 'HomePage',
 })
-
-const router = useRouter()
-const auth = useAuthStore()
 
 const observer = ref<IntersectionObserver | null>(null)
 const countersAnimated = ref(false)
@@ -41,11 +38,6 @@ const animateCounters = () => {
 }
 
 onMounted(() => {
-  if (auth.isAuthenticated) {
-    const targetRoute = auth.user?.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard'
-    router.replace(targetRoute)
-  }
-
   observer.value = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
@@ -106,7 +98,7 @@ onBeforeUnmount(() => {
           <div class="category-card reveal" v-for="(category, idx) in categories" :key="category.name" :style="{ transitionDelay: `${idx * 0.08}s` }">
             <div class="category-card-inner">
               <h3 class="category-title">
-                <span class="category-icon">{{ category.icon }}</span>
+                <span class="category-icon"><ToolIcon :name="category.icon" :size="22" /></span>
                 <span>{{ category.name }}</span>
               </h3>
               <div class="category-tools">
@@ -116,7 +108,7 @@ onBeforeUnmount(() => {
                   :to="tool.route || '/tools/' + tool.slug"
                   class="category-tool-link"
                 >
-                  <span class="category-tool-icon">{{ tool.icon }}</span>
+                  <span class="category-tool-icon"><ToolIcon :name="tool.icon" :size="22" /></span>
                   <div class="category-tool-content">
                     <span class="category-tool-title">{{ tool.title }}</span>
                     <span class="category-tool-desc">{{ tool.description }}</span>
@@ -185,7 +177,7 @@ onBeforeUnmount(() => {
         </div>
         <div class="features-grid">
           <div class="feature-card reveal" v-for="(feature, idx) in features" :key="feature.title" :style="{ transitionDelay: `${idx * 0.07}s` }">
-            <div class="feature-icon">{{ feature.icon }}</div>
+            <div class="feature-icon"><ToolIcon :name="feature.icon" :size="34" /></div>
             <h3>{{ feature.title }}</h3>
             <p>{{ feature.desc }}</p>
           </div>
@@ -209,7 +201,7 @@ onBeforeUnmount(() => {
               <p>"{{ t.quote }}"</p>
             </div>
             <div class="testimonial-author">
-              <div class="testimonial-avatar">{{ t.avatar }}</div>
+              <div class="testimonial-avatar"><ToolIcon :name="t.avatar" :size="27" /></div>
               <div class="testimonial-info">
                 <h4>{{ t.author }}</h4>
                 <p>{{ t.role }}</p>
@@ -283,18 +275,18 @@ const stats = [
 ]
 
 const features = [
-  { icon: '🎯', title: 'Easy to Use', desc: 'Intuitive interface designed for educators. No technical skills required — start using tools in seconds.' },
-  { icon: '📱', title: 'Works Everywhere', desc: 'Access tools on any device — desktop, tablet, or mobile. Perfect for modern classrooms.' },
-  { icon: '🔒', title: 'Safe & Secure', desc: 'Your data is protected with enterprise-grade security. We prioritize student privacy.' },
-  { icon: '💡', title: 'Constantly Updated', desc: 'Regular new features and improvements based on educator feedback. Always evolving.' },
-  { icon: '🌍', title: 'Global Community', desc: 'Join thousands of educators worldwide sharing best practices and success stories.' },
-  { icon: '🎓', title: 'Education-Focused', desc: 'Built by educators who understand classroom needs. Every feature serves a purpose.' },
+  { icon: 'target', title: 'Easy to Use', desc: 'Intuitive interface designed for educators. No technical skills required — start using tools in seconds.' },
+  { icon: 'device', title: 'Works Everywhere', desc: 'Access tools on any device — desktop, tablet, or mobile. Perfect for modern classrooms.' },
+  { icon: 'lock', title: 'Safe & Secure', desc: 'Your data is protected with enterprise-grade security. We prioritize student privacy.' },
+  { icon: 'bulb', title: 'Constantly Updated', desc: 'Regular new features and improvements based on educator feedback. Always evolving.' },
+  { icon: 'globe', title: 'Global Community', desc: 'Join thousands of educators worldwide sharing best practices and success stories.' },
+  { icon: 'cap', title: 'Education-Focused', desc: 'Built by educators who understand classroom needs. Every feature serves a purpose.' },
 ]
 
 const testimonials = [
-  { quote: 'ClassTools has completely transformed how I engage my students. The Random Wheel and Student Picker are game-changers!', author: 'Sarah Johnson', role: 'Elementary School Teacher', avatar: '👩‍🏫' },
-  { quote: 'The Group Generator saves me so much time. I can create balanced groups in seconds and focus on teaching.', author: 'Michael Chen', role: 'High School Teacher', avatar: '👨‍🏫' },
-  { quote: 'My students love the educational games! They\'re learning while having fun. Best tool I\'ve ever used.', author: 'Emily Rodriguez', role: 'Middle School Teacher', avatar: '👩‍🏫' },
+  { quote: 'ClassTools has completely transformed how I engage my students. The Random Wheel and Student Picker are game-changers!', author: 'Sarah Johnson', role: 'Elementary School Teacher', avatar: 'teacher' },
+  { quote: 'The Group Generator saves me so much time. I can create balanced groups in seconds and focus on teaching.', author: 'Michael Chen', role: 'High School Teacher', avatar: 'cap' },
+  { quote: 'My students love the educational games! They\'re learning while having fun. Best tool I\'ve ever used.', author: 'Emily Rodriguez', role: 'Middle School Teacher', avatar: 'users' },
 ]
 
 const team = [
@@ -666,15 +658,18 @@ const team = [
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+  background: linear-gradient(135deg, #f5f7ff 0%, #e5ecff 55%, #f5edff 100%);
   border-radius: 12px;
+  border: 1px solid rgba(129, 140, 248, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 5px 12px rgba(99, 102, 241, 0.09);
   flex-shrink: 0;
   transition: transform 0.25s ease;
   position: relative;
 }
 
 .category-tool-link:hover .category-tool-icon {
-  transform: scale(1.08);
+  transform: scale(1.08) rotate(3deg);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 8px 18px rgba(99, 102, 241, 0.18);
 }
 
 .category-tool-content {
@@ -826,9 +821,15 @@ const team = [
 }
 
 .feature-icon {
-  font-size: 52px;
-  margin-bottom: 18px;
-  display: block;
+  width: 68px;
+  height: 68px;
+  margin: 0 auto 18px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #f5f7ff 0%, #e5ecff 55%, #f5edff 100%);
+  border: 1px solid rgba(129, 140, 248, 0.12);
+  border-radius: 20px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), 0 10px 20px rgba(99, 102, 241, .1);
   transition: transform 0.35s ease;
   position: relative;
 }
@@ -921,13 +922,14 @@ const team = [
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+  background: linear-gradient(135deg, #f5f7ff 0%, #e5ecff 55%, #f5edff 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 28px;
   border: 1px solid #e2e8f0;
   transition: transform 0.35s ease;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), 0 6px 14px rgba(99, 102, 241, .1);
 }
 
 .testimonial-card:hover .testimonial-avatar {

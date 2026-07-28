@@ -2,10 +2,27 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { RouterLink } from 'vue-router'
 import SiteFooter from '@/components/SiteFooter.vue'
+import ToolIcon from '@/components/ToolIcon.vue'
 
 const observer = ref<IntersectionObserver | null>(null)
 
 const countersAnimated = ref(false)
+
+const missionIcon = (title: string) => ({
+  'Increase Engagement': 'target',
+  'Simplify Teaching': 'bulb',
+  'Ensure Fairness': 'sparkles',
+  'Foster Innovation': 'rocket',
+}[title] || 'sparkles')
+
+const featureIcon = (title: string) => ({
+  'Random Selection Tools': 'wheel',
+  'Classroom Timers': 'timer',
+  'Group Management': 'users',
+  'Live Polling & Voting': 'poll',
+  'Educational Games': 'gamepad',
+  'Teacher Dashboard': 'chart',
+}[title] || 'quiz')
 
 const animateCounters = () => {
   if (countersAnimated.value) return
@@ -130,7 +147,7 @@ onBeforeUnmount(() => {
             { icon: '🚀', title: 'Foster Innovation', desc: 'Continuously develop new features that leverage technology for better outcomes.' },
           ]" :key="idx" :style="{ transitionDelay: `${idx * 0.08}s` }">
             <div class="mission-card-top">
-              <span class="mission-icon">{{ m.icon }}</span>
+              <span class="mission-icon"><ToolIcon :name="missionIcon(m.title)" :size="30" /></span>
               <div class="mission-number">{{ String(idx + 1).padStart(2, '0') }}</div>
             </div>
             <h3 class="mission-card-title">{{ m.title }}</h3>
@@ -157,7 +174,7 @@ onBeforeUnmount(() => {
             { icon: '🎮', title: 'Educational Games', desc: 'Add friendly competition with quizzes, vocabulary games, and more.' },
             { icon: '📊', title: 'Teacher Dashboard', desc: 'Organize classes, save lists, and track activity history in one place.' },
           ]" :key="f.title" :style="{ transitionDelay: `${idx * 0.08}s` }">
-            <div class="feature-card-icon">{{ f.icon }}</div>
+            <div class="feature-card-icon"><ToolIcon :name="featureIcon(f.title)" :size="32" /></div>
             <h3 class="feature-card-title">{{ f.title }}</h3>
             <p class="feature-card-desc">{{ f.desc }}</p>
           </div>
@@ -672,7 +689,14 @@ onBeforeUnmount(() => {
 }
 
 .mission-icon {
-  font-size: 40px;
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #f5f7ff 0%, #e5ecff 55%, #f5edff 100%);
+  border: 1px solid rgba(129, 140, 248, 0.12);
+  border-radius: 18px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), 0 8px 18px rgba(99, 102, 241, .1);
   transition: transform 0.35s ease;
 }
 
@@ -745,9 +769,15 @@ onBeforeUnmount(() => {
 }
 
 .feature-card-icon {
-  font-size: 40px;
+  width: 64px;
+  height: 64px;
   margin-bottom: 18px;
-  display: block;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #f5f7ff 0%, #e5ecff 55%, #f5edff 100%);
+  border: 1px solid rgba(129, 140, 248, 0.12);
+  border-radius: 18px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), 0 8px 18px rgba(99, 102, 241, .1);
   position: relative;
   transition: transform 0.35s ease;
 }

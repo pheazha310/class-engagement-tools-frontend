@@ -1,59 +1,55 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useLivePollStore } from '@/stores/livePollStore'
-import ToastNotification from '@/components/ToastNotification.vue'
-import LoadingSpinner from '@/components/LoadingSpinner.vue'
-import type { PollType, LivePollFormData } from '@/types/livePoll'
+import { ref, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import TeacherLayout from '@/components/teacher/TeacherLayout.vue'
+import TeacherIcon from '@/components/teacher/TeacherIcon.vue'
+import { pollService } from '@/services/pollService'
+import type { PollFormData } from '@/types/poll'
+import { showNotification } from '@/utils/notifications'
 
-const route = useRoute()
 const router = useRouter()
-const store = useLivePollStore()
+const route = useRoute()
 
-const isEdit = computed(() => !!route.params.id)
-const pageTitle = computed(() => (isEdit.value ? 'Edit Poll' : 'Create Poll'))
+const isEdit = ref(false)
+const pollId = ref<string | null>(null)
+const loading = ref(false)
+const submitting = ref(false)
 
-const title = ref('')
-const description = ref('')
 const question = ref('')
-const pollType = ref<PollType>('multiple_choice')
 const options = ref<string[]>(['', ''])
 const durationMinutes = ref<number | null>(null)
-const allowMultipleVotes = ref(false)
-const anonymous = ref(true)
-const showResults = ref(true)
-const validationError = ref<string | null>(null)
-const initialized = ref(false)
+const isMultipleChoice = ref(false)
+const isAnonymous = ref(false)
+const isQuiz = ref(false)
+const isOpenText = ref(false)
+const maxPoints = ref<number | null>(null)
 
 onMounted(async () => {
-  if (isEdit.value) {
-    const id = route.params.id as string
+  if (route.params.id) {
+    isEdit.value = true
+    pollId.value = route.params.id as string
+    loading.value = true
     try {
-      const poll = await store.fetchPoll(id)
-      if (poll) {
-        title.value = poll.title
-        description.value = poll.description || ''
-        question.value = poll.question
-        pollType.value = poll.poll_type
-        options.value = poll.options.map((o) => o.option_text)
-        if (options.value.length < 2) options.value.push('')
-        durationMinutes.value = poll.duration_minutes
-        allowMultipleVotes.value = poll.allow_multiple_votes
-        anonymous.value = poll.anonymous
-        showResults.value = poll.show_results
-      }
+      const poll = await pollService.getPoll(pollId.value)
+      question.value = poll.question
+      options.value = poll.options?.map((o) => o.option_text) || ['']
+      durationMinutes.value = poll.duration_minutes || null
+      isMultipleChoice.value = poll.is_multiple_choice || false
+      isAnonymous.value = poll.is_anonymous || false
+      isQuiz.value = poll.is_quiz || false
+      isOpenText.value = poll.is_open_text || false
+      maxPoints.value = poll.max_points || null
     } catch {
-      router.push({ name: 'live-poll-list' })
-      return
+      showNotification('Failed to load poll for editing.', 'error')
+      router.push('/teacher/live-polls')
+    } finally {
+      loading.value = false
     }
   }
-  initialized.value = true
 })
 
 function addOption() {
-  if (options.value.length < 20) {
-    options.value.push('')
-  }
+  options.value.push('')
 }
 
 function removeOption(index: number) {
@@ -62,253 +58,130 @@ function removeOption(index: number) {
   }
 }
 
-function validate(): boolean {
-  validationError.value = null
+async function submitForm() {
   if (!question.value.trim()) {
-    validationError.value = 'Question is required.'
-    return false
+    showNotification('Please enter a question.', 'error')
+    return
   }
-  if (!title.value.trim()) {
-    validationError.value = 'Title is required.'
-    return false
-  }
-  const validOptions = options.value.map((o) => o.trim()).filter(Boolean)
-  if (validOptions.length < 2) {
-    validationError.value = 'At least 2 options are required.'
-    return false
-  }
-  if (new Set(validOptions).size !== validOptions.length) {
-    validationError.value = 'Duplicate options are not allowed.'
-    return false
-  }
-  return true
-}
-
-async function handleSubmit() {
-  if (!validate()) return
-
-  const data: LivePollFormData = {
-    title: title.value.trim(),
-    description: description.value.trim() || undefined,
-    question: question.value.trim(),
-    poll_type: pollType.value,
-    options: options.value.map((o) => o.trim()).filter(Boolean),
-    duration_minutes: durationMinutes.value,
-    allow_multiple_votes: allowMultipleVotes.value,
-    anonymous: anonymous.value,
-    show_results: showResults.value,
-  }
-
-  try {
-    if (isEdit.value) {
-      await store.updatePoll(route.params.id as string, data)
-    } else {
-      await store.createPoll(data)
+  if (!isOpenText.value) {
+    const filled = options.value.filter((o) => o.trim())
+    if (filled.length < 2) {
+      showNotification('Please provide at least 2 options.', 'error')
+      return
     }
-    router.push({ name: 'live-poll-list' })
-  } catch {
-    // error is set in store
   }
-}
 
-const typeOptions: { value: PollType; label: string }[] = [
-  { value: 'multiple_choice', label: 'Multiple Choice' },
-  { value: 'yes_no', label: 'Yes / No' },
-  { value: 'rating', label: 'Rating Scale' },
-]
+  const data: PollFormData = {
+    question: question.value.trim(),
+    options: isOpenText.value ? [] : options.value.filter((o) => o.trim()),
+    is_multiple_choice: isMultipleChoice.value,
+    duration_minutes: durationMinutes.value,
+    is_anonymous: isAnonymous.value,
+    is_quiz: isQuiz.value,
+    is_open_text: isOpenText.value,
+    max_points: maxPoints.value,
+  }
 
-function setPollType(type: PollType) {
-  pollType.value = type
-  if (type === 'yes_no') {
-    options.value = ['Yes', 'No']
-  } else if (type === 'rating' && options.value.length < 3) {
-    options.value = ['1', '2', '3', '4', '5']
+  submitting.value = true
+  try {
+    if (isEdit.value && pollId.value) {
+      await pollService.updatePoll(pollId.value, data)
+      showNotification('Poll updated successfully!', 'success')
+    } else {
+      await pollService.createPoll(data)
+      showNotification('Poll created successfully!', 'success')
+    }
+    router.push('/teacher/live-polls')
+  } catch {
+    showNotification(`Failed to ${isEdit.value ? 'update' : 'create'} poll.`, 'error')
+  } finally {
+    submitting.value = false
   }
 }
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 px-4 pb-12 pt-24 sm:px-6 lg:px-8">
-    <div class="mx-auto max-w-3xl">
-      <div class="mb-8 flex items-center justify-between">
-        <div>
-          <h1 class="text-3xl font-bold tracking-tight text-gray-900">{{ pageTitle }}</h1>
-          <p class="mt-1 text-sm text-gray-500">{{ isEdit ? 'Update your poll details' : 'Create a new live poll for your classroom' }}</p>
+  <TeacherLayout sidebar-active="live-polls" :page-title="isEdit ? 'Edit Poll' : 'Create Poll'" :page-subtitle="isEdit ? 'Update your live poll settings.' : 'Set up a new live poll for your class.'">
+    <div v-if="loading" class="loading-state"><div class="spinner"></div><p>Loading poll...</p></div>
+    <form v-else class="poll-form" @submit.prevent="submitForm">
+      <div class="form-section">
+        <h2 class="section-title">Question</h2>
+        <div class="form-group">
+          <textarea v-model="question" class="form-textarea" rows="3" placeholder="What would you like to ask?" required></textarea>
         </div>
-        <router-link
-          :to="{ name: 'live-poll-list' }"
-          class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
-        >
-          Back
-        </router-link>
       </div>
 
-      <div v-if="!initialized" class="py-20">
-        <LoadingSpinner size="lg" />
-      </div>
-
-      <form v-else @submit.prevent="handleSubmit">
-        <div class="space-y-6">
-          <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 class="mb-4 text-lg font-semibold text-gray-900">Basic Information</h2>
-            <div class="space-y-4">
-              <div>
-                <label class="mb-1.5 block text-sm font-medium text-gray-700">Title</label>
-                <input
-                  v-model="title"
-                  type="text"
-                  class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
-                  placeholder="e.g. Week 10 Review Poll"
-                  maxlength="255"
-                />
-              </div>
-              <div>
-                <label class="mb-1.5 block text-sm font-medium text-gray-700">Description <span class="text-gray-400">(optional)</span></label>
-                <textarea
-                  v-model="description"
-                  class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
-                  placeholder="Brief description of this poll"
-                  maxlength="2000"
-                  rows="2"
-                />
-              </div>
-              <div>
-                <label class="mb-1.5 block text-sm font-medium text-gray-700">Question</label>
-                <input
-                  v-model="question"
-                  type="text"
-                  class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
-                  placeholder="e.g. What is your favorite programming language?"
-                  maxlength="1000"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 class="mb-4 text-lg font-semibold text-gray-900">Poll Type & Options</h2>
-            <div class="mb-5 flex gap-2">
-              <button
-                v-for="opt in typeOptions"
-                :key="opt.value"
-                type="button"
-                class="rounded-lg px-4 py-2 text-sm font-medium transition"
-                :class="pollType === opt.value ? 'bg-indigo-600 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
-                @click="setPollType(opt.value)"
-              >
-                {{ opt.label }}
-              </button>
-            </div>
-
-            <div v-if="pollType !== 'yes_no'" class="space-y-3">
-              <label class="block text-sm font-medium text-gray-700">Options ({{ options.length }}/20)</label>
-              <div v-for="(opt, i) in options" :key="i" class="flex items-center gap-2">
-                <input
-                  v-model="options[i]"
-                  type="text"
-                  class="flex-1 rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
-                  :placeholder="`Option ${i + 1}`"
-                  maxlength="255"
-                />
-                <button
-                  v-if="options.length > 2"
-                  type="button"
-                  class="flex h-10 w-10 items-center justify-center rounded-lg text-gray-400 transition hover:bg-red-50 hover:text-red-500"
-                  @click="removeOption(i)"
-                >
-                  <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
-              </div>
-              <button
-                v-if="options.length < 20"
-                type="button"
-                class="mt-2 flex items-center gap-2 text-sm font-medium text-indigo-600 transition hover:text-indigo-800"
-                @click="addOption"
-              >
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                </svg>
-                Add option
-              </button>
-            </div>
-
-            <p v-if="pollType === 'yes_no'" class="rounded-lg bg-blue-50 p-3 text-sm text-blue-700">
-              Yes/No poll type uses two fixed options: Yes and No.
-            </p>
-          </div>
-
-          <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 class="mb-4 text-lg font-semibold text-gray-900">Settings</h2>
-            <div class="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label class="mb-1.5 block text-sm font-medium text-gray-700">Duration <span class="text-gray-400">(minutes, optional)</span></label>
-                <input
-                  v-model.number="durationMinutes"
-                  type="number"
-                  class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
-                  placeholder="e.g. 5"
-                  min="1"
-                  max="1440"
-                />
-              </div>
-            </div>
-            <div class="mt-5 space-y-3">
-              <label class="flex items-center gap-3">
-                <input
-                  v-model="anonymous"
-                  type="checkbox"
-                  class="h-5 w-5 rounded-lg border-gray-300 text-indigo-600 outline-none focus:ring-2 focus:ring-indigo-500/20"
-                />
-                <span class="text-sm text-gray-700">Anonymous votes</span>
-              </label>
-              <label class="flex items-center gap-3">
-                <input
-                  v-model="allowMultipleVotes"
-                  type="checkbox"
-                  class="h-5 w-5 rounded-lg border-gray-300 text-indigo-600 outline-none focus:ring-2 focus:ring-indigo-500/20"
-                />
-                <span class="text-sm text-gray-700">Allow multiple votes per person</span>
-              </label>
-              <label class="flex items-center gap-3">
-                <input
-                  v-model="showResults"
-                  type="checkbox"
-                  class="h-5 w-5 rounded-lg border-gray-300 text-indigo-600 outline-none focus:ring-2 focus:ring-indigo-500/20"
-                />
-                <span class="text-sm text-gray-700">Show results to voters after voting</span>
-              </label>
-            </div>
-          </div>
-
-          <div v-if="validationError || store.error" class="rounded-xl bg-red-50 p-4 text-sm text-red-700">
-            {{ validationError || store.error }}
-          </div>
-
-          <div class="flex items-center justify-end gap-3">
-            <router-link
-              :to="{ name: 'live-poll-list' }"
-              class="rounded-xl border border-gray-300 px-6 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
-            >
-              Cancel
-            </router-link>
-            <button
-              type="submit"
-              class="rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:opacity-50"
-              :disabled="store.loading"
-            >
-              {{ store.loading ? 'Saving...' : isEdit ? 'Update Poll' : 'Create Poll' }}
-            </button>
+      <div v-if="!isOpenText" class="form-section">
+        <div class="section-header">
+          <h2 class="section-title">Options</h2>
+          <button type="button" class="outline-button-sm" @click="addOption"><TeacherIcon icon="plus" :size="16" /><span>Add Option</span></button>
+        </div>
+        <div class="options-list">
+          <div v-for="(opt, idx) in options" :key="idx" class="option-row">
+            <span class="option-label">{{ String.fromCharCode(65 + idx) }}</span>
+            <input v-model="options[idx]" type="text" class="form-input" :placeholder="`Option ${String.fromCharCode(65 + idx)}`" />
+            <button v-if="options.length > 2" type="button" class="remove-option" @click="removeOption(idx)"><TeacherIcon icon="x" :size="18" /></button>
           </div>
         </div>
-      </form>
+      </div>
 
-      <ToastNotification
-        :message="store.error"
-        type="error"
-        @close="store.clearError()"
-      />
-    </div>
-  </div>
+      <div class="form-section">
+        <h2 class="section-title">Settings</h2>
+        <div class="settings-grid">
+          <div class="checkbox-group">
+            <label class="checkbox-label"><input v-model="isMultipleChoice" type="checkbox" :disabled="isOpenText" /><span>Allow multiple choice</span></label>
+            <label class="checkbox-label"><input v-model="isAnonymous" type="checkbox" /><span>Anonymous responses</span></label>
+            <label class="checkbox-label"><input v-model="isQuiz" type="checkbox" /><span>Quiz mode (assign points)</span></label>
+            <label class="checkbox-label"><input v-model="isOpenText" type="checkbox" /><span>Open text response</span></label>
+          </div>
+          <div class="settings-fields">
+            <div class="form-group">
+              <label>Duration (minutes)</label>
+              <input v-model.number="durationMinutes" type="number" min="0" class="form-input" placeholder="No limit" />
+            </div>
+            <div class="form-group" v-if="isQuiz">
+              <label>Max Points</label>
+              <input v-model.number="maxPoints" type="number" min="0" class="form-input" placeholder="e.g. 10" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="outline-button" @click="router.push('/teacher/live-polls')">Cancel</button>
+        <button type="submit" class="primary-button" :disabled="submitting">
+          {{ submitting ? 'Saving...' : isEdit ? 'Update Poll' : 'Create Poll' }}
+        </button>
+      </div>
+    </form>
+  </TeacherLayout>
 </template>
+
+<style scoped>
+.poll-form { max-width: 720px; margin: 0 auto; padding: 0 0 40px; }
+.form-section { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.section-title { margin: 0 0 16px; font-size: 16px; font-weight: 700; color: var(--ink); }
+.section-header .section-title { margin: 0; }
+.form-group { margin-bottom: 12px; }
+.form-group label { display: block; font-size: 13px; font-weight: 600; color: #3e465a; margin-bottom: 6px; }
+.form-textarea { width: 100%; padding: 12px 14px; border: 1px solid #d0d5e0; border-radius: 8px; font-size: 15px; font-family: inherit; resize: vertical; transition: border-color .15s; background: #fafcff; }
+.form-textarea:focus { outline: none; border-color: var(--primary); background: #fff; }
+.form-input { width: 100%; padding: 10px 12px; border: 1px solid #d0d5e0; border-radius: 8px; font-size: 14px; font-family: inherit; transition: border-color .15s; background: #fafcff; }
+.form-input:focus { outline: none; border-color: var(--primary); background: #fff; }
+.options-list { display: flex; flex-direction: column; gap: 10px; }
+.option-row { display: flex; align-items: center; gap: 10px; }
+.option-label { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 6px; background: var(--primary-soft); color: var(--primary); font-size: 12px; font-weight: 800; flex-shrink: 0; }
+.option-row .form-input { flex: 1; }
+.remove-option { display: inline-grid; width: 30px; height: 30px; place-items: center; border: 0; border-radius: 6px; background: transparent; color: #8a91a3; cursor: pointer; transition: all .15s; flex-shrink: 0; }
+.remove-option:hover { background: var(--red-soft); color: var(--red); }
+.settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.checkbox-group { display: flex; flex-direction: column; gap: 12px; }
+.checkbox-label { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--ink); cursor: pointer; }
+.checkbox-label input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--primary); }
+.settings-fields { display: flex; flex-direction: column; gap: 16px; }
+.outline-button-sm { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border: 1px solid #d0d5e0; border-radius: 8px; background: #fff; color: var(--ink); font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s; }
+.outline-button-sm:hover { border-color: var(--primary); color: var(--primary); }
+.form-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; }
+@media (max-width:720px) { .settings-grid { grid-template-columns: 1fr; } }
+</style>

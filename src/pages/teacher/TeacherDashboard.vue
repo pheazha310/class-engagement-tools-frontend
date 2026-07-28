@@ -1,31 +1,32 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
-import { useTeacherDashboardStore } from '@/stores/teacherDashboardStore'
-import { useToolOrganizerStore } from '@/stores/toolOrganizerStore'
-import TeacherLayout from '@/components/teacher/TeacherLayout.vue'
-import TeacherIcon from '@/components/teacher/TeacherIcon.vue'
+import { computed, onMounted, ref } from "vue";
+import { useRouter } from "vue-router";
+import { useAuthStore } from "@/stores/auth";
+import { useTeacherDashboardStore } from "@/stores/teacherDashboardStore";
+import { useToolOrganizerStore } from "@/stores/toolOrganizerStore";
+import TeacherLayout from "@/components/teacher/TeacherLayout.vue";
+import TeacherIcon from "@/components/teacher/TeacherIcon.vue";
+import ToolIcon from "@/components/ToolIcon.vue";
 
-type TrendPoint = { label: string; value: number }
+type TrendPoint = { label: string; value: number };
 
-const router = useRouter()
-const authStore = useAuthStore()
-const dashboardStore = useTeacherDashboardStore()
-const organizer = useToolOrganizerStore()
+const router = useRouter();
+const authStore = useAuthStore();
+const dashboardStore = useTeacherDashboardStore();
+const organizer = useToolOrganizerStore();
 
-const searchValue = ref('')
-const teacherName = computed(() => authStore.user?.name || 'Dr. Sarah Miller')
+const searchValue = ref("");
+const teacherName = computed(() => authStore.user?.name || "Dr. Sarah Miller");
 const greeting = computed(() => {
-  const hour = new Date().getHours()
-  if (hour < 12) return 'Good Morning'
-  if (hour < 18) return 'Good Afternoon'
-  return 'Good Evening'
-})
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good Morning";
+  if (hour < 18) return "Good Afternoon";
+  return "Good Evening";
+});
 
 onMounted(() => {
-  dashboardStore.loadInitialDashboard()
-})
+  dashboardStore.loadInitialDashboard();
+});
 
 const stats = computed(() => ({
   totalClasses: dashboardStore.totalClasses,
@@ -35,105 +36,169 @@ const stats = computed(() => ({
   liveSessions: dashboardStore.liveSessions,
   totalActivities: dashboardStore.totalActivities,
   engagementPct: dashboardStore.engagementPct,
-}))
+}));
 
 const statCards = computed(() => [
-  { label: 'Total Classes', value: stats.value.totalClasses, meta: 'Tracked classes', icon: 'cap', tone: 'blue' as const, route: '/teacher/classes' },
-  { label: 'Students', value: stats.value.totalStudents, meta: `${stats.value.engagementPct}% engagement`, icon: 'users', tone: 'green' as const, route: '/teacher/students' },
-  { label: 'Active Polls', value: stats.value.activePolls, meta: 'Live activity', icon: 'poll', tone: 'orange' as const, route: '/teacher/live-polls' },
-  { label: 'Activities', value: stats.value.totalActivities, meta: 'All time', icon: 'clipboard', tone: 'violet' as const, route: '/teacher/activity-history' },
-])
+  {
+    label: "Total Classes",
+    value: stats.value.totalClasses,
+    meta: "Tracked classes",
+    icon: "cap",
+    tone: "blue" as const,
+    route: "/teacher/classes",
+  },
+  {
+    label: "Students",
+    value: stats.value.totalStudents,
+    meta: `${stats.value.engagementPct}% engagement`,
+    icon: "users",
+    tone: "green" as const,
+    route: "/teacher/students",
+  },
+  {
+    label: "Active Polls",
+    value: stats.value.activePolls,
+    meta: "Live activity",
+    icon: "poll",
+    tone: "orange" as const,
+    route: "/teacher/live-polls",
+  },
+  {
+    label: "Activities",
+    value: stats.value.totalActivities,
+    meta: "All time",
+    icon: "clipboard",
+    tone: "violet" as const,
+    route: "/teacher/activity-history",
+  },
+  {
+    label: "Scheduled",
+    value: stats.value.scheduledSessions,
+    meta: "Upcoming",
+    icon: "calendar",
+    tone: "blue" as const,
+    route: "/teacher/tools",
+  },
+  {
+    label: "Live Now",
+    value: stats.value.liveSessions,
+    meta: "On air",
+    icon: "zap",
+    tone: "red" as const,
+    route: "/teacher/tools",
+  },
+]);
 
-const livePoll = computed(() => dashboardStore.livePoll)
-const livePollOptions = computed(() => livePoll.value?.options || [])
+const livePoll = computed(() => dashboardStore.livePoll);
 
 const recentActivities = computed(() =>
-  (Array.isArray(dashboardStore.recentActivities) ? dashboardStore.recentActivities : []).slice(0, 3).map((activity: any) => ({
-    className: activity.class_name || activity.class || 'Class',
-    activity: activity.name || activity.title || activity.description || 'Activity',
-    status: activity.status === 'active' || activity.status === 'live' ? 'Live' : 'Completed',
-    responses: activity.max_responses ? `${activity.responses}/${activity.max_responses}` : `${activity.responses ?? 0}`,
-    action: activity.status === 'active' || activity.status === 'live' ? ('external' as const) : ('chart' as const),
-  })),
-)
+  (Array.isArray(dashboardStore.recentActivities) ? dashboardStore.recentActivities : [])
+    .slice(0, 3)
+    .map((activity: any) => ({
+      className: activity.class_name || activity.class || "Class",
+      activity: activity.name || activity.title || activity.description || "Activity",
+      status:
+        activity.status === "active" || activity.status === "live" ? "Live" : "Completed",
+      responses: activity.max_responses
+        ? `${activity.responses}/${activity.max_responses}`
+        : `${activity.responses ?? 0}`,
+      action:
+        activity.status === "active" || activity.status === "live"
+          ? ("external" as const)
+          : ("chart" as const),
+    }))
+);
 
 const sessionLogs = computed(() =>
-  (Array.isArray(dashboardStore.topQuizzes) ? dashboardStore.topQuizzes : []).slice(0, 4).map((quiz: any) => ({
-    date: quiz.created_at ? new Date(quiz.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Today',
-    type: quiz.title || 'Quiz',
-    subject: quiz.subject || quiz.class_name || 'General',
-    score: `${quiz.submissions_count ?? 0} submissions`,
-  })),
-)
+  (Array.isArray(dashboardStore.topQuizzes) ? dashboardStore.topQuizzes : [])
+    .slice(0, 4)
+    .map((quiz: any) => ({
+      date: quiz.created_at
+        ? new Date(quiz.created_at).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          })
+        : "Today",
+      type: quiz.title || "Quiz",
+      subject: quiz.subject || quiz.class_name || "General",
+      score: `${quiz.submissions_count ?? 0} submissions`,
+    }))
+);
 
-const trendSeries = computed<TrendPoint[]>(() => dashboardStore.participationTrend)
-const chartWidth = 680
-const chartHeight = 230
+const trendSeries = computed<TrendPoint[]>(() => dashboardStore.participationTrend);
+const chartWidth = 680;
+const chartHeight = 230;
 
 function buildPath(points: TrendPoint[]) {
-  if (points.length === 0) return ''
-  const values = points.map((point) => point.value)
-  const max = Math.max(...values, 1)
-  const innerWidth = chartWidth - 44
-  const innerHeight = chartHeight - 44
-  const stepX = values.length > 1 ? innerWidth / (values.length - 1) : 0
+  if (points.length === 0) return "";
+  const values = points.map((point) => point.value);
+  const max = Math.max(...values, 1);
+  const innerWidth = chartWidth - 44;
+  const innerHeight = chartHeight - 44;
+  const stepX = values.length > 1 ? innerWidth / (values.length - 1) : 0;
   return values
     .map((value, index) => {
-      const x = 22 + index * stepX
-      const y = 22 + innerHeight - (value / max) * innerHeight
-      return `${index === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`
+      const x = 22 + index * stepX;
+      const y = 22 + innerHeight - (value / max) * innerHeight;
+      return `${index === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`;
     })
-    .join(' ')
+    .join(" ");
 }
 
 function buildArea(points: TrendPoint[]) {
-  if (points.length === 0) return ''
-  const values = points.map((point) => point.value)
-  const max = Math.max(...values, 1)
-  const innerWidth = chartWidth - 44
-  const innerHeight = chartHeight - 44
-  const stepX = values.length > 1 ? innerWidth / (values.length - 1) : 0
-  const firstY = 22 + innerHeight - (((values[0] ?? 0) / max) * innerHeight)
-  const lastX = 22 + (values.length - 1) * stepX
-  const baseY = 22 + innerHeight
-  return `${buildPath(points)} L ${lastX.toFixed(1)} ${baseY.toFixed(1)} L 22 ${baseY.toFixed(1)} L 22 ${firstY.toFixed(1)} Z`
+  if (points.length === 0) return "";
+  const values = points.map((point) => point.value);
+  const max = Math.max(...values, 1);
+  const innerWidth = chartWidth - 44;
+  const innerHeight = chartHeight - 44;
+  const stepX = values.length > 1 ? innerWidth / (values.length - 1) : 0;
+  const firstY = 22 + innerHeight - ((values[0] ?? 0) / max) * innerHeight;
+  const lastX = 22 + (values.length - 1) * stepX;
+  const baseY = 22 + innerHeight;
+  return `${buildPath(points)} L ${lastX.toFixed(1)} ${baseY.toFixed(
+    1
+  )} L 22 ${baseY.toFixed(1)} L 22 ${firstY.toFixed(1)} Z`;
 }
 
-const trendPath = computed(() => buildPath(trendSeries.value))
-const trendArea = computed(() => buildArea(trendSeries.value))
+const trendPath = computed(() => buildPath(trendSeries.value));
+const trendArea = computed(() => buildArea(trendSeries.value));
 const trendAverage = computed(() => {
-  if (trendSeries.value.length === 0) return 0
-  return trendSeries.value.reduce((sum, point) => sum + point.value, 0) / trendSeries.value.length
-})
+  if (trendSeries.value.length === 0) return 0;
+  return (
+    trendSeries.value.reduce((sum, point) => sum + point.value, 0) /
+    trendSeries.value.length
+  );
+});
 const averageLine = computed(() => {
-  if (trendSeries.value.length === 0) return ''
-  const values = trendSeries.value.map((point) => point.value)
-  const max = Math.max(...values, 1)
-  const innerHeight = chartHeight - 44
-  const y = 22 + innerHeight - (trendAverage.value / max) * innerHeight
-  return `M 22 ${y.toFixed(1)} L 658 ${y.toFixed(1)}`
-})
+  if (trendSeries.value.length === 0) return "";
+  const values = trendSeries.value.map((point) => point.value);
+  const max = Math.max(...values, 1);
+  const innerHeight = chartHeight - 44;
+  const y = 22 + innerHeight - (trendAverage.value / max) * innerHeight;
+  return `M 22 ${y.toFixed(1)} L 658 ${y.toFixed(1)}`;
+});
 
-const trendLabels = computed(() => trendSeries.value.map((point) => point.label))
+const trendLabels = computed(() => trendSeries.value.map((point) => point.label));
 
 const favoriteTools = computed(() =>
   organizer.favoriteTools.slice(0, 6).map((tool) => ({
     label: tool.title,
     icon: tool.icon,
-    tone: tool.category.toLowerCase().includes('quiz')
-      ? 'green'
-      : tool.category.toLowerCase().includes('game')
-        ? 'violet'
-        : tool.category.toLowerCase().includes('class')
-          ? 'orange'
-          : 'blue',
+    tone: tool.category.toLowerCase().includes("quiz")
+      ? "green"
+      : tool.category.toLowerCase().includes("game")
+      ? "violet"
+      : tool.category.toLowerCase().includes("class")
+      ? "orange"
+      : "blue",
     route: tool.route,
-  })),
-)
+  }))
+);
 
 const goTo = (route?: string) => {
-  if (route) router.push(route)
-}
+  if (route) router.push(route);
+};
 </script>
 
 <template>
@@ -221,7 +286,13 @@ const goTo = (route?: string) => {
       <section class="panel recent-panel">
         <div class="panel-header">
           <h2>Recent Activities</h2>
-          <button class="link-button" type="button" @click="goTo('/teacher/activity-history')">View All</button>
+          <button
+            class="link-button"
+            type="button"
+            @click="goTo('/teacher/activity-history')"
+          >
+            View All
+          </button>
         </div>
 
         <div v-if="recentActivities.length" class="activity-table">
@@ -232,10 +303,18 @@ const goTo = (route?: string) => {
             <span>Responses</span>
             <span></span>
           </div>
-          <div v-for="activity in recentActivities" :key="`${activity.className}-${activity.activity}`" class="activity-row activity-data-row">
+          <div
+            v-for="activity in recentActivities"
+            :key="`${activity.className}-${activity.activity}`"
+            class="activity-row activity-data-row"
+          >
             <strong>{{ activity.className }}</strong>
             <span>{{ activity.activity }}</span>
-            <span><mark :class="activity.status.toLowerCase()">{{ activity.status }}</mark></span>
+            <span
+              ><mark :class="activity.status.toLowerCase()">{{
+                activity.status
+              }}</mark></span
+            >
             <span>{{ activity.responses }}</span>
             <button class="table-action" type="button" aria-label="Open activity">
               <TeacherIcon :icon="activity.action" :size="21" />
@@ -254,41 +333,40 @@ const goTo = (route?: string) => {
 
       <aside class="panel live-poll-panel">
         <div class="live-poll-header">
-          <span class="live-badge">Live Poll</span>
+          <span class="live-badge">Classroom Tools</span>
           <div>
-            <strong>{{ livePoll?.responses ?? 0 }}</strong>
-            <small>Responses</small>
+            <strong>{{ stats.totalActivities }}</strong>
+            <small>Activities</small>
           </div>
         </div>
 
-        <template v-if="livePoll">
-          <h2>{{ livePoll.title }}</h2>
-          <p>{{ livePoll.question }}</p>
-          <div class="poll-bars">
-            <div v-for="option in livePollOptions" :key="option.label" class="poll-bar">
-              <div>
-                <span>{{ option.label }}</span>
-                <strong>{{ option.value }}%</strong>
-              </div>
-              <i :style="{ width: `${option.value}%` }"></i>
-            </div>
-          </div>
-        </template>
-
-        <template v-else>
-          <h2>No live poll right now</h2>
-          <p>Start a poll to watch responses update here in real time.</p>
-        </template>
+        <h2>Engage your classroom</h2>
+        <p>
+          Use interactive tools like quizzes, wheels, and group generators to boost
+          participation.
+        </p>
 
         <div class="live-poll-actions">
-          <button class="primary-button close-poll-button" type="button" @click="goTo('/teacher/live-polls/create')">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 4v16m8-8H4" />
+          <button
+            class="primary-button close-poll-button"
+            type="button"
+            @click="goTo('/teacher/tools')"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="16" />
+              <line x1="8" y1="12" x2="16" y2="12" />
             </svg>
-            <span>Create Poll</span>
-          </button>
-          <button class="outline-button close-poll-button-secondary" type="button" @click="goTo('/teacher/live-polls')">
-            Open Live Polls
+            Browse Tools
           </button>
         </div>
       </aside>
@@ -303,7 +381,13 @@ const goTo = (route?: string) => {
         </div>
 
         <template v-if="trendSeries.length">
-          <svg class="trend-chart" viewBox="0 0 680 230" preserveAspectRatio="none" role="img" aria-label="Participation trend">
+          <svg
+            class="trend-chart"
+            viewBox="0 0 680 230"
+            preserveAspectRatio="none"
+            role="img"
+            aria-label="Participation trend"
+          >
             <path class="chart-fill" :d="trendArea" />
             <path class="chart-line" :d="trendPath" />
             <path class="chart-average" :d="averageLine" />
@@ -311,8 +395,17 @@ const goTo = (route?: string) => {
               <circle
                 v-for="(point, index) in trendSeries"
                 :key="`${point.label}-${index}`"
-                :cx="22 + (trendSeries.length > 1 ? (index * (636 / (trendSeries.length - 1))) : 0)"
-                :cy="22 + (186 - (point.value / Math.max(...trendSeries.map((item) => item.value), 1)) * 186)"
+                :cx="
+                  22 +
+                  (trendSeries.length > 1 ? index * (636 / (trendSeries.length - 1)) : 0)
+                "
+                :cy="
+                  22 +
+                  (186 -
+                    (point.value /
+                      Math.max(...trendSeries.map((item) => item.value), 1)) *
+                      186)
+                "
                 r="5"
               />
             </g>
@@ -327,14 +420,23 @@ const goTo = (route?: string) => {
             <TeacherIcon icon="chart" :size="40" />
           </div>
           <h3>No trend data yet</h3>
-          <p>Participation metrics will appear after students interact with your activities.</p>
+          <p>
+            Participation metrics will appear after students interact with your
+            activities.
+          </p>
         </div>
       </section>
 
       <section class="panel session-panel">
         <div class="panel-header">
           <h2>Recent Quiz Activity</h2>
-          <button class="link-button" type="button" @click="goTo('/teacher/activity-history')">View All</button>
+          <button
+            class="link-button"
+            type="button"
+            @click="goTo('/teacher/activity-history')"
+          >
+            View All
+          </button>
         </div>
 
         <div v-if="sessionLogs.length" class="session-table">
@@ -345,7 +447,11 @@ const goTo = (route?: string) => {
             <span>Submissions</span>
             <span>Actions</span>
           </div>
-          <div v-for="log in sessionLogs" :key="`${log.date}-${log.type}`" class="session-row session-data-row">
+          <div
+            v-for="log in sessionLogs"
+            :key="`${log.date}-${log.type}`"
+            class="session-row session-data-row"
+          >
             <span>{{ log.date }}</span>
             <strong>{{ log.type }}</strong>
             <span>{{ log.subject }}</span>
@@ -372,14 +478,24 @@ const goTo = (route?: string) => {
               <TeacherIcon icon="star" :size="16" />
             </span>
             Favorite Tools
-            <span v-if="favoriteTools.length" class="favtools-count-badge">{{ favoriteTools.length }}</span>
+            <span v-if="favoriteTools.length" class="favtools-count-badge">{{
+              favoriteTools.length
+            }}</span>
           </h2>
           <div class="favtools-actions-row">
-            <button class="ghost-button" type="button" @click="goTo('/teacher/organize-tools')">
+            <button
+              class="ghost-button"
+              type="button"
+              @click="goTo('/teacher/organize-tools')"
+            >
               <TeacherIcon icon="picker" :size="16" />
               <span>Add / Remove</span>
             </button>
-            <button class="outline-button manage-tools-btn" type="button" @click="goTo('/teacher/organize-tools')">
+            <button
+              class="outline-button manage-tools-btn"
+              type="button"
+              @click="goTo('/teacher/organize-tools')"
+            >
               <TeacherIcon icon="picker" :size="16" />
               <span>Manage</span>
             </button>
@@ -396,7 +512,7 @@ const goTo = (route?: string) => {
               type="button"
               @click="goTo(tool.route)"
             >
-              <span class="favtool-emoji">{{ tool.icon }}</span>
+              <span class="favtool-emoji"><ToolIcon :name="tool.icon" :size="24" /></span>
               <span class="favtool-name">{{ tool.label }}</span>
               <span class="favtool-hint">Open tool</span>
             </button>
@@ -424,8 +540,11 @@ const goTo = (route?: string) => {
   padding: 24px 26px;
   border: 1px solid rgba(197, 203, 221, 0.78);
   border-radius: 20px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 255, 0.98) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.98) 0%,
+    rgba(248, 250, 255, 0.98) 100%
+  );
   box-shadow: 0 12px 26px rgba(21, 33, 72, 0.06);
 }
 
@@ -633,7 +752,11 @@ const goTo = (route?: string) => {
   min-width: 0;
   border: 1px solid rgba(197, 203, 221, 0.9);
   border-radius: 18px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(250, 252, 255, 0.99) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.99) 0%,
+    rgba(250, 252, 255, 0.99) 100%
+  );
   box-shadow: 0 12px 24px rgba(21, 33, 72, 0.06);
   overflow: hidden;
 }
@@ -757,7 +880,7 @@ mark.live {
 }
 
 .live-badge::before {
-  content: '';
+  content: "";
   width: 6px;
   height: 6px;
   border-radius: 50%;

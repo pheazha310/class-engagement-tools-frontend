@@ -187,6 +187,9 @@ export const useAuthStore = defineStore('auth', () => {
       // ignore
     }
     clearUser()
+    // Clear classroom quiz student data on logout
+    localStorage.removeItem('classroom-student-name')
+    localStorage.removeItem('classroom-student-class')
   }
 
   return {

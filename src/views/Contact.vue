@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import SiteFooter from '@/components/SiteFooter.vue'
+import ToolIcon from '@/components/ToolIcon.vue'
 
 const formData = ref({
   name: '',
@@ -12,6 +13,9 @@ const formData = ref({
 const formErrors = ref<Record<string, string>>({})
 const isSubmitting = ref(false)
 const submitted = ref(false)
+
+const contactIcon = (title: string) => ({ Email: 'mail', Phone: 'phone', Office: 'pin' }[title] || 'mail')
+const socialIcon = (name: string) => ({ Facebook: 'facebook', Twitter: 'twitter', LinkedIn: 'linkedin', Instagram: 'instagram', YouTube: 'youtube' }[name] || 'globe')
 
 const observer = ref<IntersectionObserver | null>(null)
 
@@ -88,7 +92,7 @@ const handleSubmit = () => {
             { icon: '📱', title: 'Phone', detail: ['+1 (555) 494-1983', 'Mon-Fri, 9am-5pm EST'] },
             { icon: '📍', title: 'Office', detail: ['St 371, Phum Propeang', 'Khan Sen Sok, Phnom Penh, Cambodia'] },
           ]" :key="c.title">
-            <div class="contact-card-icon">{{ c.icon }}</div>
+            <div class="contact-card-icon"><ToolIcon :name="contactIcon(c.title)" :size="34" /></div>
             <h3>{{ c.title }}</h3>
             <p v-for="(d, i) in c.detail" :key="i">{{ d }}</p>
           </a>
@@ -211,7 +215,7 @@ const handleSubmit = () => {
             { icon: '📷', name: 'Instagram', href: 'https://instagram.com/classtools' },
             { icon: '📺', name: 'YouTube', href: 'https://youtube.com/classtools' },
           ]" :key="s.name" :href="s.href" target="_blank" rel="noopener noreferrer" class="social-card reveal">
-            <div class="social-card-icon">{{ s.icon }}</div>
+            <div class="social-card-icon"><ToolIcon :name="socialIcon(s.name)" :size="30" /></div>
             <span class="social-card-name">{{ s.name }}</span>
           </a>
         </div>
@@ -528,8 +532,15 @@ const handleSubmit = () => {
 }
 
 .contact-card-icon {
-  font-size: 48px;
+  width: 72px;
+  height: 72px;
   margin-bottom: 18px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #f5f7ff 0%, #e5ecff 55%, #f5edff 100%);
+  border: 1px solid rgba(129, 140, 248, .12);
+  border-radius: 21px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), 0 10px 20px rgba(99, 102, 241, .1);
   transition: transform 0.35s ease;
 }
 
@@ -774,7 +785,14 @@ const handleSubmit = () => {
 }
 
 .social-card-icon {
-  font-size: 36px;
+  width: 60px;
+  height: 60px;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 12px;
+  background: rgba(255, 255, 255, .15);
+  border: 1px solid rgba(255, 255, 255, .18);
+  border-radius: 18px;
   position: relative;
   transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }

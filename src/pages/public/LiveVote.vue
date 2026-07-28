@@ -1,277 +1,162 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { useLivePollStore } from '@/stores/livePollStore'
-import { useAuthStore } from '@/stores/auth'
-import { getGuestToken } from '@/services/livePollService'
-import VoteOption from '@/components/live/VoteOption.vue'
-import ResultBar from '@/components/live/ResultBar.vue'
-import CountdownTimer from '@/components/CountdownTimer.vue'
-import LoadingSpinner from '@/components/LoadingSpinner.vue'
-import ToastNotification from '@/components/ToastNotification.vue'
-import type { LivePoll, LivePollResults } from '@/types/livePoll'
+import { pollService } from '@/services/pollService'
+import type { Poll, PollResultsData } from '@/types/poll'
+import { showNotification } from '@/utils/notifications'
 
 const route = useRoute()
-const store = useLivePollStore()
-const auth = useAuthStore()
 
-const token = computed(() => route.params.token as string)
-const poll = ref<LivePoll | null>(null)
-const results = ref<LivePollResults | null>(null)
-const selectedOptionId = ref<string | null>(null)
-const pageError = ref<string | null>(null)
-const phase = ref<'loading' | 'poll' | 'voted' | 'results' | 'error'>('loading')
-const resultsLoading = ref(false)
+const loading = ref(true)
+const voting = ref(false)
+const hasVoted = ref(false)
+const poll = ref<Poll | null>(null)
+const results = ref<PollResultsData | null>(null)
+const selectedOption = ref<string | null>(null)
+const textResponse = ref('')
+const error = ref('')
 
-const isStudent = computed(() => auth.user?.role === 'student')
-
-const totalSeconds = computed(() => {
-  if (!poll.value?.duration_minutes || !poll.value?.started_at) return 0
-  const started = new Date(poll.value.started_at).getTime()
-  const elapsed = (Date.now() - started) / 1000
-  const remaining = Math.round(poll.value.duration_minutes * 60 - elapsed)
-  return Math.max(0, remaining)
-})
-
-onMounted(async () => {
-  await auth.fetchUser()
-  await loadPoll()
-})
-
-watch(token, () => {
-  phase.value = 'loading'
-  selectedOptionId.value = null
-  poll.value = null
-  results.value = null
-  loadPoll()
-})
+const isActive = computed(() => poll.value?.status === 'active')
 
 async function loadPoll() {
-  try {
-    const p = await store.fetchPublicPoll(token.value)
-    if (!p) {
-      pageError.value = 'Poll not found or is not active.'
-      phase.value = 'error'
-      return
-    }
-    poll.value = p
-
-    if (p.show_results && p.status === 'closed') {
-      await loadResults()
-      phase.value = 'results'
-    } else {
-      phase.value = 'poll'
-    }
-  } catch {
-    pageError.value = 'Failed to load poll. It may have expired or been removed.'
-    phase.value = 'error'
+  const token = route.params.token as string
+  if (!token) {
+    error.value = 'Invalid voting link.'
+    loading.value = false
+    return
   }
-}
-
-async function loadResults() {
-  resultsLoading.value = true
   try {
-    const r = await store.fetchPublicResults(token.value)
-    if (r) results.value = r
+    const res = await pollService.getActivePoll()
+    const p = (res as any).poll || (res as any).data
+    if (p) {
+      poll.value = p as Poll
+    } else {
+      error.value = 'Poll not found or has ended.'
+    }
   } catch {
-    // ignore
+    error.value = 'Unable to load poll. It may have ended or the link is invalid.'
   } finally {
-    resultsLoading.value = false
+    loading.value = false
   }
 }
 
 async function submitVote() {
-  if (!selectedOptionId.value) return
+  if (!poll.value || !isActive.value) return
+  if (!poll.value.is_open_text && !selectedOption.value) {
+    showNotification('Please select an option.', 'error')
+    return
+  }
+  if (poll.value.is_open_text && !textResponse.value.trim()) {
+    showNotification('Please enter your response.', 'error')
+    return
+  }
+  voting.value = true
   try {
-    if (isStudent.value && auth.user) {
-      await livePollServiceSubmitVote(token.value, selectedOptionId.value)
-    } else {
-      await livePollServiceSubmitVote(token.value, selectedOptionId.value, getGuestToken())
-    }
-    phase.value = 'voted'
-    if (poll.value?.show_results) {
-      await loadResults()
-    }
-  } catch (e: unknown) {
-    const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to submit vote.'
-    store.error = msg
+    const res = await pollService.vote(
+      poll.value.id,
+      selectedOption.value,
+      undefined,
+      poll.value.is_open_text ? textResponse.value.trim() : undefined,
+    )
+    results.value = res
+    hasVoted.value = true
+  } catch {
+    showNotification('Failed to submit vote.', 'error')
+  } finally {
+    voting.value = false
   }
-}
-
-async function livePollServiceSubmitVote(t: string, optionId: string, guestToken?: string) {
-  const { livePollService } = await import('@/services/livePollService')
-  return livePollService.submitVote(t, optionId, guestToken)
-}
-
-function onExpire() {
-  if (poll.value) {
-    phase.value = 'results'
-    loadResults()
-  }
-}
-
-const maxPercentage = computed(() => {
-  if (!results.value?.options.length) return 0
-  return Math.max(...results.value.options.map((o) => (results.value!.total_votes > 0 ? Math.round((o.votes / results.value!.total_votes) * 100) : 0)))
-})
-
-const viewResults = () => {
-  phase.value = 'results'
-  loadResults()
 }
 </script>
 
 <template>
-  <div class="min-h-[100dvh] bg-gradient-to-br from-indigo-50 via-white to-purple-50 px-4 py-8 sm:px-6">
-    <div class="mx-auto max-w-lg">
-      <div class="mb-8 text-center">
-        <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-100">
-          <svg class="h-7 w-7 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </div>
-        <h1 class="text-xl font-bold text-gray-900">Classroom Poll</h1>
+  <div class="vote-page">
+    <div v-if="loading" class="vote-loading">
+      <div class="spinner"></div>
+      <p>Loading poll...</p>
+    </div>
+
+    <div v-else-if="error" class="vote-error">
+      <div class="error-card">
+        <h2>Poll Unavailable</h2>
+        <p>{{ error }}</p>
       </div>
+    </div>
 
-      <!-- Loading -->
-      <div v-if="phase === 'loading'" class="py-16">
-        <LoadingSpinner size="lg" />
-      </div>
-
-      <!-- Error -->
-      <div v-else-if="phase === 'error'" class="rounded-2xl bg-white p-8 text-center shadow-sm">
-        <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
-          <svg class="h-8 w-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-          </svg>
+    <div v-else-if="hasVoted && results" class="vote-success">
+      <div class="result-card">
+        <h2>Your vote has been recorded!</h2>
+        <p class="result-question">{{ results.question }}</p>
+        <div v-if="results.is_open_text" class="open-text-result">
+          <p class="result-text">{{ textResponse }}</p>
         </div>
-        <h2 class="mb-2 text-lg font-semibold text-gray-900">Poll Unavailable</h2>
-        <p class="text-sm text-gray-500">{{ pageError || store.error || 'This poll is not available.' }}</p>
-      </div>
-
-      <!-- Vote phase -->
-      <div v-else-if="phase === 'poll' && poll" class="space-y-5">
-        <div class="rounded-2xl bg-white p-6 shadow-sm">
-          <div v-if="poll.duration_minutes && poll.started_at" class="mb-4 flex justify-center">
-            <CountdownTimer
-              :seconds="totalSeconds"
-              label="Time Remaining"
-              :size="100"
-              :stroke-width="6"
-              :warning-threshold="60"
-              :danger-threshold="30"
-              :on-expire="onExpire"
-            />
-          </div>
-
-          <h2 class="mb-1 text-lg font-bold text-gray-900">{{ poll.question }}</h2>
-          <p v-if="poll.title" class="mb-4 text-sm text-gray-500">{{ poll.title }}</p>
-
-          <div v-if="poll.anonymous" class="mb-4 inline-flex items-center gap-1.5 rounded-full bg-purple-100 px-3 py-1 text-xs font-medium text-purple-700">
-            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-            </svg>
-            Anonymous poll
-          </div>
-        </div>
-
-        <div class="rounded-2xl bg-white p-6 shadow-sm">
-          <h3 class="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">
-            {{ poll.allow_multiple_votes ? 'Select all that apply' : 'Select one option' }}
-          </h3>
-          <div class="space-y-3">
-            <VoteOption
-              v-for="option in poll.options"
-              :key="option.id"
-              :value="option.id"
-              :label="option.option_text"
-              :selected="selectedOptionId === option.id"
-              @select="selectedOptionId = $event"
-            />
-          </div>
-        </div>
-
-        <div v-if="store.error" class="rounded-xl bg-red-50 p-4 text-sm text-red-700">
-          {{ store.error }}
-        </div>
-
-        <div class="flex gap-3">
-          <button
-            class="flex-1 rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:opacity-50"
-            :disabled="!selectedOptionId || store.voting"
-            @click="submitVote"
-          >
-            {{ store.voting ? 'Submitting...' : 'Submit Vote' }}
-          </button>
-          <button
-            v-if="poll.show_results"
-            class="rounded-xl border border-gray-300 px-5 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
-            @click="viewResults"
-          >
-            Results
-          </button>
-        </div>
-      </div>
-
-      <!-- Voted phase -->
-      <div v-else-if="phase === 'voted'" class="space-y-5">
-        <div class="rounded-2xl bg-white p-8 text-center shadow-sm">
-          <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-            <svg class="h-8 w-8 animate-scale-check text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <h2 class="mb-2 text-xl font-bold text-gray-900">Thank You!</h2>
-          <p class="text-sm text-gray-500">Your vote has been recorded successfully.</p>
-          <div v-if="resultsLoading" class="mt-4">
-            <LoadingSpinner size="sm" />
-          </div>
-          <button
-            v-if="results && !resultsLoading"
-            class="mt-6 rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700"
-            @click="phase = 'results'"
-          >
-            View Results
-          </button>
-        </div>
-      </div>
-
-      <!-- Results phase -->
-      <div v-else-if="results" class="space-y-5">
-        <div class="rounded-2xl bg-white p-6 shadow-sm">
-          <h2 class="mb-1 text-lg font-bold text-gray-900">{{ results.question }}</h2>
-          <p class="text-sm text-gray-500">
-            {{ results.total_votes }} vote{{ results.total_votes !== 1 ? 's' : '' }}
-            <span v-if="results.status === 'active'" class="ml-2 inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
-              <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-green-500" />
-              Live
-            </span>
-            <span v-else class="ml-2 text-xs text-gray-400">Closed</span>
-          </p>
-        </div>
-
-        <div class="rounded-2xl bg-white p-6 shadow-sm">
-          <div v-if="results.total_votes === 0" class="py-6 text-center text-sm text-gray-400">
-            No votes yet.
-          </div>
-          <div v-else class="space-y-4">
-            <div v-for="option in results.options" :key="option.id">
-              <ResultBar
-                :label="option.option_text"
-                :votes="option.votes"
-                :total-votes="results.total_votes"
-                :max-percentage="maxPercentage"
-              />
-            </div>
-          </div>
+        <div v-else class="result-stats">
+          <div class="total-votes">Total votes: <strong>{{ results.totalVotes }}</strong></div>
         </div>
       </div>
     </div>
 
-    <ToastNotification
-      :message="store.error"
-      type="error"
-      @close="store.clearError()"
-    />
+    <div v-else-if="poll" class="vote-card">
+      <div class="vote-header">
+        <h1 class="vote-question">{{ poll.question }}</h1>
+        <p v-if="poll.is_anonymous" class="vote-note">This vote is anonymous.</p>
+      </div>
+
+      <div v-if="poll.is_open_text" class="open-text-area">
+        <textarea v-model="textResponse" class="vote-textarea" rows="4" placeholder="Type your response..." :disabled="voting"></textarea>
+      </div>
+
+      <div v-else class="options-area">
+        <button
+          v-for="(opt, idx) in poll.options"
+          :key="opt.id"
+          class="option-btn"
+          :class="{ selected: selectedOption === opt.id }"
+          :disabled="voting"
+          @click="selectedOption = opt.id"
+        >
+          <span class="option-letter">{{ String.fromCharCode(65 + idx) }}</span>
+          <span class="option-text">{{ opt.option_text }}</span>
+        </button>
+      </div>
+
+      <button
+        class="submit-btn"
+        :disabled="voting || !isActive"
+        @click="submitVote"
+      >
+        {{ voting ? 'Submitting...' : isActive ? 'Submit Vote' : 'Poll has ended' }}
+      </button>
+    </div>
   </div>
 </template>
+
+<style scoped>
+.vote-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+.vote-loading, .vote-error { text-align: center; color: #fff; }
+.vote-loading .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite; margin: 0 auto 16px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.error-card, .result-card, .vote-card { background: #fff; border-radius: 16px; padding: 32px; max-width: 520px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,.15); }
+.error-card h2, .result-card h2 { margin: 0 0 12px; font-size: 20px; }
+.result-card h2 { color: #16a34a; }
+.error-card p { margin: 0; color: #64748b; }
+.result-question { font-size: 18px; font-weight: 700; color: var(--ink, #1e293b); margin: 16px 0; }
+.result-text { padding: 12px; background: #f8faff; border-radius: 8px; font-size: 15px; }
+.total-votes { font-size: 14px; color: #64748b; }
+.vote-header { margin-bottom: 24px; }
+.vote-question { margin: 0; font-size: 22px; font-weight: 800; color: #1e293b; line-height: 1.3; }
+.vote-note { margin: 8px 0 0; font-size: 13px; color: #94a3b8; }
+.options-area { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.option-btn { display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px 18px; border: 2px solid #e2e8f0; border-radius: 12px; background: #fff; cursor: pointer; transition: all .2s; font-size: 15px; text-align: left; }
+.option-btn:hover { border-color: #667eea; background: #f8faff; }
+.option-btn.selected { border-color: #667eea; background: #eef2ff; }
+.option-btn:disabled { opacity: .5; cursor: not-allowed; }
+.option-letter { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; background: #f1f5f9; color: #64748b; font-weight: 800; font-size: 14px; flex-shrink: 0; }
+.option-btn.selected .option-letter { background: #667eea; color: #fff; }
+.option-text { font-weight: 600; color: #1e293b; }
+.open-text-area { margin-bottom: 20px; }
+.vote-textarea { width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 15px; font-family: inherit; resize: vertical; transition: border-color .2s; }
+.vote-textarea:focus { outline: none; border-color: #667eea; }
+.submit-btn { width: 100%; padding: 14px; border: 0; border-radius: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; transition: opacity .2s; }
+.submit-btn:hover { opacity: .9; }
+.submit-btn:disabled { opacity: .5; cursor: not-allowed; }
+</style>

@@ -2,6 +2,7 @@
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import { RouterLink } from 'vue-router'
 import { categories } from '@/data/toolsData'
+import ToolIcon from '@/components/ToolIcon.vue'
 
 const groupedTools = computed(() => categories)
 
@@ -48,7 +49,7 @@ onBeforeUnmount(() => {
           <div class="category-card reveal" v-for="(category, idx) in groupedTools" :key="category.name" :style="{ transitionDelay: `${idx * 0.08}s` }">
             <div class="category-card-inner">
               <h3 class="category-title">
-                <span class="category-icon">{{ category.icon }}</span>
+                <span class="category-icon"><ToolIcon :name="category.icon" :size="22" /></span>
                 <span>{{ category.name }}</span>
               </h3>
               <div class="category-tools">
@@ -58,7 +59,7 @@ onBeforeUnmount(() => {
                   :to="tool.route || `/tools/${tool.slug}`"
                   class="category-tool-link"
                 >
-                  <span class="category-tool-icon">{{ tool.icon }}</span>
+                  <span class="category-tool-icon"><ToolIcon :name="tool.icon" :size="22" /></span>
                   <div class="category-tool-content">
                     <span class="category-tool-title">{{ tool.title }}</span>
                     <span class="category-tool-desc">{{ tool.description }}</span>
@@ -273,15 +274,18 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+  background: linear-gradient(135deg, #f5f7ff 0%, #e5ecff 55%, #f5edff 100%);
   border-radius: 12px;
+  border: 1px solid rgba(129, 140, 248, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 5px 12px rgba(99, 102, 241, 0.09);
   flex-shrink: 0;
   transition: transform 0.25s ease;
   position: relative;
 }
 
 .category-tool-link:hover .category-tool-icon {
-  transform: scale(1.08);
+  transform: scale(1.08) rotate(3deg);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 8px 18px rgba(99, 102, 241, 0.18);
 }
 
 .category-tool-content {

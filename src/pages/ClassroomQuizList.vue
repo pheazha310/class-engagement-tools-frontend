@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useClassroomQuizStore } from '@/stores/classroomQuizStore'
 import { useAuthStore } from '@/stores/auth'
@@ -15,25 +15,53 @@ const showNameModal = ref(false)
 
 onMounted(() => {
   store.init()
-  
-  if (authStore.user?.name && authStore.user?.email?.includes('@student')) {
-    const loggedInName = authStore.user.name
-    const loggedInClass = authStore.user.school || ''
-    
-    if (store.currentStudentName) {
-      showNameModal.value = false
-    } else {
-      studentName.value = loggedInName
-      studentClass.value = loggedInClass
-      setTimeout(() => {
-        store.setStudentInfo(studentName.value, studentClass.value)
-        showNameModal.value = false
-      }, 100)
-    }
+
+  // Wait for auth to be initialized before checking
+  if (!authStore.initialized) {
+    authStore.fetchUser().finally(() => {
+      syncUser()
+    })
   } else {
-    showNameModal.value = true
+    syncUser()
   }
 })
+
+// Watch for user login/logout changes
+watch(
+  () => authStore.user?.name,
+  () => {
+    // User logged in or logged out - sync immediately
+    syncUser()
+  }
+)
+
+function syncUser() {
+  // For ANY logged-in user: always sync with their account
+  if (authStore.user?.name) {
+    const loggedInName = authStore.user.name
+    const loggedInClass = authStore.user.school || ''
+
+    // Override localStorage with logged-in user's info
+    studentName.value = loggedInName
+    studentClass.value = loggedInClass
+    store.setStudentInfo(studentName.value, studentClass.value)
+    showNameModal.value = false
+    return
+  }
+
+  // For logged-out users: use stored name if available, don't clear it
+  if (store.currentStudentName) {
+    // Has existing name - don't show modal, let them take quiz easily
+    studentName.value = store.currentStudentName
+    studentClass.value = store.currentStudentClass
+    showNameModal.value = false
+  } else {
+    // No stored name - show the form
+    studentName.value = ''
+    studentClass.value = ''
+    showNameModal.value = true
+  }
+}
 
 const filteredQuizzes = computed(() => {
   let result = store.quizzes
@@ -68,13 +96,27 @@ function viewRankings(quizId: string) {
 }
 
 function hasSubmitted(quizId: string): boolean {
-  if (!store.currentStudentName) return false
-  return store.hasStudentSubmitted(quizId, store.currentStudentName)
+  if (!store.currentStudentName || !store.currentStudentClass) return false
+  return store.hasStudentSubmitted(quizId, store.currentStudentName, store.currentStudentClass)
 }
 
 function getTotalQuestions(quizId: string): number {
   const quiz = store.getQuizById(quizId)
   return quiz ? quiz.questions.length : 0
+}
+
+function isCustomQuiz(quizId: string): boolean {
+  return quizId.startsWith('custom-')
+}
+
+function editQuiz(quizId: string) {
+  router.push(`/classroom/create?edit=${quizId}`)
+}
+
+function deleteQuiz(quizId: string) {
+  if (confirm('Are you sure you want to delete this quiz? This cannot be undone.')) {
+    store.deleteCustomQuiz(quizId)
+  }
 }
 </script>
 
@@ -199,9 +241,34 @@ function getTotalQuestions(quizId: string): number {
           class="quiz-card"
         >
           <div class="quiz-card-top">
-            <div class="quiz-card-badge-row">
-              <span class="badge badge--subject">{{ quiz.subject }}</span>
-              <span class="badge badge--class">{{ quiz.class_name }}</span>
+            <div class="quiz-card-header-row">
+              <div class="quiz-card-badge-row">
+                <span class="badge badge--subject">{{ quiz.subject }}</span>
+                <span class="badge badge--class">{{ quiz.class_name }}</span>
+              </div>
+              <!-- Edit/Delete icons for custom quizzes -->
+              <div v-if="isCustomQuiz(quiz.id)" class="quiz-card-actions-top">
+                <button
+                  class="btn-icon-action"
+                  @click="editQuiz(quiz.id)"
+                  title="Edit quiz"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
+                </button>
+                <button
+                  class="btn-icon-action btn-icon-action--delete"
+                  @click="deleteQuiz(quiz.id)"
+                  title="Delete quiz"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                  </svg>
+                </button>
+              </div>
             </div>
             <h3 class="quiz-card-title">{{ quiz.title }}</h3>
             <p class="quiz-card-desc">{{ quiz.description }}</p>
@@ -281,7 +348,7 @@ function getTotalQuestions(quizId: string): number {
 .classroom-page {
   position: relative;
   min-height: 100vh;
-  padding: 2rem 1rem 4rem;
+  padding: 7rem 1rem 4rem;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
@@ -592,11 +659,57 @@ function getTotalQuestions(quizId: string): number {
   flex: 1;
 }
 
+.quiz-card-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
 .quiz-card-badge-row {
   display: flex;
   gap: 0.5rem;
-  margin-bottom: 0.75rem;
   flex-wrap: wrap;
+  flex: 1;
+}
+
+.quiz-card-actions-top {
+  display: flex;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.btn-icon-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.btn-icon-action svg {
+  width: 16px;
+  height: 16px;
+}
+
+.btn-icon-action:hover {
+  border-color: #f59e0b;
+  color: #f59e0b;
+  background: #fffbeb;
+}
+
+.btn-icon-action--delete:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+  background: #fef2f2;
 }
 
 .badge {
@@ -667,7 +780,7 @@ function getTotalQuestions(quizId: string): number {
 /* Actions */
 .quiz-card-actions {
   display: flex;
-  gap: 0.4rem;
+  gap: 0.35rem;
   padding-top: 0.75rem;
   border-top: 1px solid #f1f5f9;
 }
@@ -685,8 +798,8 @@ function getTotalQuestions(quizId: string): number {
   cursor: pointer;
   transition: all 0.2s ease;
   text-decoration: none;
-  flex: 1;
   justify-content: center;
+  white-space: nowrap;
 }
 
 .btn:disabled {
@@ -695,8 +808,8 @@ function getTotalQuestions(quizId: string): number {
 }
 
 .btn-icon {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
 }
 
 .btn-primary {
@@ -729,8 +842,11 @@ function getTotalQuestions(quizId: string): number {
   background: transparent;
   color: #64748b;
   border: 1px solid #cbd5e1;
-  padding: 0.45rem 0.8rem;
-  font-size: 0.8rem;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.65rem;
+  border-radius: 6px;
+  flex: 1;
+  min-width: 0;
 }
 
 .btn-rankings:hover {
@@ -742,15 +858,17 @@ function getTotalQuestions(quizId: string): number {
 .completed-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.45rem 0.8rem;
-  border-radius: 8px;
-  font-size: 0.8rem;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.65rem;
   font-weight: 600;
   background: #d1fae5;
   color: #065f46;
   flex: 1;
-  justify-content: center;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .btn-create-quiz {
@@ -766,24 +884,27 @@ function getTotalQuestions(quizId: string): number {
 }
 
 .completed-icon {
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
 }
 
 .btn-review-small {
-  padding: 0.45rem 0.8rem;
+  padding: 0.35rem 0.5rem;
   background: #ffffff;
   color: #2563eb;
   border: 1px solid #2563eb;
-  font-size: 0.8rem;
+  font-size: 0.65rem;
   font-weight: 600;
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
+  justify-content: center;
+  gap: 0.2rem;
   transition: all 0.2s ease;
   white-space: nowrap;
+  flex: 1;
+  min-width: 0;
 }
 
 .btn-review-small:hover {
@@ -827,7 +948,7 @@ function getTotalQuestions(quizId: string): number {
    ============================================================ */
 @media (max-width: 768px) {
   .classroom-page {
-    padding: 1.25rem 0.75rem 3rem;
+    padding: 6rem 0.75rem 3rem;
   }
 
   .classroom-header {
