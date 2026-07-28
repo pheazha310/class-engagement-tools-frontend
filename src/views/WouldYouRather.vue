@@ -415,8 +415,8 @@ onMounted(() => {
       </div>
     </section>
     <StickyBottomNav
-      to="/tools"
-      label="Back to all tools"
+      to="/icebreakers"
+      label="Back to IceBreakers"
       gradient="linear-gradient(135deg, #8b5cf6, #7c3aed)"
       border-color="rgba(139, 92, 246, 0.15)"
       shadow-color="rgba(139, 92, 246, 0.3)"

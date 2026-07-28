@@ -322,8 +322,8 @@ const toggleLie = (id: number) => {
       </div>
     </dialog>
     <StickyBottomNav
-      to="/tools"
-      label="Back to all tools"
+      to="/icebreakers"
+      label="Back to IceBreakers"
     />
   </div>
 </template>

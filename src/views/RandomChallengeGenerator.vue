@@ -316,8 +316,8 @@ const categoriesList = [
       </div>
     </section>
     <StickyBottomNav
-      to="/tools"
-      label="Back to all tools"
+      to="/icebreakers"
+      label="Back to IceBreakers"
       gradient="linear-gradient(135deg, #f59e0b, #d97706)"
       border-color="rgba(245, 158, 11, 0.15)"
       shadow-color="rgba(245, 158, 11, 0.3)"
