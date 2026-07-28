@@ -230,6 +230,12 @@ function getBarColor(index: number, total: number): string {
             </div>
             <h1 class="sv-title">Active Polls</h1>
             <p class="sv-subtitle">Select an active poll below to cast your vote</p>
+            <router-link to="/tools" class="sv-back-to-tools">
+              <svg class="sv-back-to-tools-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Back to All Tools
+            </router-link>
           </div>
           <div class="sv-voter-badge">
             <svg class="sv-voter-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -680,6 +686,29 @@ function getBarColor(index: number, total: number): string {
 .sv-back-icon {
   width: 16px;
   height: 16px;
+}
+
+.sv-back-to-tools {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #6366F1;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  width: fit-content;
+}
+
+.sv-back-to-tools:hover {
+  color: #4F46E5;
+  gap: 10px;
+}
+
+.sv-back-to-tools-icon {
+  width: 14px;
+  height: 14px;
 }
 
 /* ── Loading ── */

@@ -4,6 +4,7 @@ import { useRoute, RouterLink } from 'vue-router'
 import { allTools } from '@/data/toolsData'
 import TimerCountdown from '@/components/TimerCountdown.vue'
 import Stopwatch from '@/components/Stopwatch.vue'
+import ToolIcon from '@/components/ToolIcon.vue'
 
 const route = useRoute()
 
@@ -15,7 +16,7 @@ const tool = computed(() => allTools.find((item) => item.slug === route.params.s
     <section v-if="tool.slug !== 'timer' && tool.slug !== 'stopwatch'" class="tool-hero" :class="{ 'tool-hero-compact': tool.slug === 'timer' }">
       <div class="container">
         <div class="tool-hero-content">
-          <div v-if="tool.slug !== 'timer' && tool.slug !== 'stopwatch'" class="tool-icon">{{ tool.icon }}</div>
+          <div v-if="tool.slug !== 'timer' && tool.slug !== 'stopwatch'" class="tool-icon"><ToolIcon :name="tool.icon" :size="44" /></div>
           <h1 v-if="tool.slug !== 'timer' && tool.slug !== 'stopwatch'" class="tool-hero-title">{{ tool.title }}</h1>
           <p v-if="tool.slug !== 'timer' && tool.slug !== 'stopwatch'" class="tool-hero-category">{{ tool.category }}</p>
         </div>

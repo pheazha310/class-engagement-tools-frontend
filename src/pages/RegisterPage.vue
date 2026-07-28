@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import api from '@/services/api'
-import SearchableSelect from '@/components/SearchableSelect.vue'
 
 import '@/assets/css/auth.css'
 
@@ -12,41 +10,12 @@ const auth = useAuthStore()
 
 type Role = '' | 'student' | 'teacher'
 
-interface CountryOption {
-  id: number
-  code: string
-  name: string
-}
-
-interface ProvinceOption {
-  id: number
-  name: string
-}
-
-interface SchoolOption {
-  id: number
-  name: string
-}
-
-interface LocationOptionResponse {
-  country: CountryOption
-  province: ProvinceOption
-  school: SchoolOption
-}
-
 interface FormData {
   name: string
   email: string
   password: string
   passwordConfirmation: string
   role: Role
-  countryCode: string
-  countryId: number | null
-  countryName: string
-  provinceId: number | null
-  province: string
-  schoolId: number | null
-  schoolName: string
 }
 
 const form = ref<FormData>({
@@ -55,35 +24,27 @@ const form = ref<FormData>({
   password: '',
   passwordConfirmation: '',
   role: '',
-  countryCode: '',
-  countryId: null,
-  countryName: '',
-  provinceId: null,
-  province: '',
-  schoolId: null,
-  schoolName: '',
-})
-
-const countries = ref<CountryOption[]>([])
-const provinces = ref<ProvinceOption[]>([])
-const schools = ref<SchoolOption[]>([])
-const loadingCountries = ref(false)
-const loadingProvinces = ref(false)
-const loadingSchools = ref(false)
-const showAddLocation = ref(false)
-const savingLocation = ref(false)
-const locationError = ref('')
-const locationSuccess = ref('')
-
-const newLocation = ref({
-  countryName: '',
-  countryCode: '',
-  provinceName: '',
-  schoolName: '',
 })
 
 const step = ref(1)
 const error = ref('')
+const fieldErrors = ref<Record<string, string>>({})
+
+// Clear field errors when user types
+watch(() => form.value.name, () => {
+  if (error.value) error.value = ''
+  delete fieldErrors.value.name
+})
+watch(() => form.value.email, () => {
+  if (error.value) error.value = ''
+  delete fieldErrors.value.email
+})
+watch(() => form.value.password, () => {
+  delete fieldErrors.value.password
+})
+watch(() => form.value.role, () => {
+  delete fieldErrors.value.role
+})
 const submitting = ref(false)
 const success = ref(false)
 const showPassword = ref(false)
@@ -97,12 +58,11 @@ const passwordStrength = computed(() => {
   const pwd = form.value.password
   if (!pwd) return 0
   let score = 0
-  if (pwd.length >= 8) score += 25
-  if (pwd.length >= 12) score += 15
-  if (/[A-Z]/.test(pwd)) score += 20
-  if (/[a-z]/.test(pwd)) score += 15
-  if (/[0-9]/.test(pwd)) score += 15
-  if (/[^A-Za-z0-9]/.test(pwd)) score += 10
+  if (pwd.length >= 8) score += 30
+  if (pwd.length >= 12) score += 10
+  if (/[a-z]/.test(pwd)) score += 10
+  if (/[0-9]/.test(pwd)) score += 40
+  if (/[Za-z0-9]/.test(pwd)) score += 10
   return Math.min(score, 100)
 })
 
@@ -121,33 +81,7 @@ const passwordStrengthColor = computed(() => {
   return '#10b981'
 })
 
-const step1Valid = computed(
-  () =>
-    form.value.name.trim() !== '' &&
-    form.value.email.trim() !== '' &&
-    form.value.password.length >= 8 &&
-    passwordMatch.value
-)
 
-const step2Valid = computed(() => form.value.role !== '')
-
-const step3Valid = computed(
-  () =>
-    form.value.countryCode !== '' &&
-    form.value.province.trim() !== '' &&
-    form.value.schoolName.trim() !== ''
-)
-
-const selectedCountry = computed(() =>
-  countries.value.find(c => c.code === form.value.countryCode) ?? null
-)
-
-const addLocationValid = computed(
-  () =>
-    newLocation.value.countryName.trim() !== '' &&
-    newLocation.value.provinceName.trim() !== '' &&
-    newLocation.value.schoolName.trim() !== ''
-)
 
 const steps = [
   { number: 1, label: 'Account', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
@@ -155,153 +89,51 @@ const steps = [
   { number: 3, label: 'Review', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
 ]
 
-async function fetchCountries() {
-  loadingCountries.value = true
-  try {
-    const { data } = await api.get('/api/countries')
-    countries.value = data.data ?? data
-  } catch (err) {
-    console.error('[RegisterPage] failed to load countries', err)
-  } finally {
-    loadingCountries.value = false
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+function validateStep1(): boolean {
+  fieldErrors.value = {}
+  
+  const errs: Record<string, string> = {}
+  
+  if (!form.value.name.trim()) {
+    errs.name = 'Please enter your full name.'
   }
+  if (!form.value.email.trim()) {
+    errs.email = 'Please enter your email address.'
+  } else if (!emailRegex.test(form.value.email.trim())) {
+    errs.email = 'Please enter a valid email address.'
+  }
+  if (!form.value.password) {
+    errs.password = 'Please enter a password.'
+  } else if (form.value.password.length < 8) {
+    errs.password = 'Password must be at least 8 characters.'
+  }
+  if (!form.value.passwordConfirmation) {
+    errs.confirm = 'Please confirm your password.'
+  } else if (form.value.password !== form.value.passwordConfirmation) {
+    errs.confirm = 'Passwords do not match.'
+  }
+  
+  fieldErrors.value = errs
+  return Object.keys(errs).length === 0
 }
 
-async function selectCountry(countryCode: string) {
-  form.value.countryCode = countryCode
-  form.value.countryName = countries.value.find(c => c.code === countryCode)?.name ?? ''
-  await fetchProvinces()
-}
-
-async function fetchProvinces() {
-  const country = countries.value.find(c => c.code === form.value.countryCode)
-  if (!country) return
-  form.value.countryId = country.id
-  form.value.province = ''
-  form.value.provinceId = null
-  form.value.schoolName = ''
-  form.value.schoolId = null
-  provinces.value = []
-  schools.value = []
-  loadingProvinces.value = true
-  try {
-    const { data } = await api.get('/api/provinces', { params: { country_id: country.id } })
-    provinces.value = data.data ?? data
-    if (provinces.value.length > 0) {
-      const firstProvince = provinces.value[0]
-      form.value.provinceId = firstProvince.id
-      form.value.province = firstProvince.name
-      await fetchSchools()
-    }
-  } catch (err) {
-    console.error('[RegisterPage] failed to load provinces', err)
-  } finally {
-    loadingProvinces.value = false
+function validateStep2(): boolean {
+  const errs: Record<string, string> = {}
+  if (!form.value.role) {
+    errs.role = 'Please select your role.'
   }
-}
-
-async function fetchSchools() {
-  if (!form.value.provinceId) return
-  form.value.schoolName = ''
-  form.value.schoolId = null
-  schools.value = []
-  loadingSchools.value = true
-  try {
-    const { data } = await api.get('/api/location-schools', {
-      params: { province_id: form.value.provinceId },
-    })
-    schools.value = data ?? []
-    if (schools.value.length > 0) {
-      const firstSchool = schools.value[0]
-      form.value.schoolId = firstSchool.id
-      form.value.schoolName = firstSchool.name
-    }
-  } catch (err) {
-    console.error('[RegisterPage] failed to load schools', err)
-  } finally {
-    loadingSchools.value = false
-  }
-}
-
-onMounted(async () => {
-  await fetchCountries()
-  const cambodia = countries.value.find(c => c.code === 'KH')
-  if (cambodia) {
-    form.value.countryCode = cambodia.code
-    form.value.countryName = cambodia.name
-    form.value.countryId = cambodia.id
-    await fetchProvinces()
-  }
-})
-
-function openAddLocation() {
-  locationError.value = ''
-  locationSuccess.value = ''
-  newLocation.value = {
-    countryName: form.value.countryName || selectedCountry.value?.name || '',
-    countryCode: form.value.countryCode || '',
-    provinceName: form.value.province,
-    schoolName: form.value.schoolName,
-  }
-  showAddLocation.value = true
-}
-
-function closeAddLocation() {
-  if (savingLocation.value) return
-  showAddLocation.value = false
-  locationError.value = ''
-  locationSuccess.value = ''
-}
-
-async function addLocationOption() {
-  if (!addLocationValid.value) return
-
-  savingLocation.value = true
-  locationError.value = ''
-  locationSuccess.value = ''
-
-  try {
-    const { data } = await api.post<LocationOptionResponse>('/api/location-options', {
-      country_name: newLocation.value.countryName,
-      country_code: newLocation.value.countryCode || undefined,
-      province_name: newLocation.value.provinceName,
-      school_name: newLocation.value.schoolName,
-    })
-
-    await fetchCountries()
-    if (!countries.value.some(c => c.code === data.country.code)) {
-      countries.value.push(data.country)
-    }
-
-    await selectCountry(data.country.code)
-    if (!provinces.value.some(p => p.id === data.province.id)) {
-      provinces.value.push(data.province)
-    }
-
-    form.value.province = data.province.name
-    await fetchSchools()
-    if (!schools.value.some(s => s.id === data.school.id)) {
-      schools.value.push(data.school)
-    }
-
-    form.value.schoolName = data.school.name
-    form.value.schoolId = data.school.id
-    locationSuccess.value = 'Location added and selected.'
-    showAddLocation.value = false
-  } catch (err) {
-    const response = (err as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } }).response
-    locationError.value = response?.data?.message
-      || (response?.data?.errors ? Object.values(response.data.errors).flat().join(', ') : '')
-      || 'Could not add this location.'
-  } finally {
-    savingLocation.value = false
-  }
+  fieldErrors.value = errs
+  return Object.keys(errs).length === 0
 }
 
 function nextStep() {
-  if (step.value === 1 && step1Valid.value) step.value = 2
-  else if (step.value === 2 && step2Valid.value) step.value = 3
-  else if (step.value === 3 && step3Valid.value) step.value = 4
+  if (step.value === 1 && validateStep1()) {
+    step.value = 2
+  } else if (step.value === 2 && validateStep2()) {
+    step.value = 3
+  }
 }
 
 function prevStep() {
@@ -315,6 +147,7 @@ function goToStep(n: number) {
 
 async function submit() {
   error.value = ''
+  fieldErrors.value = {}
   submitting.value = true
 
   const err = await auth.register({
@@ -323,23 +156,33 @@ async function submit() {
     password: form.value.password,
     password_confirmation: form.value.passwordConfirmation,
     role: form.value.role,
-    country_id: form.value.countryId,
-    province_id: form.value.provinceId,
-    school_id: form.value.schoolId,
-    country_name: form.value.countryName,
-    province_name: form.value.province,
-    school_name: form.value.schoolName,
   })
 
   if (err) {
-    error.value = err
+    // Classify error to show on the right field
+    const lower = err.toLowerCase()
+    if (lower.includes('name')) {
+      fieldErrors.value.name = err
+      step.value = 1
+    } else if (lower.includes('email') || lower.includes('registered') || lower.includes('exists') || lower.includes('taken')) {
+      fieldErrors.value.email = err
+      step.value = 1
+    } else if (lower.includes('password') || lower.includes('confirm') || lower.includes('match') || lower.includes('character') || lower.includes('min')) {
+      fieldErrors.value.password = err
+      step.value = 1
+    } else if (lower.includes('role')) {
+      fieldErrors.value.role = err
+      step.value = 2
+    } else {
+      error.value = err
+    }
     submitting.value = false
     return
   }
 
   success.value = true
-  // Redirect based on user role
-  const targetRoute = auth.user?.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard'
+  // Students start on the public home page after registration rather than the student dashboard.
+  const targetRoute = auth.user?.role === 'teacher' ? '/teacher/dashboard' : auth.user?.role === 'admin' ? '/admin/users' : '/'
   setTimeout(() => router.replace(targetRoute), 2000)
 }
 
@@ -363,10 +206,7 @@ const roleOptions: { value: Role; label: string; icon: string; desc: string; fea
 const stepErrors = computed(() => {
   const errs: Record<string, string> = {}
   if (step.value === 1) {
-    if (!form.value.name.trim()) errs.name = 'Name is required'
-    if (!form.value.email.trim()) errs.email = 'Email is required'
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.value.email)) errs.email = 'Invalid email format'
-    if (form.value.password.length > 0 && form.value.password.length < 6) errs.password = 'At least 6 characters'
+    if (form.value.password.length > 0 && form.value.password.length < 8) errs.password = 'At least 8 characters'
     if (form.value.passwordConfirmation && !passwordMatch.value) errs.confirm = 'Passwords do not match'
   }
   return errs
@@ -479,7 +319,7 @@ const stepErrors = computed(() => {
       </Transition>
 
       <!-- Form -->
-      <form v-if="!success" class="auth-form" novalidate @submit.prevent="step < 4 ? nextStep() : submit()">
+      <form v-if="!success" class="auth-form" novalidate @submit.prevent="step < 3 ? nextStep() : submit()">
         <Transition name="fade">
           <div v-if="error" class="alert">
             <svg class="alert-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -510,17 +350,17 @@ const stepErrors = computed(() => {
                   v-model="form.name"
                   type="text"
                   class="input"
-                  :class="{ 'input--error': stepErrors.name }"
+                  :class="{ 'input--error': stepErrors.name || fieldErrors.name }"
                   placeholder="John Doe"
                   required
                 />
-                <svg v-if="form.name.trim() && !stepErrors.name" class="input-valid" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <svg v-if="form.name.trim() && !stepErrors.name && !fieldErrors.name" class="input-valid" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
                   <polyline points="22 4 12 14.01 9 11.01" />
                 </svg>
               </div>
               <Transition name="fade">
-                <span v-if="stepErrors.name" class="field-error">{{ stepErrors.name }}</span>
+                <span v-if="stepErrors.name || fieldErrors.name" class="field-error">{{ fieldErrors.name || stepErrors.name }}</span>
               </Transition>
             </label>
 
@@ -535,17 +375,17 @@ const stepErrors = computed(() => {
                   v-model="form.email"
                   type="email"
                   class="input"
-                  :class="{ 'input--error': stepErrors.email }"
+                  :class="{ 'input--error': stepErrors.email || fieldErrors.email }"
                   placeholder="john@example.com"
                   required
                 />
-                <svg v-if="form.email.trim() && !stepErrors.email" class="input-valid" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <svg v-if="form.email.trim() && !stepErrors.email && !fieldErrors.email" class="input-valid" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
                   <polyline points="22 4 12 14.01 9 11.01" />
                 </svg>
               </div>
               <Transition name="fade">
-                <span v-if="stepErrors.email" class="field-error">{{ stepErrors.email }}</span>
+                <span v-if="stepErrors.email || fieldErrors.email" class="field-error">{{ fieldErrors.email || stepErrors.email }}</span>
               </Transition>
             </label>
 
@@ -561,8 +401,8 @@ const stepErrors = computed(() => {
                     v-model="form.password"
                     :type="showPassword ? 'text' : 'password'"
                     class="input"
-                    :class="{ 'input--error': stepErrors.password }"
-                     placeholder="At least 8 characters"
+                    :class="{ 'input--error': stepErrors.password || fieldErrors.password }"
+                    placeholder="At least 8 characters"
                     required
                   />
                   <button type="button" class="password-toggle" @click="showPassword = !showPassword" tabindex="-1">
@@ -589,7 +429,7 @@ const stepErrors = computed(() => {
                   </span>
                 </div>
                 <Transition name="fade">
-                  <span v-if="stepErrors.password" class="field-error">{{ stepErrors.password }}</span>
+                  <span v-if="stepErrors.password || fieldErrors.password" class="field-error">{{ fieldErrors.password || stepErrors.password }}</span>
                 </Transition>
               </label>
 
@@ -604,7 +444,7 @@ const stepErrors = computed(() => {
                     v-model="form.passwordConfirmation"
                     :type="showConfirmPassword ? 'text' : 'password'"
                     class="input"
-                    :class="{ 'input--error': form.passwordConfirmation && !passwordMatch }"
+                    :class="{ 'input--error': (form.passwordConfirmation && !passwordMatch) || fieldErrors.confirm }"
                     placeholder="Repeat password"
                     required
                   />
@@ -620,7 +460,7 @@ const stepErrors = computed(() => {
                   </button>
                 </div>
                 <Transition name="fade">
-                  <span v-if="stepErrors.confirm" class="field-error">{{ stepErrors.confirm }}</span>
+                  <span v-if="stepErrors.confirm || fieldErrors.confirm" class="field-error">{{ fieldErrors.confirm || stepErrors.confirm }}</span>
                 </Transition>
               </label>
             </div>
@@ -628,6 +468,16 @@ const stepErrors = computed(() => {
         </div>
 
         <!-- Step 2: Role -->
+        <Transition name="fade">
+          <div v-if="fieldErrors.role" class="alert" style="margin-bottom: 16px">
+            <svg class="alert-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="15" y1="9" x2="9" y2="15" />
+              <line x1="9" y1="9" x2="15" y2="15" />
+            </svg>
+            <span>{{ fieldErrors.role }}</span>
+          </div>
+        </Transition>
         <div v-show="step === 2" class="auth-step-panel">
           <div class="auth-step-panel__header">
             <h2 class="auth-step-panel__title">Select Your Role</h2>
@@ -667,120 +517,8 @@ const stepErrors = computed(() => {
           </div>
         </div>
 
-        <!-- Step 3: Location (dynamic cascading dropdowns) -->
+        <!-- Step 3: Review -->
         <div v-show="step === 3" class="auth-step-panel">
-          <div class="auth-step-panel__header auth-step-panel__header--split">
-            <div>
-              <h2 class="auth-step-panel__title">Your Location</h2>
-              <p class="auth-step-panel__desc">Select your location from the options below</p>
-            </div>
-            <button type="button" class="auth-mini-btn" @click="openAddLocation">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-              Add location
-            </button>
-          </div>
-
-          <div class="auth-step-panel__body auth-step-panel__body--location">
-            <Transition name="fade">
-              <div v-if="locationSuccess" class="auth-inline-success">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-                {{ locationSuccess }}
-              </div>
-            </Transition>
-
-            <div v-if="showAddLocation" class="auth-add-location">
-              <div class="auth-add-location__header">
-                <span class="auth-add-location__title">Add Missing Location</span>
-                <button type="button" class="auth-icon-btn" aria-label="Close" @click="closeAddLocation">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
-                </button>
-              </div>
-              <div class="auth-add-location__grid">
-                <label class="form-group">
-                  <span class="form-label">Country name</span>
-                  <input v-model="newLocation.countryName" class="input input--plain" type="text" placeholder="Cambodia" />
-                </label>
-                <label class="form-group">
-                  <span class="form-label">Country code</span>
-                  <input v-model="newLocation.countryCode" class="input input--plain" type="text" placeholder="KH" maxlength="10" />
-                </label>
-                <label class="form-group">
-                  <span class="form-label">Province</span>
-                  <input v-model="newLocation.provinceName" class="input input--plain" type="text" placeholder="Phnom Penh" />
-                </label>
-                <label class="form-group">
-                  <span class="form-label">School</span>
-                  <input v-model="newLocation.schoolName" class="input input--plain" type="text" placeholder="School name" />
-                </label>
-              </div>
-              <Transition name="fade">
-                <span v-if="locationError" class="field-error">{{ locationError }}</span>
-              </Transition>
-              <div class="auth-add-location__actions">
-                <button type="button" class="auth-btn auth-btn--secondary auth-btn--compact" :disabled="savingLocation" @click="closeAddLocation">Cancel</button>
-                <button type="button" class="auth-btn auth-btn--primary auth-btn--compact" :disabled="!addLocationValid || savingLocation" @click="addLocationOption">
-                  <svg v-if="savingLocation" class="auth-spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" stroke-linecap="round" /></svg>
-                  <span>{{ savingLocation ? 'Saving...' : 'Save & select' }}</span>
-                </button>
-              </div>
-            </div>
-
-            <SearchableSelect
-              v-model="form.countryCode"
-              label="Country"
-              :options="countries"
-              value-key="code"
-              label-key="name"
-              placeholder="Select a country"
-              :loading="loadingCountries"
-              :disabled="loadingCountries"
-              icon-path="<circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;10&quot; /><line x1=&quot;2&quot; y1=&quot;12&quot; x2=&quot;22&quot; y2=&quot;12&quot; /><path d=&quot;M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z&quot; />"
-              @change="selectCountry($event)"
-            />
-
-            <label class="form-group">
-              <span class="form-label">Province</span>
-              <div class="input-wrap">
-                <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                  <circle cx="12" cy="10" r="3" />
-                </svg>
-                <input
-                  v-model="form.province"
-                  type="text"
-                  class="input"
-                  placeholder="Auto-filled after selecting country"
-                />
-              </div>
-            </label>
-
-            <label class="form-group">
-              <span class="form-label">School</span>
-              <div class="input-wrap">
-                <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
-                  <path d="M6 12v5c3 3 9 3 12 0v-5" />
-                </svg>
-                <input
-                  v-model="form.schoolName"
-                  type="text"
-                  class="input"
-                  placeholder="Auto-filled after selecting province"
-                />
-              </div>
-            </label>
-          </div>
-        </div>
-
-        <!-- Step 4: Review -->
-        <div v-show="step === 4" class="auth-step-panel">
           <div class="auth-step-panel__header">
             <h2 class="auth-step-panel__title">Review Your Details</h2>
             <p class="auth-step-panel__desc">Please verify everything looks correct before submitting</p>
@@ -842,39 +580,6 @@ const stepErrors = computed(() => {
                   </div>
                 </div>
               </div>
-
-              <div class="auth-review-section">
-                <div class="auth-review-section__header">
-                  <div class="auth-review-section__icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 0 1-2.827 0l-4.244-4.243a8 8 0 1 1 11.314 0z" />
-                      <circle cx="12" cy="10" r="3" />
-                    </svg>
-                  </div>
-                  <span class="auth-review-section__title">Location</span>
-                  <button type="button" class="auth-review-section__edit" @click="goToStep(3)">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                    </svg>
-                    Edit
-                  </button>
-                </div>
-                <div class="auth-review-section__body">
-                  <div class="auth-review-row">
-                    <span class="auth-review-row__label">Country</span>
-                    <span class="auth-review-row__value">{{ form.countryName || '—' }}</span>
-                  </div>
-                  <div class="auth-review-row">
-                    <span class="auth-review-row__label">Province</span>
-                    <span class="auth-review-row__value">{{ form.province || '—' }}</span>
-                  </div>
-                  <div class="auth-review-row">
-                    <span class="auth-review-row__label">School</span>
-                    <span class="auth-review-row__value">{{ form.schoolName || '—' }}</span>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -908,13 +613,8 @@ const stepErrors = computed(() => {
           <button
             type="button"
             class="auth-btn auth-btn--primary"
-            :disabled="
-              submitting ||
-              (step === 1 && !step1Valid) ||
-              (step === 2 && !step2Valid) ||
-              (step === 3 && !step3Valid)
-            "
-            @click="step < 4 ? nextStep() : submit()"
+            :disabled="submitting"
+            @click="step < 3 ? nextStep() : submit()"
           >
             <template v-if="submitting">
               <svg class="auth-spinner" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -923,8 +623,8 @@ const stepErrors = computed(() => {
               Creating account...
             </template>
             <template v-else>
-              <span>{{ step < 4 ? 'Continue' : 'Create Account' }}</span>
-              <svg v-if="step < 4" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <span>{{ step < 3 ? 'Continue' : 'Create Account' }}</span>
+              <svg v-if="step < 3" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="5" y1="12" x2="19" y2="12" />
                 <polyline points="12 5 19 12 12 19" />
               </svg>

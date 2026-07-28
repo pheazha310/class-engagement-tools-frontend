@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useClassroomQuizStore } from '@/stores/classroomQuizStore'
 import { useAuthStore } from '@/stores/auth'
@@ -392,7 +392,7 @@ function cancel() {
 .create-page {
   position: relative;
   min-height: 100vh;
-  padding: 3rem 1rem 4rem;
+  padding: 7rem 1rem 4rem;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
@@ -935,7 +935,7 @@ function cancel() {
    RESPONSIVE
    ============================================================ */
 @media (max-width: 768px) {
-  .create-page { padding: 1.25rem 0.75rem 3rem; }
+  .create-page { padding: 6rem 0.75rem 3rem; }
 
   .create-header { flex-wrap: wrap; }
 
@@ -952,3 +952,4 @@ function cancel() {
   .btn { width: 100%; justify-content: center; }
 }
 </style>
+const isNotAuthenticated = computed(() => !authStore.isAuthenticated)

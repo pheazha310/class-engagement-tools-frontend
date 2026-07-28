@@ -71,6 +71,13 @@ function selectAnswer(questionId: string, choiceId: string) {
     }
   } else {
     answers.value[questionId] = [choiceId]
+
+    // Auto-advance to next question after a short delay for single-answer questions
+    setTimeout(() => {
+      if (currentIndex.value < totalQuestions.value - 1) {
+        nextQuestion()
+      }
+    }, 400)
   }
 }
 
@@ -410,7 +417,7 @@ onUnmounted(() => {
 .quiz-play-page {
   position: relative;
   min-height: 100vh;
-  padding: 1.5rem 1rem 3rem;
+  padding: 7rem 1rem 4rem;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
@@ -1150,7 +1157,7 @@ onUnmounted(() => {
    ============================================================ */
 @media (max-width: 768px) {
   .quiz-play-page {
-    padding: 1.25rem 0.75rem 2rem;
+    padding: 6rem 0.75rem 3rem;
   }
 
   .intro-card {

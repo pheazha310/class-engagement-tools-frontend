@@ -6,6 +6,7 @@ import { useTeacherDashboardStore } from '@/stores/teacherDashboardStore'
 import { useToolOrganizerStore } from '@/stores/toolOrganizerStore'
 import TeacherLayout from '@/components/teacher/TeacherLayout.vue'
 import TeacherIcon from '@/components/teacher/TeacherIcon.vue'
+import ToolIcon from '@/components/ToolIcon.vue'
 
 type TrendPoint = { label: string; value: number }
 
@@ -40,14 +41,13 @@ const stats = computed(() => ({
 const statCards = computed(() => [
   { label: 'Total Classes', value: stats.value.totalClasses, meta: 'Tracked', icon: 'cap', tone: 'blue' as const, route: '/teacher/classes' },
   { label: 'Students', value: stats.value.totalStudents, meta: `${stats.value.engagementPct}% engagement`, icon: 'users', tone: 'green' as const, route: '/teacher/students' },
-  { label: 'Active Polls', value: stats.value.activePolls, meta: 'Live', icon: 'poll', tone: 'red' as const, route: '/teacher/live-polls' },
-  { label: 'Scheduled', value: stats.value.scheduledSessions, meta: 'Upcoming', icon: 'calendar', tone: 'blue' as const, route: '/teacher/live-polls' },
-  { label: 'Live Now', value: stats.value.liveSessions, meta: 'On air', icon: 'zap', tone: 'red' as const, route: '/teacher/live-polls' },
+  { label: 'Active Polls', value: stats.value.activePolls, meta: 'Live', icon: 'poll', tone: 'red' as const, route: '/teacher/tools' },
+  { label: 'Scheduled', value: stats.value.scheduledSessions, meta: 'Upcoming', icon: 'calendar', tone: 'blue' as const, route: '/teacher/tools' },
+  { label: 'Live Now', value: stats.value.liveSessions, meta: 'On air', icon: 'zap', tone: 'red' as const, route: '/teacher/tools' },
   { label: 'Activities', value: stats.value.totalActivities, meta: 'All time', icon: 'clipboard', tone: 'blue' as const, route: '/teacher/activity-history' },
 ])
 
 const livePoll = computed(() => dashboardStore.livePoll)
-const livePollOptions = computed(() => livePoll.value?.options || [])
 
 const recentActivities = computed(() =>
   (Array.isArray(dashboardStore.recentActivities) ? dashboardStore.recentActivities : []).slice(0, 3).map((activity: any) => ({
@@ -242,35 +242,26 @@ const goTo = (route?: string) => {
 
       <aside class="panel live-poll-panel">
         <div class="live-poll-header">
-          <span class="live-badge">Live Poll</span>
+          <span class="live-badge">Classroom Tools</span>
           <div>
-            <strong>{{ livePoll?.responses ?? 0 }}</strong>
-            <small>Responses</small>
+            <strong>{{ stats.totalActivities }}</strong>
+            <small>Activities</small>
           </div>
         </div>
 
-        <template v-if="livePoll">
-          <h2>{{ livePoll.title }}</h2>
-          <p>{{ livePoll.question }}</p>
-          <div class="poll-bars">
-            <div v-for="option in livePollOptions" :key="option.label" class="poll-bar">
-              <div>
-                <span>{{ option.label }}</span>
-                <strong>{{ option.value }}%</strong>
-              </div>
-              <i :style="{ width: `${option.value}%` }"></i>
-            </div>
-          </div>
-        </template>
+        <h2>Engage your classroom</h2>
+        <p>Use interactive tools like quizzes, wheels, and group generators to boost participation.</p>
 
-        <template v-else>
-          <h2>No live poll right now</h2>
-          <p>Start a poll to watch responses update here in real time.</p>
-        </template>
-
-        <button class="primary-button close-poll-button" type="button" @click="goTo('/teacher/live-polls')">
-          Open Live Polls
-        </button>
+        <div class="live-poll-actions">
+          <button class="primary-button close-poll-button" type="button" @click="goTo('/teacher/tools')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="16" />
+              <line x1="8" y1="12" x2="16" y2="12" />
+            </svg>
+            Browse Tools
+          </button>
+        </div>
       </aside>
 
       <section class="panel trends-panel">
@@ -376,7 +367,7 @@ const goTo = (route?: string) => {
               type="button"
               @click="goTo(tool.route)"
             >
-              <span class="favtool-emoji">{{ tool.icon }}</span>
+              <span class="favtool-emoji"><ToolIcon :name="tool.icon" :size="24" /></span>
               <span class="favtool-name">{{ tool.label }}</span>
               <span class="favtool-hint">Open tool</span>
             </button>
@@ -738,10 +729,57 @@ mark.live {
   box-shadow: 80px 0 0 #dbe6fb;
 }
 
-.close-poll-button {
-  width: calc(100% - 52px);
-  min-height: 48px;
+.live-poll-actions {
+  display: flex;
+  gap: 10px;
   margin: 22px 26px 0;
+  width: calc(100% - 52px);
+}
+
+.close-poll-button {
+  flex: 1;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  border-radius: 10px;
+  background: var(--primary);
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.close-poll-button:hover {
+  background: #0019a0;
+  transform: translateY(-1px);
+}
+
+.close-poll-button-secondary {
+  flex: 1;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--primary);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.close-poll-button-secondary:hover {
+  background: var(--primary-soft);
+  transform: translateY(-1px);
 }
 
 .trends-panel,

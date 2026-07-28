@@ -108,6 +108,38 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  /** Extract the most specific error message from an API error response */
+  function extractError(err: unknown, fallback: string): string {
+    if (!(err instanceof AxiosError) || !err.response?.data) {
+      return err instanceof Error ? err.message : fallback
+    }
+
+    const data = err.response.data as Record<string, unknown>
+
+    // 1. Try field-level validation errors first (most specific)
+    const errors = data.errors
+    if (errors && typeof errors === 'object') {
+      const errObj = errors as Record<string, string[]>
+      const firstKey = Object.keys(errObj)[0]
+      const firstMsgs = firstKey ? errObj[firstKey] : null
+      if (Array.isArray(firstMsgs) && firstMsgs.length > 0 && firstMsgs[0]) {
+        return firstMsgs[0]
+      }
+    }
+
+    // 2. Try top-level message
+    if (typeof data.message === 'string' && data.message) {
+      return data.message
+    }
+
+    // 3. Try error field
+    if (typeof data.error === 'string' && data.error) {
+      return data.error
+    }
+
+    return fallback
+  }
+
   async function login(email: string, password: string, remember: boolean = false): Promise<string | null> {
     loading.value = true
     try {
@@ -122,10 +154,7 @@ export const useAuthStore = defineStore('auth', () => {
       }
       return null
     } catch (err) {
-      if (err instanceof AxiosError) {
-        return err.response?.data?.message || err.message || 'Login failed'
-      }
-      return err instanceof Error ? err.message : 'Login failed'
+      return extractError(err, 'Login failed. Please check your credentials.')
     } finally {
       loading.value = false
     }
@@ -145,10 +174,7 @@ export const useAuthStore = defineStore('auth', () => {
       }
       return null
     } catch (err) {
-      if (err instanceof AxiosError) {
-        return err.response?.data?.message || err.message || 'Registration failed'
-      }
-      return err instanceof Error ? err.message : 'Registration failed'
+      return extractError(err, 'Registration failed. Please try again.')
     } finally {
       loading.value = false
     }
@@ -161,6 +187,9 @@ export const useAuthStore = defineStore('auth', () => {
       // ignore
     }
     clearUser()
+    // Clear classroom quiz student data on logout
+    localStorage.removeItem('classroom-student-name')
+    localStorage.removeItem('classroom-student-class')
   }
 
   return {

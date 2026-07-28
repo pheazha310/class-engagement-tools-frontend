@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
@@ -12,21 +12,55 @@ const email = ref('')
 const password = ref('')
 const remember = ref(false)
 const error = ref<string | null>(null)
+const fieldErrors = ref<Record<string, string>>({})
 const showPassword = ref(false)
+
+// Clear errors when user types
+watch(email, () => {
+  if (error.value) error.value = null
+  delete fieldErrors.value.email
+})
+watch(password, () => {
+  if (error.value) error.value = null
+  delete fieldErrors.value.password
+})
 
 async function submit(event: Event) {
   event.preventDefault()
   error.value = null
+  fieldErrors.value = {}
 
-  const err = await auth.login(email.value, password.value, remember.value)
-  if (err) {
-    error.value = err
+  // Client-side validation
+  if (!email.value.trim()) {
+    fieldErrors.value.email = 'Please enter your email address.'
+    return
+  }
+  if (!password.value) {
+    fieldErrors.value.password = 'Please enter your password.'
     return
   }
 
-  const targetRoute = auth.user?.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard'
+  const err = await auth.login(email.value, password.value, remember.value)
+  if (err) {
+    // Show credential errors on both fields or as a general alert
+    const lower = err.toLowerCase()
+    if (lower.includes('email')) {
+      fieldErrors.value.email = err
+    } else if (lower.includes('credential') || lower.includes('password') || lower.includes('incorrect') || lower.includes('invalid') || lower.includes('not found') || lower.includes('doesn')) {
+      // Show on both fields for credential issues
+      fieldErrors.value.email = err
+      fieldErrors.value.password = err
+    } else {
+      error.value = err
+    }
+    return
+  }
+
+  // Students start on the public home page after login; their dashboard remains available only when they choose it.
+  const targetRoute = auth.user?.role === 'teacher' ? '/teacher/dashboard' : auth.user?.role === 'admin' ? '/admin/users' : '/'
   router.replace(targetRoute)
 }
+
 </script>
 
 <template>
@@ -94,8 +128,18 @@ async function submit(event: Event) {
                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
                 <polyline points="22,6 12,13 2,6" />
               </svg>
-              <input v-model="email" type="email" class="input" placeholder="you@example.com" required />
+              <input
+                v-model="email"
+                type="email"
+                class="input"
+                :class="{ 'input--error': fieldErrors.email }"
+                placeholder="you@example.com"
+                required
+              />
             </div>
+            <Transition name="fade">
+              <span v-if="fieldErrors.email" class="field-error">{{ fieldErrors.email }}</span>
+            </Transition>
           </label>
 
           <label class="form-group">
@@ -109,6 +153,7 @@ async function submit(event: Event) {
                 v-model="password"
                 :type="showPassword ? 'text' : 'password'"
                 class="input"
+                :class="{ 'input--error': fieldErrors.password }"
                 placeholder="Enter your password"
                 required
               />
@@ -123,6 +168,9 @@ async function submit(event: Event) {
                 </svg>
               </button>
             </div>
+            <Transition name="fade">
+              <span v-if="fieldErrors.password" class="field-error">{{ fieldErrors.password }}</span>
+            </Transition>
           </label>
 
           <div class="auth-options">

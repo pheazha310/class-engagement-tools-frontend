@@ -95,7 +95,7 @@ function getRankIcon(rank: number) {
             </p>
           </div>
         </div>
-        <button v-if="quiz && !store.hasStudentSubmitted(quizId, store.currentStudentName)" class="btn btn-retake" @click="retakeQuiz">
+        <button v-if="quiz && !store.hasStudentSubmitted(quizId, store.currentStudentName, store.currentStudentClass)" class="btn btn-retake" @click="retakeQuiz">
           <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polygon points="5 3 19 12 5 21 5 3" />
           </svg>
@@ -211,7 +211,7 @@ function getRankIcon(rank: number) {
 .rankings-page {
   position: relative;
   min-height: 100vh;
-  padding: 3rem 1rem 4rem;
+  padding: 7rem 1rem 4rem;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
@@ -676,7 +676,7 @@ function getRankIcon(rank: number) {
    ============================================================ */
 @media (max-width: 768px) {
   .rankings-page {
-    padding: 1.25rem 0.75rem 3rem;
+    padding: 6rem 0.75rem 3rem;
   }
 
   .rankings-header {

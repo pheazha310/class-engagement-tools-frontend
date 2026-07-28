@@ -4,6 +4,7 @@ import TeacherLayout from '@/components/teacher/TeacherLayout.vue'
 import TeacherIcon from '@/components/teacher/TeacherIcon.vue'
 import { useToolOrganizerStore } from '@/stores/toolOrganizerStore'
 import { categories } from '@/data/toolsData'
+import ToolIcon from '@/components/ToolIcon.vue'
 
 const organizer = useToolOrganizerStore()
 
@@ -187,10 +188,10 @@ function showSavedToast() {
           <span class="drag-handle" title="Drag to reorder">
             <TeacherIcon icon="picker" :size="16" />
           </span>
-          <span class="org-emoji">{{ tool.icon }}</span>
+          <span class="org-emoji"><ToolIcon :name="tool.icon" :size="22" /></span>
           <div class="org-info">
             <strong>{{ tool.title }}</strong>
-            <span class="org-category">{{ getCategoryEmoji(tool.category) }} {{ tool.category }}</span>
+            <span class="org-category"><ToolIcon :name="getCategoryEmoji(tool.category)" :size="14" /> {{ tool.category }}</span>
           </div>
           <div class="org-badges">
             <span class="org-badge badge-fav">Favorite</span>
@@ -251,10 +252,10 @@ function showSavedToast() {
           <span class="drag-handle" title="Drag to reorder">
             <TeacherIcon icon="picker" :size="16" />
           </span>
-          <span class="org-emoji">{{ tool.icon }}</span>
+          <span class="org-emoji"><ToolIcon :name="tool.icon" :size="22" /></span>
           <div class="org-info">
             <strong>{{ tool.title }}</strong>
-            <span class="org-category">{{ getCategoryEmoji(tool.category) }} {{ tool.category }}</span>
+            <span class="org-category"><ToolIcon :name="getCategoryEmoji(tool.category)" :size="14" /> {{ tool.category }}</span>
           </div>
           <div class="org-badges">
             <span v-if="tool.isFavorite" class="org-badge badge-fav">Favorite</span>
