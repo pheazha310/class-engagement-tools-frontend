@@ -2,13 +2,28 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { pollService } from '@/services/pollService'
+import { useAuthStore } from '@/stores/auth'
 import type { Poll } from '@/types/poll'
 
 const router = useRouter()
+const auth = useAuthStore()
 const polls = ref<Poll[]>([])
 const loading = ref(true)
 
 async function fetchActivePolls() {
+  if (!auth.initialized) {
+    try {
+      await auth.fetchUser()
+    } catch {
+      // continue as guest
+    }
+  }
+
+  if (auth.isAuthenticated && auth.user?.role === 'teacher') {
+    router.replace('/teacher/live-polls')
+    return
+  }
+
   try {
     const response = await pollService.getPolls(50)
     const items = (response.data || []).filter((p: Poll) => p.status === 'active')

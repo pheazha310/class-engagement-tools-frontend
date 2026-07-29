@@ -209,7 +209,7 @@ function getBarColor(index: number, total: number): string {
           If you want to test the voting experience, please log out or use a different browser.
         </p>
         <div class="sv-teacher-block-actions">
-          <router-link to="/live-voting" class="sv-btn sv-btn--outline">
+          <router-link to="/teacher/live-polls" class="sv-btn sv-btn--outline">
             <svg class="sv-btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>

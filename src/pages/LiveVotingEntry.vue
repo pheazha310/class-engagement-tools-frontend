@@ -21,10 +21,11 @@ onMounted(async () => {
   await new Promise((r) => setTimeout(r, 400))
 
   if (auth.isAuthenticated && auth.user?.role === 'teacher') {
-    router.replace('/live-voting')
-  } else {
-    router.replace('/polls/active')
+    router.replace('/teacher/live-polls')
+    return
   }
+
+  router.replace('/active-polls')
 })
 </script>
 

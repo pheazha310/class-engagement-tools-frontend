@@ -71,6 +71,12 @@ function openResults(id: string) {
   router.push(`/teacher/live-polls/${id}/results`)
 }
 
+function openLiveVoting(poll: Poll) {
+  const token = poll.public_token
+  const votingUrl = token ? `${window.location.origin}/vote/${token}` : `${window.location.origin}/polls/active`
+  window.open(votingUrl, '_blank', 'noopener,noreferrer')
+}
+
 function confirmDelete(poll: Poll) {
   deletingId.value = poll.id
   deletingTitle.value = poll.question
@@ -197,6 +203,7 @@ onMounted(() => fetchPolls())
           <div class="card-actions">
             <button v-if="p.status === 'draft'" class="card-action-btn start" type="button" title="Start Poll" @click.stop="startPoll(p.id)"><TeacherIcon icon="play" :size="16" /></button>
             <button v-if="p.status === 'active'" class="card-action-btn stop" type="button" title="End Poll" @click.stop="endPoll(p.id)"><TeacherIcon icon="stop" :size="16" /></button>
+            <button v-if="p.status === 'active'" class="card-action-btn live" type="button" title="Live Voting" @click.stop="openLiveVoting(p)"><TeacherIcon icon="poll" :size="16" /></button>
             <button class="card-action-btn" type="button" title="Results" @click.stop="openResults(p.id)"><TeacherIcon icon="chart" :size="16" /></button>
             <button class="card-action-btn" type="button" title="Edit" @click.stop="openEdit(p.id)"><TeacherIcon icon="edit" :size="16" /></button>
             <button class="card-action-btn delete" type="button" title="Delete" @click.stop="confirmDelete(p)"><TeacherIcon icon="trash" :size="16" /></button>
@@ -221,6 +228,7 @@ onMounted(() => fetchPolls())
           <span class="tcol-actions"><div class="t-actions">
             <button v-if="p.status === 'draft'" class="t-action start" type="button" title="Start Poll" @click="startPoll(p.id)"><TeacherIcon icon="play" :size="16" /></button>
             <button v-if="p.status === 'active'" class="t-action stop" type="button" title="End Poll" @click="endPoll(p.id)"><TeacherIcon icon="stop" :size="16" /></button>
+            <button v-if="p.status === 'active'" class="t-action live" type="button" title="Live Voting" @click="openLiveVoting(p)"><TeacherIcon icon="poll" :size="16" /></button>
             <button class="t-action" type="button" title="Results" @click="openResults(p.id)"><TeacherIcon icon="chart" :size="16" /></button>
             <button class="t-action" type="button" title="Edit" @click="openEdit(p.id)"><TeacherIcon icon="edit" :size="16" /></button>
             <button class="t-action delete" type="button" title="Delete" @click="confirmDelete(p)"><TeacherIcon icon="trash" :size="16" /></button>
@@ -282,6 +290,7 @@ onMounted(() => fetchPolls())
 .card-action-btn.delete:hover { background: var(--red-soft); color: var(--red); }
 .card-action-btn.start:hover { background: var(--green-soft); color: var(--green); }
 .card-action-btn.stop:hover { background: #fff0f0; color: var(--red); }
+.card-action-btn.live:hover { background: #eef2ff; color: var(--primary); }
 .table-row { display: grid; grid-template-columns: minmax(200px,2.5fr) minmax(80px,0.7fr) minmax(110px,1fr) 60px 60px 70px 90px 90px; align-items: center; min-height: 64px; border-top: 1px solid #e0e4ef; padding: 0 20px; gap: 10px; transition: background .15s; }
 .table-row:hover { background: #f8faff; }
 .table-heading { min-height: 46px; background: #eef3ff; color: #596072; font-size: 11px; font-weight: 800; text-transform: uppercase; }
@@ -299,6 +308,7 @@ onMounted(() => fetchPolls())
 .t-action.delete:hover { background: var(--red-soft); color: var(--red); }
 .t-action.start:hover { background: var(--green-soft); color: var(--green); }
 .t-action.stop:hover { background: #fff0f0; color: var(--red); }
+.t-action.live:hover { background: #eef2ff; color: var(--primary); }
 .delete-content { text-align: center; padding: 8px 0 16px; }
 .delete-icon { color: var(--red); margin-bottom: 12px; }
 .delete-content p { margin: 8px 0; font-size: 15px; color: var(--ink); }

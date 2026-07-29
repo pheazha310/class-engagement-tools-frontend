@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
+import { pollService } from '@/services/pollService'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -104,8 +105,16 @@ async function fetchData() {
     const [historyRes] = await Promise.allSettled([
       api.get('/api/game-histories').catch(() => ({ data: { data: [] } })),
     ])
-
-    activePolls.value = []
+    const activePollRes = await pollService.getActivePoll().catch(() => null)
+    const activePayload = activePollRes as any
+    const activeList = activePayload?.polls || activePayload?.data?.polls || []
+    const singlePoll = activePayload?.poll || activePayload?.data?.poll || null
+    activePolls.value = Array.isArray(activeList)
+      ? activeList
+      : []
+    if (!activePolls.value.length && singlePoll) {
+      activePolls.value = [singlePoll]
+    }
 
     let streakDays = 0
 

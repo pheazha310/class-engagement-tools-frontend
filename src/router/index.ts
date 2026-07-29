@@ -323,6 +323,23 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true, role: 'teacher' },
   },
   {
+    path: '/live-voting',
+    name: 'live-voting-entry',
+    component: () => import('@/pages/LiveVotingEntry.vue'),
+  },
+  {
+    path: '/live-voting/create',
+    name: 'live-voting-create',
+    component: () => import('@/pages/teacher/LivePollCreate.vue'),
+    meta: { requiresAuth: true, role: 'teacher' },
+  },
+  {
+    path: '/live-voting/:id/edit',
+    name: 'live-voting-edit',
+    component: () => import('@/pages/teacher/LivePollCreate.vue'),
+    meta: { requiresAuth: true, role: 'teacher' },
+  },
+  {
     path: '/vote/:token',
     name: 'live-vote-public',
     component: () => import('@/pages/public/LiveVote.vue'),

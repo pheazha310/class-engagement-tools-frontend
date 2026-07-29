@@ -118,6 +118,12 @@ const sidebarItems: Array<{ id: string; label: string; icon: string; route: stri
     icon: "history",
     route: "/teacher/activity-history",
   },
+  {
+    id: "live-polls",
+    label: "Live Polls",
+    icon: "poll",
+    route: "/teacher/live-polls",
+  },
 ];
 
 const siteItems: Array<{ id: string; label: string; icon: string; route: string }> = [

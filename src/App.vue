@@ -2,21 +2,21 @@
 import { RouterView, useRoute } from 'vue-router'
 import Navbar from './components/Navbar.vue';
 import { computed } from 'vue';
-import { useAuthStore } from '@/stores/auth';
 
 const route = useRoute();
-const auth = useAuthStore();
 
 const hideNavbar = computed(() => {
   const routeHide = route.meta?.hideNavbar || false
-  const isTeacher = auth.isAuthenticated && auth.user?.role === 'teacher'
-  return routeHide || isTeacher
+  const usesOwnLayout = route.meta?.role === 'teacher' || route.meta?.role === 'admin'
+  return routeHide || usesOwnLayout
 })
+
+const showNavbar = computed(() => !hideNavbar.value)
 </script>
 
 <template>
-  <Navbar v-if="!hideNavbar" />
-  <div class="main-content">
+  <Navbar v-if="showNavbar" />
+  <div class="main-content" :class="{ 'has-navbar': showNavbar }">
     <RouterView />
   </div>
 </template>
@@ -44,6 +44,10 @@ html {
 
 body {
   font-family: inherit;
+}
+
+.main-content.has-navbar {
+  padding-top: 64px;
 }
 
 </style>

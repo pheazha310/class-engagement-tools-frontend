@@ -2,10 +2,12 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useLivePollStore } from '@/stores/livePollStore'
+import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
 const router = useRouter()
 const store = useLivePollStore()
+const auth = useAuthStore()
 
 const token = computed(() => route.params.token as string)
 
@@ -76,7 +78,20 @@ function goToResults() {
   router.push({ name: 'live-results-page', params: { token: token.value } })
 }
 
-onMounted(() => {
+onMounted(async () => {
+  if (!auth.initialized) {
+    try {
+      await auth.fetchUser()
+    } catch {
+      // continue
+    }
+  }
+
+  if (auth.isAuthenticated && auth.user?.role === 'teacher') {
+    router.replace('/teacher/live-polls')
+    return
+  }
+
   loadPoll()
   timer = setInterval(() => { now.value = Date.now() }, 1000)
 })

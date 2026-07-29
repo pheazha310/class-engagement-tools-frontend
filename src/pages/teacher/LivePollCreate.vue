@@ -58,7 +58,7 @@ function removeOption(index: number) {
   }
 }
 
-async function submitForm() {
+async function savePoll(startImmediately = false) {
   if (!question.value.trim()) {
     showNotification('Please enter a question.', 'error')
     return
@@ -84,19 +84,39 @@ async function submitForm() {
 
   submitting.value = true
   try {
+    let savedPoll: Awaited<ReturnType<typeof pollService.createPoll>> | null = null
     if (isEdit.value && pollId.value) {
       await pollService.updatePoll(pollId.value, data)
-      showNotification('Poll updated successfully!', 'success')
+      if (startImmediately) {
+        await pollService.startPoll(pollId.value)
+        showNotification('Poll updated and is now live!', 'success')
+      } else {
+        showNotification('Poll updated successfully!', 'success')
+      }
     } else {
-      await pollService.createPoll(data)
-      showNotification('Poll created successfully!', 'success')
+      savedPoll = await pollService.createPoll(data)
+      if (startImmediately && savedPoll) {
+        await pollService.startPoll(savedPoll.id)
+        showNotification('Poll created and is now live!', 'success')
+      } else {
+        showNotification('Poll created successfully!', 'success')
+      }
     }
     router.push('/teacher/live-polls')
   } catch {
-    showNotification(`Failed to ${isEdit.value ? 'update' : 'create'} poll.`, 'error')
+    const action = startImmediately ? 'start' : (isEdit.value ? 'update' : 'create')
+    showNotification(`Failed to ${action} poll.`, 'error')
   } finally {
     submitting.value = false
   }
+}
+
+function submitForm() {
+  return savePoll(false)
+}
+
+function startLiveVoting() {
+  return savePoll(true)
 }
 </script>
 
@@ -149,8 +169,11 @@ async function submitForm() {
 
       <div class="form-actions">
         <button type="button" class="outline-button" @click="router.push('/teacher/live-polls')">Cancel</button>
-        <button type="submit" class="primary-button" :disabled="submitting">
+        <button type="button" class="outline-button" :disabled="submitting" @click="submitForm">
           {{ submitting ? 'Saving...' : isEdit ? 'Update Poll' : 'Create Poll' }}
+        </button>
+        <button type="button" class="primary-button" :disabled="submitting" @click="startLiveVoting">
+          {{ submitting ? 'Starting...' : isEdit ? 'Update & Live Voting' : 'Create & Live Voting' }}
         </button>
       </div>
     </form>

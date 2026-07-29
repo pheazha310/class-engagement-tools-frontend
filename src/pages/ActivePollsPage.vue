@@ -2,15 +2,30 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useLivePollStore } from '@/stores/livePollStore'
+import { useAuthStore } from '@/stores/auth'
 import type { ActivePollItem } from '@/types/livePoll'
 
 const router = useRouter()
 const store = useLivePollStore()
+const auth = useAuthStore()
 
 const now = ref(Date.now())
 let timer: ReturnType<typeof setInterval> | null = null
 
 onMounted(async () => {
+  if (!auth.initialized) {
+    try {
+      await auth.fetchUser()
+    } catch {
+      // continue as guest
+    }
+  }
+
+  if (auth.isAuthenticated && auth.user?.role === 'teacher') {
+    router.replace('/teacher/live-polls')
+    return
+  }
+
   try {
     await store.fetchActivePolls()
   } catch {
@@ -68,7 +83,9 @@ function isEndingSoon(poll: ActivePollItem): boolean {
 }
 
 function vote(poll: ActivePollItem) {
-  router.push({ name: 'live-vote-public', params: { token: poll.public_token } })
+  if (poll.public_token) {
+    router.push({ name: 'live-vote-public', params: { token: poll.public_token } })
+  }
 }
 </script>
 

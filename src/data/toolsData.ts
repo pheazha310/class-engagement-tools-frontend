@@ -13,6 +13,7 @@ export const categories: Category[] = [
     { title: 'Icebreakers', slug: 'icebreakers', icon: 'sparkles', description: 'Warm up your class with energizing prompts and team-building exercises.', category: 'Student Engagement', route: '/icebreakers' },
     { title: 'Mood Check', slug: 'mood-check', icon: 'smile', description: 'Check student mood and engagement levels.', category: 'Student Engagement', route: '/tools/mood-check' },
     { title: 'Word Cloud', slug: 'word-cloud', icon: 'cloud', description: 'Visualize word frequency and student responses.', category: 'Student Engagement', route: '/tools/word-cloud' },
+    { title: 'Live Voting', slug: 'live-voting', icon: 'poll', description: 'Launch quick polls and collect instant student feedback in real time.', category: 'Student Engagement', route: '/live-voting' },
   ] },
   { name: 'Classroom Control', icon: 'timer', slug: 'classroom', tools: [
     { title: 'Timer', slug: 'timer', icon: 'timer', description: 'Run countdowns, stopwatches, and Pomodoro sessions with alerts.', category: 'Classroom Control', route: '/timer' },

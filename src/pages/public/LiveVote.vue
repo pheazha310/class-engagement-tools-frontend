@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { pollService } from '@/services/pollService'
+import { useAuthStore } from '@/stores/auth'
 import type { Poll, PollResultsData } from '@/types/poll'
 import { showNotification } from '@/utils/notifications'
 
 const route = useRoute()
+const router = useRouter()
+const auth = useAuthStore()
 
 const loading = ref(true)
 const voting = ref(false)
@@ -19,6 +22,19 @@ const error = ref('')
 const isActive = computed(() => poll.value?.status === 'active')
 
 async function loadPoll() {
+  if (!auth.initialized) {
+    try {
+      await auth.fetchUser()
+    } catch {
+      // continue as guest
+    }
+  }
+
+  if (auth.isAuthenticated && auth.user?.role === 'teacher') {
+    router.replace('/teacher/live-polls')
+    return
+  }
+
   const token = route.params.token as string
   if (!token) {
     error.value = 'Invalid voting link.'
@@ -39,6 +55,10 @@ async function loadPoll() {
     loading.value = false
   }
 }
+
+onMounted(() => {
+  loadPoll()
+})
 
 async function submitVote() {
   if (!poll.value || !isActive.value) return
