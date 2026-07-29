@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useLivePollStore } from '@/stores/livePollStore'
 import { useAuthStore } from '@/stores/auth'
@@ -22,8 +22,27 @@ const selectedOptionId = ref<string | null>(null)
 const pageError = ref<string | null>(null)
 const phase = ref<'loading' | 'poll' | 'voted' | 'results' | 'error'>('loading')
 const resultsLoading = ref(false)
+let resultsTimer: ReturnType<typeof setInterval> | null = null
 
 const isStudent = computed(() => auth.user?.role === 'student')
+const pollTypeLabel = computed(() => {
+  if (!poll.value) return ''
+  switch (poll.value.poll_type) {
+    case 'yes_no':
+      return 'Yes / No'
+    case 'rating':
+      return 'Rating scale'
+    default:
+      return 'Multiple choice'
+  }
+})
+
+const pollHelperText = computed(() => {
+  if (!poll.value) return ''
+  if (poll.value.poll_type === 'yes_no') return 'Tap Yes or No to respond from any phone or tablet.'
+  if (poll.value.poll_type === 'rating') return 'Choose the score that best matches your answer.'
+  return poll.value.allow_multiple_votes ? 'Select all that apply from your mobile device.' : 'Select one answer from your mobile device.'
+})
 
 const totalSeconds = computed(() => {
   if (!poll.value?.duration_minutes || !poll.value?.started_at) return 0
@@ -73,10 +92,27 @@ async function loadResults() {
   try {
     const r = await store.fetchPublicResults(token.value)
     if (r) results.value = r
+    startResultsPolling()
   } catch {
     // ignore
   } finally {
     resultsLoading.value = false
+  }
+}
+
+function startResultsPolling() {
+  stopResultsPolling()
+  resultsTimer = setInterval(() => {
+    if (phase.value === 'results' && poll.value?.status !== 'closed') {
+      void loadResults()
+    }
+  }, 3000)
+}
+
+function stopResultsPolling() {
+  if (resultsTimer) {
+    clearInterval(resultsTimer)
+    resultsTimer = null
   }
 }
 
@@ -91,6 +127,7 @@ async function submitVote() {
     phase.value = 'voted'
     if (poll.value?.show_results) {
       await loadResults()
+      phase.value = 'results'
     }
   } catch (e: unknown) {
     const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to submit vote.'
@@ -119,6 +156,10 @@ const viewResults = () => {
   phase.value = 'results'
   loadResults()
 }
+
+onUnmounted(() => {
+  stopResultsPolling()
+})
 </script>
 
 <template>
@@ -166,19 +207,22 @@ const viewResults = () => {
 
           <h2 class="mb-1 text-lg font-bold text-gray-900">{{ poll.question }}</h2>
           <p v-if="poll.title" class="mb-4 text-sm text-gray-500">{{ poll.title }}</p>
-
-          <div v-if="poll.anonymous" class="mb-4 inline-flex items-center gap-1.5 rounded-full bg-purple-100 px-3 py-1 text-xs font-medium text-purple-700">
-            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-            </svg>
-            Anonymous poll
+          <div class="mb-4 flex flex-wrap items-center gap-2">
+            <span class="rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-700">{{ pollTypeLabel }}</span>
+            <span v-if="poll.anonymous" class="rounded-full bg-purple-100 px-3 py-1 text-xs font-semibold text-purple-700">Anonymous</span>
+            <span v-if="poll.allow_multiple_votes" class="rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-700">Multi-vote</span>
           </div>
+
+          <p class="text-sm text-gray-500">{{ pollHelperText }}</p>
         </div>
 
         <div class="rounded-2xl bg-white p-6 shadow-sm">
           <h3 class="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">
             {{ poll.allow_multiple_votes ? 'Select all that apply' : 'Select one option' }}
           </h3>
+          <div v-if="poll.poll_type === 'rating'" class="mb-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
+            Rating scale polls use the options below as the score choices.
+          </div>
           <div class="space-y-3">
             <VoteOption
               v-for="option in poll.options"

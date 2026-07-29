@@ -227,7 +227,7 @@ async function handleStartPoll() {
     await pollStore.startPoll(poll.id)
     toastMessage.value = 'Poll is now live!'
     toastType.value = 'success'
-    setTimeout(() => router.push({ name: 'live-voting' }), 1200)
+    setTimeout(() => router.push({ name: 'live-poll-created', params: { id: poll.id } }), 1200)
   } catch (e: any) {
     const msg = e.response?.data?.message
       || e.response?.data?.error

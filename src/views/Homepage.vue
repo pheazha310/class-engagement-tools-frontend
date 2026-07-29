@@ -87,6 +87,7 @@ onBeforeUnmount(() => {
           <div class="hero-buttons reveal">
             <RouterLink to="/register" class="btn btn-primary btn-large">Get Started Free</RouterLink>
             <RouterLink to="/tools" class="btn btn-ghost btn-large">Explore Tools</RouterLink>
+            <RouterLink to="/classroom-polls" class="btn btn-ghost btn-large">Join a Poll</RouterLink>
           </div>
         </div>
       </div>
@@ -255,6 +256,7 @@ onBeforeUnmount(() => {
         <div class="cta-actions reveal">
           <RouterLink to="/register" class="btn btn-primary btn-large">Get Started Free</RouterLink>
           <RouterLink to="/tools" class="btn btn-ghost-light btn-large">Explore Tools</RouterLink>
+          <RouterLink to="/classroom-polls" class="btn btn-ghost-light btn-large">Join a Poll</RouterLink>
         </div>
       </div>
       <div class="cta-grid" />

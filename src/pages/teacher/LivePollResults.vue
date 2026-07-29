@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useLivePollStore } from '@/stores/livePollStore'
 import { livePollService } from '@/services/livePollService'
+import QRCodeModal from '@/components/QRCodeModal.vue'
 import ResultBar from '@/components/live/ResultBar.vue'
 import PollStatusBadge from '@/components/live/PollStatusBadge.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
@@ -18,6 +19,9 @@ const results = ref<LivePollResults | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
 const autoRefresh = ref(true)
+const exportingCsv = ref(false)
+const exportingPdf = ref(false)
+const showQr = ref(false)
 let pollTimer: ReturnType<typeof setInterval> | null = null
 
 const baseUrl = `${window.location.origin}/vote`
@@ -26,6 +30,8 @@ const voteUrl = computed(() => {
   if (!poll.value?.public_token) return ''
   return `${baseUrl}/${poll.value.public_token}`
 })
+
+const joinCode = computed(() => poll.value?.public_token || '')
 
 onMounted(async () => {
   const id = route.params.id as string
@@ -87,6 +93,46 @@ const maxPercentage = computed(() => {
   return Math.max(...results.value.options.map((o) => (results.value!.total_votes > 0 ? Math.round((o.votes / results.value!.total_votes) * 100) : 0)))
 })
 
+async function handleExportCsv() {
+  if (!poll.value || exportingCsv.value) return
+  exportingCsv.value = true
+  try {
+    const response = await livePollService.exportResults(poll.value.id, 'csv')
+    const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `live-poll-${poll.value.id}-results.csv`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+    store.successMessage = 'CSV exported successfully.'
+  } finally {
+    exportingCsv.value = false
+  }
+}
+
+async function handleExportPdf() {
+  if (!poll.value || exportingPdf.value) return
+  exportingPdf.value = true
+  try {
+    const response = await livePollService.exportResults(poll.value.id, 'pdf')
+    const blob = new Blob([response.data], { type: 'application/pdf' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `live-poll-${poll.value.id}-results.pdf`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+    store.successMessage = 'PDF exported successfully.'
+  } finally {
+    exportingPdf.value = false
+  }
+}
+
 async function copyLink() {
   if (!voteUrl.value) return
   try {
@@ -113,7 +159,7 @@ async function copyLink() {
       </div>
 
       <template v-else-if="poll">
-        <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <div class="mb-2 flex items-center gap-3">
               <h1 class="text-2xl font-bold text-gray-900">{{ poll.question }}</h1>
@@ -126,6 +172,20 @@ async function copyLink() {
             </p>
           </div>
           <div class="flex flex-wrap gap-2">
+            <button
+              class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+              :disabled="!poll || exportingCsv"
+              @click="handleExportCsv"
+            >
+              {{ exportingCsv ? 'Exporting...' : 'Export CSV' }}
+            </button>
+            <button
+              class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+              :disabled="!poll || exportingPdf"
+              @click="handleExportPdf"
+            >
+              {{ exportingPdf ? 'Exporting...' : 'Export PDF' }}
+            </button>
             <button
               v-if="poll.status === 'active'"
               class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700"
@@ -149,6 +209,18 @@ async function copyLink() {
               <input v-model="autoRefresh" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600" />
               Auto-refresh
             </label>
+          </div>
+          <div class="mb-4 grid gap-3 sm:grid-cols-2">
+            <div class="rounded-xl border border-indigo-200 bg-white px-4 py-3">
+              <div class="text-xs font-semibold uppercase tracking-wider text-gray-400">Join Code</div>
+              <div class="mt-1 font-mono text-lg font-bold text-indigo-700">{{ joinCode }}</div>
+            </div>
+            <button
+              class="rounded-xl border border-indigo-200 bg-white px-4 py-3 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-50"
+              @click="showQr = true"
+            >
+              Show QR Code
+            </button>
           </div>
           <div class="flex flex-col gap-2 sm:flex-row">
             <div class="flex-1 truncate rounded-xl border border-indigo-200 bg-white px-4 py-3 text-sm font-mono text-indigo-700">
@@ -199,6 +271,13 @@ async function copyLink() {
           :message="store.successMessage"
           type="success"
           @close="store.clearSuccess()"
+        />
+
+        <QRCodeModal
+          :show="showQr"
+          :join-url="voteUrl"
+          :room-code="joinCode"
+          @close="showQr = false"
         />
       </template>
     </div>

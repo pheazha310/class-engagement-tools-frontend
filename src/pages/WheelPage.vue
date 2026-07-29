@@ -192,8 +192,9 @@ function exitProjectorMode() {
   flex-direction: column;
   align-items: center;
   min-height: 100vh;
-  padding: 24px;
-  gap: 24px;
+  padding: 28px;
+  gap: 28px;
+  transition: background 0.4s ease;
 }
 
 .container {
@@ -201,13 +202,13 @@ function exitProjectorMode() {
   max-width: 1200px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 28px;
 }
 
 .page-header {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
 .header-actions {
@@ -234,24 +235,31 @@ function exitProjectorMode() {
   flex: 1;
   max-width: 420px;
   gap: 20px;
+  display: flex;
+  flex-direction: column;
 }
 
 .wheel-column {
   flex: 1;
   max-width: 520px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .title {
-  font-size: 32px;
+  font-size: 36px;
   font-weight: 800;
   color: #fff;
   margin: 0;
   text-align: center;
+  letter-spacing: -0.02em;
+  text-shadow: 0 2px 16px rgba(0,0,0,.25);
 }
 
 .subtitle {
-  font-size: 16px;
-  color: #888;
+  font-size: 15px;
+  color: rgba(255,255,255,.75);
   margin: 0;
   text-align: center;
 }
@@ -263,20 +271,27 @@ function exitProjectorMode() {
   gap: 10px;
   width: 100%;
   max-width: 720px;
-  height: 56px;
+  height: 52px;
   border: 1.5px solid rgba(255, 255, 255, 0.12);
   border-radius: 14px;
-  background: rgba(15, 23, 42, 0.82);
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(12px);
   color: #fff;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+  font-family: inherit;
 }
 
 .btn-projector:hover {
-  background: rgba(15, 23, 42, 0.94);
-  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(15, 23, 42, 0.9);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+}
+
+.btn-projector:active {
+  transform: translateY(0);
 }
 
 .icon-projector {
@@ -287,19 +302,25 @@ function exitProjectorMode() {
 .btn-back {
   display: inline-flex;
   align-items: center;
-  padding: 10px 20px;
-  border-radius: 8px;
+  gap: 6px;
+  padding: 10px 18px;
+  border-radius: 10px;
   text-decoration: none;
   font-weight: 600;
   font-size: 14px;
-  border: 1.5px solid rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.9);
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  background: rgba(15, 23, 42, 0.35);
   transition: all 0.2s ease;
+  font-family: inherit;
 }
 
 .btn-back:hover {
-  border-color: #22d3ee;
-  color: #22d3ee;
+  border-color: rgba(255,255,255,.45);
+  color: #fff;
+  background: rgba(15, 23, 42, 0.55);
+  transform: translateY(-1px);
 }
 
 @media (max-width: 900px) {

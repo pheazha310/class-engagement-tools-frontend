@@ -49,7 +49,7 @@ async function handleSubmit(data: PollFormData) {
     } else {
       const poll = await store.createPoll(data)
       toastMessage.value = 'Poll created successfully!'
-      router.push(`/polls/${poll.id}/results`)
+      router.push(`/teacher/live-polls/${poll.id}/created`)
       return
     }
     router.push('/polls')

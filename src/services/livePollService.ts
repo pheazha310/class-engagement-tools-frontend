@@ -52,6 +52,14 @@ export const livePollService = {
     return response.data.results
   },
 
+  async exportResults(pollId: string, format: 'csv' | 'pdf') {
+    const response = await api.get(`/api/polls/${pollId}/export/${format}`, {
+      responseType: 'blob',
+    })
+
+    return response
+  },
+
   async submitVote(token: string, optionId: string, guestToken?: string) {
     const response = await api.post<{ message: string }>(`/api/polls/public/${token}/vote`, {
       option_id: optionId,

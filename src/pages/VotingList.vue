@@ -10,6 +10,7 @@ import ConfirmationDialog from '@/components/ConfirmationDialog.vue'
 const router = useRouter()
 const auth = useAuthStore()
 const isTeacher = computed(() => auth.isAuthenticated && auth.user?.role === 'teacher')
+const guestPollPath = '/classroom-polls'
 
 const polls = ref<LivePoll[]>([])
 const searchQuery = ref('')
@@ -137,7 +138,7 @@ function formatDate(iso: string) {
 }
 
 function openShareModal(poll: LivePoll) {
-  sharePollUrl.value = `${window.location.origin}/vote/live`
+  sharePollUrl.value = `${window.location.origin}${guestPollPath}`
   sharePollTitle.value = poll.title
   linkCopied.value = false
   showShareModal.value = true
@@ -195,6 +196,23 @@ function getDurationLabel(minutes: number) {
 
       <RouterLink to="/tools" class="btn-back">← Back to all tools</RouterLink>
 
+      <div v-if="!isTeacher" class="vl-guest-banner">
+        <div class="vl-guest-banner-content">
+          <div class="vl-guest-banner-icon" aria-hidden="true">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.55 2.276a1 1 0 010 1.788L15 16.34M5 9h14M5 15h14M4 4h16v16H4z" />
+            </svg>
+          </div>
+          <div>
+            <p class="vl-guest-banner-title">Guest access</p>
+            <p class="vl-guest-banner-text">Open the classroom poll page to join an active poll or vote from your phone without logging in.</p>
+          </div>
+        </div>
+        <RouterLink :to="guestPollPath" class="vl-guest-banner-btn">
+          Open Classroom Polls
+        </RouterLink>
+      </div>
+
       <!-- Search -->
       <div class="vl-search-bar">
         <svg class="vl-search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -228,12 +246,12 @@ function getDurationLabel(minutes: number) {
         <template v-else>
           <h3 class="vl-empty-title">No polls available</h3>
           <p class="vl-empty-desc">There are no active polls right now. Check back later or ask your teacher to start one.</p>
-          <router-link to="/vote/live" class="vl-empty-btn">
+          <router-link :to="guestPollPath" class="vl-empty-btn">
             <svg class="vl-empty-btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
             </svg>
-            Go to Voting Page
+            Open Classroom Polls
           </router-link>
         </template>
       </div>
@@ -534,6 +552,79 @@ function getDurationLabel(minutes: number) {
   justify-content: space-between;
   margin-bottom: 28px;
   gap: 16px;
+}
+
+.vl-guest-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin: 0 0 28px;
+  padding: 18px 22px;
+  border: 1px solid rgba(99, 102, 241, 0.16);
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(239, 246, 255, 0.95), rgba(255, 255, 255, 0.98));
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
+}
+
+.vl-guest-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.vl-guest-banner-icon {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #EEF2FF, #E0E7FF);
+  color: #4F46E5;
+}
+
+.vl-guest-banner-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.vl-guest-banner-title {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1E293B;
+}
+
+.vl-guest-banner-text {
+  margin: 0;
+  color: #64748B;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.vl-guest-banner-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 18px;
+  border-radius: 14px;
+  background: #4F46E5;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: 0 12px 24px rgba(79, 70, 229, 0.2);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.vl-guest-banner-btn:hover {
+  background: #4338CA;
+  transform: translateY(-1px);
+  box-shadow: 0 16px 28px rgba(79, 70, 229, 0.24);
 }
 
 .vl-header-left {
@@ -1226,6 +1317,10 @@ function getDurationLabel(minutes: number) {
   }
   .vl-header {
     flex-direction: column;
+  }
+  .vl-guest-banner {
+    flex-direction: column;
+    align-items: flex-start;
   }
   .vl-title {
     font-size: 24px;

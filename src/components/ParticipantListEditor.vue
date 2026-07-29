@@ -272,14 +272,15 @@ async function handleFileChange(event: Event) {
 .editor {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   width: 100%;
   max-width: 420px;
   margin: 0 auto;
-  padding: 20px;
-  background: #141428;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  padding: 22px;
+  background: linear-gradient(135deg, #141428 0%, #1a1a3e 100%);
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255,255,255,0.06);
 }
 
 .add-row {
@@ -290,15 +291,27 @@ async function handleFileChange(event: Event) {
 
 .add-row input[type='text'] {
   flex: 1;
-  padding: 12px 14px;
-  border-radius: 10px;
-  border: 2px solid #2a2a45;
-  background: #0f0f1e;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 2px solid rgba(255,255,255,0.08);
+  background: rgba(15, 15, 30, 0.8);
   color: #f5f5f5;
   font-size: 15px;
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  min-height: 44px;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  min-height: 46px;
+  font-family: inherit;
+  backdrop-filter: blur(8px);
+}
+
+.add-row input[type='text']:focus {
+  border-color: rgba(78, 205, 196, 0.5);
+  background: rgba(15, 15, 30, 1);
+  box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.15);
+}
+
+.add-row input[type='text']::placeholder {
+  color: #6b7280;
 }
 
 .bulk-row {
@@ -309,17 +322,24 @@ async function handleFileChange(event: Event) {
 
 .bulk-input {
   flex: 1;
-  padding: 12px 14px;
-  border-radius: 10px;
-  border: 2px solid #2a2a45;
-  background: #0f0f1e;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 2px solid rgba(255,255,255,0.08);
+  background: rgba(15, 15, 30, 0.8);
   color: #f5f5f5;
   font-size: 14px;
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
   min-height: 80px;
   resize: vertical;
   font-family: inherit;
+  backdrop-filter: blur(8px);
+}
+
+.bulk-input:focus {
+  border-color: rgba(78, 205, 196, 0.5);
+  background: rgba(15, 15, 30, 1);
+  box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.15);
 }
 
 .bulk-input::placeholder {
@@ -329,66 +349,59 @@ async function handleFileChange(event: Event) {
 .btn {
   padding: 12px 20px;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  color: #fff;
-  transition: transform 0.15s, box-shadow 0.15s;
-  min-height: 44px;
+  color: #0f172a;
+  transition: transform 0.15s cubic-bezier(.4,0,.2,1), box-shadow 0.15s;
+  min-height: 46px;
+  font-family: inherit;
+  white-space: nowrap;
 }
 
 .btn:hover:not(:disabled) {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
 }
 
 .btn:active:not(:disabled) {
   transform: translateY(0);
 }
 
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .btn-add {
   background: linear-gradient(135deg, #4ecdc4, #2fa89e);
-  color: #0f172a;
-  font-weight: 800;
-  box-shadow: 0 4px 12px rgba(78, 205, 196, 0.4);
+  box-shadow: 0 4px 16px rgba(78, 205, 196, 0.35);
   letter-spacing: 0.02em;
 }
 
 .btn-add:hover:not(:disabled) {
-  background: linear-gradient(135deg, #5de0d7, #36b8ad);
-  box-shadow: 0 6px 18px rgba(78, 205, 196, 0.5);
+  box-shadow: 0 8px 24px rgba(78, 205, 196, 0.45);
 }
 
 .btn-import {
   background: linear-gradient(135deg, #45b7d1, #2d8aac);
-  color: #0f172a;
-  font-weight: 800;
-  box-shadow: 0 4px 12px rgba(69, 183, 209, 0.4);
+  box-shadow: 0 4px 16px rgba(69, 183, 209, 0.35);
   letter-spacing: 0.02em;
 }
 
 .btn-import:hover:not(:disabled) {
-  background: linear-gradient(135deg, #56c8df, #379cbf);
-  box-shadow: 0 6px 18px rgba(69, 183, 209, 0.5);
+  box-shadow: 0 8px 24px rgba(69, 183, 209, 0.45);
 }
 
 .btn-bulk {
   background: linear-gradient(135deg, #f39c12, #d68910);
-  color: #0f172a;
-  font-weight: 800;
-  box-shadow: 0 4px 12px rgba(243, 156, 18, 0.4);
+  box-shadow: 0 4px 16px rgba(243, 156, 18, 0.35);
   letter-spacing: 0.02em;
-  white-space: nowrap;
 }
 
 .btn-bulk:hover:not(:disabled) {
-  background: linear-gradient(135deg, #f5b041, #e67e22);
-  box-shadow: 0 6px 18px rgba(243, 156, 18, 0.5);
-}
-
-.btn-bulk:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+  box-shadow: 0 8px 24px rgba(243, 156, 18, 0.45);
 }
 
 .file-input {
@@ -396,50 +409,63 @@ async function handleFileChange(event: Event) {
 }
 
 .warning {
-  color: #f39c12;
-  font-size: 13px;
+  color: #fbbf24;
+  font-size: 12px;
   line-height: 1.4;
+  padding: 8px 12px;
+  background: rgba(251, 191, 36, 0.08);
+  border-radius: 8px;
+  border: 1px solid rgba(251, 191, 36, 0.15);
 }
 
 .success {
   color: #4ecdc4;
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.4;
+  padding: 8px 12px;
+  background: rgba(78, 205, 196, 0.08);
+  border-radius: 8px;
+  border: 1px solid rgba(78, 205, 196, 0.15);
 }
 
 .error {
-  color: #e74c3c;
-  font-size: 13px;
+  color: #f87171;
+  font-size: 12px;
   line-height: 1.4;
+  padding: 8px 12px;
+  background: rgba(248, 113, 113, 0.08);
+  border-radius: 8px;
+  border: 1px solid rgba(248, 113, 113, 0.15);
 }
 
 .preview {
-  border-top: 1px solid #2a2a45;
-  padding-top: 14px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding-top: 16px;
 }
 
 .preview-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .preview-title {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
-  color: #ddd;
+  color: #bbb;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
 }
 
 .preview-count {
-  background: #1f1f38;
+  background: rgba(78, 205, 196, 0.12);
   color: #4ecdc4;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   padding: 3px 10px;
   border-radius: 999px;
+  border: 1px solid rgba(78, 205, 196, 0.2);
 }
 
 .participant-list {
@@ -448,65 +474,77 @@ async function handleFileChange(event: Event) {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   max-height: 320px;
   overflow-y: auto;
 }
+
+.participant-list::-webkit-scrollbar { width: 4px; }
+.participant-list::-webkit-scrollbar-track { background: transparent; }
+.participant-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 999px; }
 
 .participant-list li {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px 14px;
-  background: #1a1a2e;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.03);
   border-radius: 12px;
-  border: 1px solid #2a2a45;
-  transition: background 0.2s, border-color 0.2s;
+  border: 1px solid rgba(255,255,255,0.06);
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+  animation: participant-in 0.3s ease-out both;
+}
+
+@keyframes participant-in {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 .participant-list li:hover {
-  background: #22223a;
-  border-color: #3a3a5a;
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.12);
 }
 
 .participant-name {
-  color: #f5f5f5;
+  color: #e0e0e0;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   word-break: break-word;
 }
 
 .btn-remove {
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 8px;
-  border: 1px solid #ff6b6b44;
-  background: #2a1010;
+  border: 1px solid rgba(255, 107, 107, 0.2);
+  background: rgba(255, 50, 50, 0.08);
   color: #ff6b6b;
-  font-size: 20px;
+  font-size: 16px;
   line-height: 1;
   cursor: pointer;
   transition: all 0.2s;
+  font-family: inherit;
 }
 
 .btn-remove:hover {
-  background: #ff6b6b22;
+  background: rgba(255, 107, 107, 0.18);
   color: #ff4c4c;
-  border-color: #ff6b6b;
-  box-shadow: 0 0 10px rgba(255, 107, 107, 0.3);
+  border-color: rgba(255, 107, 107, 0.4);
+  box-shadow: 0 0 12px rgba(255, 107, 107, 0.2);
+  transform: scale(1.1);
 }
 
 .empty {
-  color: #9999bb;
-  font-size: 14px;
+  color: #7777aa;
+  font-size: 13px;
   margin: 0;
   text-align: center;
-  padding: 20px 0;
+  padding: 24px 0;
 }
 
 .lists-row {
@@ -524,19 +562,20 @@ async function handleFileChange(event: Event) {
 .list-title-input {
   background: transparent;
   border: none;
-  color: #ddd;
-  font-size: 14px;
+  color: #ccc;
+  font-size: 13px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   outline: none;
   padding: 0;
   width: auto;
   max-width: 180px;
   cursor: text;
+  font-family: inherit;
 }
 
 .list-title-input:focus {
-  border-bottom: 1px solid #4ecdc4;
+  border-bottom: 1px solid rgba(78, 205, 196, 0.5);
 }
 </style>

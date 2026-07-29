@@ -17,13 +17,14 @@ export interface LivePoll {
   status: PollStatus
   duration_minutes: number | null
   allow_multiple_votes: boolean
-  anonymous: boolean
-  show_results: boolean
-  public_token: string
-  created_by: string
-  started_at: string | null
-  ended_at: string | null
-  options: LivePollOption[]
+  anonymous: boolean    show_results: boolean
+    public_token: string
+    room_code: string
+    join_url: string
+    created_by: string
+    started_at: string | null
+    ended_at: string | null
+    options: LivePollOption[]
   created_at: string
   updated_at: string
 }

@@ -26,6 +26,7 @@ defineProps<{
 <style scoped>
 .empty-state-container {
   display: flex;
+  width: 100%;
   align-items: center;
   justify-content: center;
   padding: 3rem 1.5rem;
@@ -33,6 +34,7 @@ defineProps<{
   border-radius: 16px;
   background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-sizing: border-box;
 }
 
 .empty-state-content {

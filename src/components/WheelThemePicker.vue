@@ -50,14 +50,15 @@ function select(theme: WheelTheme) {
 .theme-picker {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   width: 100%;
   max-width: 420px;
   margin: 0 auto;
-  padding: 18px;
-  background: #141428;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  padding: 22px;
+  background: linear-gradient(135deg, #141428 0%, #1a1a3e 100%);
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255,255,255,0.06);
 }
 
 .theme-picker-header {
@@ -67,25 +68,26 @@ function select(theme: WheelTheme) {
 }
 
 .theme-picker-title {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
-  color: #ddd;
+  color: #bbb;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
 }
 
 .theme-picker-selected {
   font-size: 12px;
   font-weight: 700;
   color: #4ecdc4;
-  background: #1f1f38;
-  padding: 3px 10px;
+  background: rgba(78, 205, 196, 0.1);
+  padding: 4px 12px;
   border-radius: 999px;
+  border: 1px solid rgba(78, 205, 196, 0.2);
 }
 
 .theme-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
   gap: 10px;
 }
 
@@ -93,46 +95,77 @@ function select(theme: WheelTheme) {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 14px;
+  padding: 16px 12px;
   border-radius: 14px;
-  border: 2px solid #2a2a45;
-  background: #1a1a2e;
+  border: 2px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.03);
   color: #fff;
   cursor: pointer;
-  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+  transition: transform 0.2s cubic-bezier(.4,0,.2,1), border-color 0.2s, box-shadow 0.2s, background 0.2s;
   min-width: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  opacity: 0;
+  transition: opacity 0.2s;
+  background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.06), transparent 70%);
+}
+
+.theme-card:hover:not(:disabled)::before {
+  opacity: 1;
 }
 
 .theme-card:hover:not(:disabled) {
-  transform: translateY(-2px);
-  border-color: #3a3a5a;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+  transform: translateY(-3px) scale(1.02);
+  border-color: rgba(255,255,255,0.15);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.4);
+  background: rgba(255,255,255,0.06);
 }
 
 .theme-card--active {
   border-color: #4ecdc4;
-  box-shadow: 0 0 0 2px rgba(78, 205, 196, 0.3), 0 8px 24px rgba(78, 205, 196, 0.25);
-  background: #1f1f3a;
+  box-shadow: 0 0 0 2px rgba(78, 205, 196, 0.25), 0 8px 24px rgba(78, 205, 196, 0.2);
+  background: rgba(78, 205, 196, 0.06);
+}
+
+.theme-card--active::before {
+  opacity: 1;
+  background: radial-gradient(circle at 50% 0%, rgba(78, 205, 196, 0.1), transparent 70%);
 }
 
 .theme-name {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   text-align: center;
-  color: #f5f5f5;
+  color: #e0e0e0;
   letter-spacing: 0.02em;
+  position: relative;
+}
+
+.theme-swatches {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  position: relative;
 }
 
 .theme-swatch {
-  width: 16px;
-  height: 16px;
-  border-radius: 5px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
-  transition: transform 0.15s;
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .theme-card:hover .theme-swatch {
-  transform: scale(1.08);
+  transform: scale(1.15);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.3), 0 4px 12px rgba(0,0,0,0.3);
 }
 </style>

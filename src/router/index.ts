@@ -374,6 +374,12 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true, role: 'teacher' },
   },
   {
+    path: '/teacher/live-polls/:id/created',
+    name: 'live-poll-created',
+    component: () => import('@/pages/PollCreatedSuccess.vue'),
+    meta: { requiresAuth: true, role: 'teacher' },
+  },
+  {
     path: '/vote/:token',
     name: 'live-vote-public',
     component: () => import('@/pages/public/LiveVote.vue'),
@@ -381,6 +387,11 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/polls/active',
     name: 'active-polls-list',
+    component: () => import('@/pages/public/ActivePolls.vue'),
+  },
+  {
+    path: '/classroom-polls',
+    name: 'classroom-polls',
     component: () => import('@/pages/public/ActivePolls.vue'),
   },
 

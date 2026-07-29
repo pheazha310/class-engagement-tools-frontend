@@ -51,22 +51,40 @@ const colors = [
 </script>
 
 <template>
-  <div class="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-    <h3 class="mb-4 text-sm font-semibold text-gray-600 dark:text-gray-400">Word Cloud</h3>
+  <div class="wc-card">
+    <h3 class="wc-title">Word Cloud</h3>
 
-    <div v-if="wordItems.length === 0" class="py-8 text-center text-sm text-gray-400">
-      No responses yet.
+    <div v-if="wordItems.length === 0" class="wc-empty">
+      <div class="wc-empty-visual">
+        <svg viewBox="0 0 120 120" fill="none">
+          <defs>
+            <linearGradient id="wcCloudGrad" x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#a78bfa" />
+              <stop offset="1" stop-color="#6366f1" />
+            </linearGradient>
+          </defs>
+          <circle cx="42" cy="62" r="22" fill="#ede9fe" />
+          <circle cx="72" cy="48" r="32" fill="url(#wcCloudGrad)" opacity="0.18" />
+          <circle cx="62" cy="78" r="18" fill="#ddd6fe" opacity="0.6" />
+          <path d="M48 76c6 8 14 10 22 6" stroke="#7c3aed" stroke-width="3" stroke-linecap="round" opacity="0.25" />
+        </svg>
+        <div class="wc-empty-text">
+          <h4>No Data Yet</h4>
+          <p>Add responses to generate a word cloud visualization.</p>
+        </div>
+      </div>
     </div>
 
-    <div v-else class="flex flex-wrap items-center justify-center gap-2">
+    <div v-else class="wc-cloud">
       <span
         v-for="(word, i) in wordItems"
         :key="word.text"
-        class="inline-block rounded-full px-3 py-1 font-medium leading-tight transition hover:scale-110"
+        class="wc-word"
         :style="{
           fontSize: `${word.fontSize}px`,
           color: colors[i % colors.length],
-          backgroundColor: `${colors[i % colors.length]}15`,
+          backgroundColor: `${colors[i % colors.length]}18`,
+          animationDelay: `${i * 30}ms`,
         }"
         :title="`${word.text}: ${word.count} ${word.count === 1 ? 'mention' : 'mentions'}`"
       >
@@ -74,21 +92,161 @@ const colors = [
       </span>
     </div>
 
-    <!-- Full responses list -->
-    <div v-if="!isAnonymous && responses.length > 0" class="mt-6">
-      <h4 class="mb-3 text-sm font-semibold text-gray-600 dark:text-gray-400">Individual Responses</h4>
-      <div class="max-h-48 space-y-2 overflow-y-auto">
+    <div v-if="!isAnonymous && responses.length > 0" class="wc-responses">
+      <h4 class="wc-responses-title">Individual Responses</h4>
+      <div class="wc-responses-list">
         <div
           v-for="(r, i) in responses"
           :key="i"
-          class="rounded-lg bg-gray-50 p-3 text-sm dark:bg-gray-700/50"
+          class="wc-response-item"
         >
-          <p class="text-gray-900 dark:text-white">{{ r.text }}</p>
-          <p v-if="r.student_name" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            — {{ r.student_name }}
-          </p>
+          <p class="wc-response-text">{{ r.text }}</p>
+          <p v-if="r.student_name" class="wc-response-author">— {{ r.student_name }}</p>
         </div>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.wc-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.04);
+}
+.wc-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #475569;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.wc-empty {
+  padding: 48px 20px;
+  text-align: center;
+}
+.wc-empty-visual {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+.wc-empty-visual svg {
+  width: 120px;
+  height: 120px;
+  opacity: .85;
+  animation: wc-float 3s ease-in-out infinite;
+}
+@keyframes wc-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.wc-empty-text h4 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #475569;
+  margin-bottom: 4px;
+}
+.wc-empty-text p {
+  font-size: 13px;
+  color: #94a3b8;
+  max-width: 240px;
+  line-height: 1.5;
+}
+
+.wc-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px 8px;
+  position: relative;
+  min-height: 200px;
+}
+.wc-cloud::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: .3;
+  background-image: radial-gradient(circle at 1px 1px, rgba(148,163,184,.18) 1px, transparent 0);
+  background-size: 26px 26px;
+  mask-image: linear-gradient(180deg, rgba(0,0,0,0.3), transparent 75%);
+  -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,0.3), transparent 75%);
+}
+.wc-word {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 5px 18px;
+  font-weight: 700;
+  line-height: 1.4;
+  transition: all .25s cubic-bezier(.4,0,.2,1);
+  cursor: default;
+  border: 1px solid transparent;
+  position: relative;
+  animation: wc-appear .4s ease-out both;
+}
+@keyframes wc-appear {
+  from { opacity: 0; transform: scale(.7); }
+  to { opacity: 1; transform: scale(1); }
+}
+.wc-word:hover {
+  transform: scale(1.12);
+  border-color: currentColor;
+  box-shadow: 0 10px 28px rgba(0,0,0,.1);
+  z-index: 2;
+}
+
+.wc-responses {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #f1f5f9;
+}
+.wc-responses-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.wc-responses-list {
+  max-height: 240px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 4px;
+}
+.wc-responses-list::-webkit-scrollbar { width: 5px; }
+.wc-responses-list::-webkit-scrollbar-track { background: transparent; }
+.wc-responses-list::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+.wc-response-item {
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border: 1px solid #f1f5f9;
+  border-radius: 12px;
+  padding: 12px 16px;
+  transition: all .2s;
+}
+.wc-response-item:hover {
+  border-color: #e2e8f0;
+  box-shadow: 0 4px 12px rgba(0,0,0,.04);
+}
+.wc-response-text {
+  font-size: 14px;
+  color: #0f172a;
+  line-height: 1.5;
+  margin: 0;
+}
+.wc-response-author {
+  margin: 5px 0 0;
+  font-size: 12px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+</style>

@@ -127,7 +127,8 @@ function goBack() {
   flex-direction: column;
   align-items: center;
   min-height: 100vh;
-  transition: background 0.35s ease;
+  transition: background 0.4s ease;
+  background: #0f0f1e;
 }
 
 .wheel-header {
@@ -142,21 +143,27 @@ function goBack() {
 
 .icon-btn {
   display: inline-grid;
-  width: 44px;
-  height: 44px;
+  width: 46px;
+  height: 46px;
   place-items: center;
-  border-radius: 12px;
-  border: 1.5px solid rgba(255, 255, 255, 0.18);
-  background: rgba(15, 23, 42, 0.62);
+  border-radius: 14px;
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(14px);
   color: #fff;
   cursor: pointer;
-  backdrop-filter: blur(10px);
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
 }
 
 .icon-btn:hover {
-  background: rgba(15, 23, 42, 0.82);
-  border-color: rgba(255, 255, 255, 0.32);
+  background: rgba(15, 23, 42, 0.8);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+
+.icon-btn:active {
+  transform: translateY(0);
 }
 
 .icon-btn svg {
@@ -173,10 +180,9 @@ function goBack() {
   padding: 24px;
 }
 
-.wheel-view.projector-mode .page-header,
-.wheel-view.projector-mode .back-wrapper,
-.wheel-view.projector-mode .page-title {
+.wheel-view.projector-mode .wheel-header {
   opacity: 0;
   pointer-events: none;
+  transition: opacity 0.3s ease;
 }
 </style>

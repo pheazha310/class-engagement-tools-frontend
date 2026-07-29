@@ -68,18 +68,16 @@ function validate(): boolean {
     validationError.value = 'Question is required.'
     return false
   }
-  if (!title.value.trim()) {
-    validationError.value = 'Title is required.'
-    return false
-  }
-  const validOptions = options.value.map((o) => o.trim()).filter(Boolean)
-  if (validOptions.length < 2) {
-    validationError.value = 'At least 2 options are required.'
-    return false
-  }
-  if (new Set(validOptions).size !== validOptions.length) {
-    validationError.value = 'Duplicate options are not allowed.'
-    return false
+  if (pollType.value === 'multiple_choice') {
+    const validOptions = options.value.map((o) => o.trim()).filter(Boolean)
+    if (validOptions.length < 2) {
+      validationError.value = 'At least 2 options are required.'
+      return false
+    }
+    if (new Set(validOptions).size !== validOptions.length) {
+      validationError.value = 'Duplicate options are not allowed.'
+      return false
+    }
   }
   return true
 }
@@ -88,11 +86,13 @@ async function handleSubmit() {
   if (!validate()) return
 
   const data: LivePollFormData = {
-    title: title.value.trim(),
+    title: title.value.trim() || question.value.trim(),
     description: description.value.trim() || undefined,
     question: question.value.trim(),
     poll_type: pollType.value,
-    options: options.value.map((o) => o.trim()).filter(Boolean),
+    options: pollType.value === 'multiple_choice'
+      ? options.value.map((o) => o.trim()).filter(Boolean)
+      : [],
     duration_minutes: durationMinutes.value,
     allow_multiple_votes: allowMultipleVotes.value,
     anonymous: anonymous.value,
@@ -121,7 +121,7 @@ function setPollType(type: PollType) {
   pollType.value = type
   if (type === 'yes_no') {
     options.value = ['Yes', 'No']
-  } else if (type === 'rating' && options.value.length < 3) {
+  } else if (type === 'rating') {
     options.value = ['1', '2', '3', '4', '5']
   }
 }

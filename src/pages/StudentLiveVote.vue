@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { getPolls, type LivePoll } from '@/utils/pollStorage'
 import {
   castVote,
@@ -14,6 +15,8 @@ import { useAuthStore } from '@/stores/auth'
 import ToastNotification from '@/components/ToastNotification.vue'
 
 const auth = useAuthStore()
+const route = useRoute()
+const router = useRouter()
 
 // ── Check if the current user is a teacher (teachers cannot vote)
 const isTeacher = computed(() => auth.isAuthenticated && auth.user?.role === 'teacher')
@@ -85,6 +88,17 @@ onUnmounted(() => {
 function loadPolls() {
   polls.value = getPolls()
   loading.value = false
+  autoOpenRequestedPoll()
+}
+
+function autoOpenRequestedPoll() {
+  const requestedPollId = route.query.pollId
+  if (selectedPoll.value || typeof requestedPollId !== 'string' || !requestedPollId) return
+  const requestedPoll = activePolls.value.find((poll) => poll.id === requestedPollId)
+  if (!requestedPoll) return
+
+  selectPoll(requestedPoll)
+  void router.replace({ path: route.path, query: {} })
 }
 
 function selectPoll(poll: LivePoll) {
