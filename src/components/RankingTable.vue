@@ -177,11 +177,11 @@ function getRankIcon(rank: number) {
 }
 
 .ranking-row--top {
-  background: #f0fdfa;
+  background: #eff6ff;
 }
 
 .ranking-row--top:hover {
-  background: #e6f7f2;
+  background: #dbeafe;
 }
 
 .ranking-row td {
@@ -203,8 +203,8 @@ function getRankIcon(rank: number) {
   border-radius: 8px;
   font-size: 0.8rem;
   font-weight: 700;
-  background: #f1f5f9;
-  color: #64748b;
+  background: #eff6ff;
+  color: #2563eb;
 }
 
 .rank-badge--gold {
@@ -362,10 +362,10 @@ function getRankIcon(rank: number) {
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
   }
 
-  .ranking-mobile-card--top {
-    border-color: #86efac;
-    background: #f0fdfa;
-  }
+.ranking-mobile-card--top {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
 
   .mobile-card-top {
     display: flex;

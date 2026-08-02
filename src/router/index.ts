@@ -6,12 +6,19 @@ import SingleStudentPickerView from '@/views/SingleStudentPickerView.vue'
 import MultipleStudentPickerView from '@/views/MultipleStudentPickerView.vue'
 import LuckyDrawView from '@/views/LuckyDrawView.vue'
 import HomepageView from '@/views/Homepage.vue'
-import ToolsPage from '@/pages/ToolsPage.vue'
 import ToolDetailPage from '@/pages/ToolDetailPage.vue'
 import GroupGeneratorView from '@/views/GroupGeneratorView.vue'
+import Icebreakers from '@/views/Icebreakers.vue'
+import TwoTruthsOneLie from '@/views/TwoTruthsOneLie.vue'
+import WouldYouRather from '@/views/WouldYouRather.vue'
+import SpinTheQuestion from '@/views/SpinTheQuestion.vue'
+import SpinTheQuestionResults from '@/views/SpinTheQuestionResults.vue'
+import RandomChallengeGenerator from '@/views/RandomChallengeGenerator.vue'
+import MysteryBox from '@/views/MysteryBox.vue'
 import CreateGamePage from '@/pages/CreateGamePage.vue'
 import JoinGamePage from '@/pages/JoinGamePage.vue'
 import GamePlayPage from '@/pages/GamePlayPage.vue'
+import GameHistoryPage from '@/pages/GameHistoryPage.vue'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -35,7 +42,43 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/teacher/dashboard',
     name: 'teacher-dashboard',
-    component: () => import('@/pages/TeacherPollList.vue'),
+    component: () => import('@/pages/teacher/TeacherDashboard.vue'),
+    meta: { requiresAuth: true, role: 'teacher' },
+  },
+  {
+    path: '/teacher/classes',
+    name: 'teacher-classes',
+    component: () => import('@/pages/teacher/ClassesPage.vue'),
+    meta: { requiresAuth: true, role: 'teacher' },
+  },
+  {
+    path: '/teacher/students',
+    name: 'teacher-students',
+    component: () => import('@/pages/teacher/StudentsPage.vue'),
+    meta: { requiresAuth: true, role: 'teacher' },
+  },
+  {
+    path: '/teacher/tools',
+    name: 'teacher-tools',
+    component: () => import('@/pages/teacher/TeacherToolsPage.vue'),
+    meta: { requiresAuth: true, role: 'teacher' },
+  },
+  {
+    path: '/teacher/activity-history',
+    name: 'teacher-activity-history',
+    component: () => import('@/pages/teacher/ActivityHistoryPage.vue'),
+    meta: { requiresAuth: true, role: 'teacher' },
+  },
+  {
+    path: '/teacher/settings',
+    name: 'teacher-settings',
+    component: () => import('@/pages/teacher/SettingsPage.vue'),
+    meta: { requiresAuth: true, role: 'teacher' },
+  },
+  {
+    path: '/teacher/organize-tools',
+    name: 'teacher-organize-tools',
+    component: () => import('@/pages/teacher/ToolOrganizerPage.vue'),
     meta: { requiresAuth: true, role: 'teacher' },
   },
 
@@ -43,18 +86,49 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/student/dashboard',
     name: 'student-dashboard',
-    component: () => import('@/pages/ActivePoll.vue'),
+    component: () => import('@/pages/student/StudentDashboard.vue'),
     meta: { requiresAuth: true, role: 'student' },
   },
 
-  // Quizzes
+  // Classroom Quiz (frontend-only)
   {
-    path: '/quizzes',
-    name: 'teacher-quizzes',
+    path: '/classroom',
+    name: 'classroom-quizzes',
+    component: () => import('@/pages/ClassroomQuizList.vue'),
+  },
+  {
+    path: '/classroom/create',
+    name: 'classroom-create-quiz',
+    component: () => import('@/pages/ClassroomCreateQuiz.vue'),
+  },
+  {
+    path: '/classroom/quiz/:quizId',
+    name: 'classroom-quiz-play',
+    component: () => import('@/pages/ClassroomQuizPlay.vue'),
+  },
+  {
+    path: '/classroom/review/:quizId',
+    name: 'classroom-quiz-review',
+    component: () => import('@/pages/ClassroomReview.vue'),
+  },
+  {
+    path: '/classroom/rankings/:quizId',
+    name: 'classroom-quiz-rankings',
+    component: () => import('@/pages/ClassroomRankings.vue'),
+  },
+
+  // Classroom (teacher dashboard quizzes)
+  {
+    path: '/classroom',
+    name: 'teacher-classroom',
     component: () => import('@/pages/TeacherQuizList.vue'),
   },
   {
-    path: '/quizzes/create',
+    path: '/Classroom',
+    redirect: '/classroom',
+  },
+  {
+    path: '/classroom/create',
     name: 'create-quiz',
     component: () => import('@/pages/CreateQuiz.vue'),
   },
@@ -95,37 +169,6 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/ReportView.vue'),
   },
 
-  // Polls
-  {
-    path: '/polls',
-    name: 'teacher-polls',
-    component: () => import('@/pages/TeacherPollList.vue'),
-    meta: { requiresAuth: true },
-  },
-  {
-    path: '/polls/create',
-    name: 'create-poll',
-    component: () => import('@/pages/CreatePoll.vue'),
-    meta: { requiresAuth: true },
-  },
-  {
-    path: '/polls/:id/edit',
-    name: 'edit-poll',
-    component: () => import('@/pages/CreatePoll.vue'),
-    meta: { requiresAuth: true },
-  },
-  {
-    path: '/polls/:id/results',
-    name: 'poll-results',
-    component: () => import('@/pages/LiveResults.vue'),
-    meta: { requiresAuth: true },
-  },
-  {
-    path: '/active-poll',
-    name: 'active-poll',
-    component: () => import('@/pages/ActivePoll.vue'),
-  },
-
   // Admin
   {
     path: '/admin/users',
@@ -146,7 +189,7 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true, role: 'admin' },
   },
 
-  // Other pages from your friend
+  // Other pages
   {
     path: '/about',
     name: 'about',
@@ -161,6 +204,11 @@ const routes: RouteRecordRaw[] = [
     path: '/wheel',
     name: 'wheel',
     component: () => import('@/pages/WheelPage.vue'),
+  },
+  {
+    path: '/wheel-canvas',
+    name: 'wheel-canvas',
+    component: () => import('@/views/WheelCanvasView.vue'),
   },
   {
     path: '/wheel/shared/:shareToken',
@@ -188,14 +236,29 @@ const routes: RouteRecordRaw[] = [
     component: MultipleStudentPickerView,
   },
   {
+    path: '/image-picker',
+    name: 'image-picker',
+    component: () => import('@/pages/ImagePicker.vue'),
+  },
+  {
     path: '/lucky-draw',
     name: 'lucky-draw',
     component: LuckyDrawView,
   },
   {
+    path: '/soundboard',
+    name: 'soundboard',
+    component: () => import('@/pages/SoundboardPage.vue'),
+  },
+  {
     path: '/tools',
     name: 'tools',
-    component: ToolsPage,
+    component: () => import('@/pages/AllToolsPage.vue'),
+  },
+  {
+    path: '/tools/fun-activities',
+    name: 'fun-activities',
+    component: () => import('@/pages/ToolsPage.vue'),
   },
   {
     path: '/tools/category/:slug',
@@ -212,6 +275,27 @@ const routes: RouteRecordRaw[] = [
     name: 'stopwatch',
     component: () => import('@/views/StopwatchView.vue'),
   },
+  // Tools pages (individual)
+  {
+    path: '/tools/soundboard',
+    name: 'tool-soundboard',
+    component: () => import('@/pages/tools/SoundboardTool.vue'),
+  },
+  {
+    path: '/tools/mood-check',
+    name: 'tool-mood-check',
+    component: () => import('@/pages/tools/MoodCheckTool.vue'),
+  },
+  {
+    path: '/tools/word-cloud',
+    name: 'tool-word-cloud',
+    component: () => import('@/pages/tools/WordCloudTool.vue'),
+  },
+  {
+    path: '/tools/icebreakers',
+    name: 'tool-icebreakers',
+    component: () => import('@/views/Icebreakers.vue'),
+  },
   {
     path: '/tools/:slug',
     name: 'tool-detail',
@@ -225,21 +309,43 @@ const routes: RouteRecordRaw[] = [
     component: GroupGeneratorView,
   },
   {
-    path: '/teacher/polls',
-    name: 'teacher-polls',
-    component: () => import('@/pages/teacher/PollDashboard.vue'),
-    meta: { requiresAuth: true, role: 'teacher' },
+    path: '/tools/icebreakers',
+    redirect: '/icebreakers',
   },
   {
-    path: '/teacher/polls/create',
-    name: 'teacher-polls-create',
-    component: () => import('@/pages/teacher/PollCreatePage.vue'),
-    meta: { requiresAuth: true, role: 'teacher' },
+    path: '/icebreakers',
+    name: 'icebreakers',
+    component: Icebreakers,
   },
   {
-    path: '/student/polls/:id',
-    name: 'student-poll-vote',
-    component: () => import('@/pages/student/PollVotePage.vue'),
+    path: '/tools/icebreakers/two-truths-one-lie',
+    name: 'two-truths-one-lie',
+    component: TwoTruthsOneLie,
+  },
+  {
+    path: '/tools/icebreakers/would-you-rather',
+    name: 'would-you-rather',
+    component: WouldYouRather,
+  },
+  {
+    path: '/tools/icebreakers/spin-the-question',
+    name: 'spin-the-question',
+    component: SpinTheQuestion,
+  },
+  {
+    path: '/tools/icebreakers/spin-the-question/results',
+    name: 'spin-the-question-results',
+    component: SpinTheQuestionResults,
+  },
+  {
+    path: '/tools/icebreakers/random-challenge-generator',
+    name: 'random-challenge-generator',
+    component: RandomChallengeGenerator,
+  },
+  {
+    path: '/tools/icebreakers/mystery-box',
+    name: 'mystery-box',
+    component: MysteryBox,
   },
   {
     path: '/profile',
@@ -269,6 +375,11 @@ const routes: RouteRecordRaw[] = [
     component: GamePlayPage,
   },
   {
+    path: '/games/history',
+    name: 'game-history',
+    component: GameHistoryPage,
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
     component: () => import('@/pages/NotFound.vue'),
@@ -283,6 +394,14 @@ const router = createRouter({
 router.beforeEach((to) => {
   const authStore = useAuthStore()
 
+  if (to.name === 'home') {
+    return true
+  }
+
+  if (to.meta.requiresAuth && !authStore.initialized) {
+    return true
+  }
+
   if (to.meta.requiresAuth && !authStore.user) {
     return '/login'
   }
@@ -294,9 +413,9 @@ router.beforeEach((to) => {
       case 'teacher':
         return '/teacher/dashboard'
       case 'student':
-        return '/student/dashboard'
+        return '/'
       default:
-        return '/polls'
+        return '/'
     }
   }
 
@@ -307,9 +426,9 @@ router.beforeEach((to) => {
       case 'teacher':
         return '/teacher/dashboard'
       case 'student':
-        return '/student/dashboard'
+        return '/'
       default:
-        return '/polls'
+        return '/'
     }
   }
 

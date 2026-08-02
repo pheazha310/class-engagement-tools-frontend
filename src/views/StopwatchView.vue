@@ -9,53 +9,49 @@ import Stopwatch from '@/components/Stopwatch.vue'
 
     <section class="stopwatch-hero">
       <div class="container">
-        <div class="hero-copy">
-          <h1>Stopwatch</h1>
-        </div>
+        <div class="hero-content" />
       </div>
     </section>
 
     <div class="container">
       <Stopwatch />
-      <div class="back-link">
-        <RouterLink to="/tools" class="btn-back">← Back to all tools</RouterLink>
-      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
 .stopwatch-hero {
-  background: linear-gradient(135deg, #4f46e5 0%, #64748b 100%);
   color: white;
   padding: 90px 20px 60px;
   text-align: center;
 }
 
-.hero-copy {
-  max-width: 720px;
+.hero-content h1 {
+  font-size: 44px;
+  margin: 0 0 12px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.hero-content p {
+  font-size: 18px;
+  line-height: 1.6;
+  opacity: 0.9;
   margin: 0 auto;
+  max-width: 30rem;
 }
 
-.back-link {
-  display: flex;
-  justify-content: flex-start;
-  margin: 32px 0 48px;
-}
+@media (max-width: 640px) {
+  .stopwatch-hero {
+    padding: 70px 16px 40px;
+  }
 
-.btn-back {
-  display: inline-flex;
-  align-items: center;
-  padding: 12px 22px;
-  border-radius: 10px;
-  border: 1.5px solid #cbd5e1;
-  color: #1e293b;
-  text-decoration: none;
-  background: #f1f5f9;
-  transition: all 0.2s ease;
-}
+  .hero-content h1 {
+    font-size: 2rem;
+  }
 
-.btn-back:hover {
-  background: rgba(255, 255, 255, 0.18);
+  .hero-content p {
+    font-size: 0.95rem;
+  }
 }
 </style>

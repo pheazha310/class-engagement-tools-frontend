@@ -119,12 +119,13 @@ function goBackToQuiz() {
       <LoadingSpinner v-if="loading && rankings.length === 0" />
 
       <!-- ===================== EMPTY ===================== -->
-      <EmptyState
-        v-else-if="!loading && rankings.length === 0 && !error"
-        title="No rankings yet"
-        description="Students haven't taken this quiz yet. Rankings will appear here once submissions come in."
-        icon="🏆"
-      />
+      <div v-else-if="!loading && rankings.length === 0 && !error" class="ranking-empty-state">
+        <div class="ranking-empty-icon-wrapper">
+          <span class="ranking-empty-icon">🏆</span>
+        </div>
+        <h3 class="ranking-empty-title">No rankings yet</h3>
+        <p class="ranking-empty-desc">Students haven't taken this quiz yet. Rankings will appear here once submissions come in.</p>
+      </div>
 
       <!-- ===================== TABLE ===================== -->
       <div v-else-if="rankings.length > 0" class="ranking-card">
@@ -208,9 +209,9 @@ function goBackToQuiz() {
 }
 
 .btn-back-icon:hover {
-  border-color: #14b8a6;
-  color: #0d9488;
-  background: #f0fdfa;
+  border-color: #3b82f6;
+  color: #2563eb;
+  background: #eff6ff;
 }
 
 .ranking-header-icon {
@@ -220,8 +221,8 @@ function goBackToQuiz() {
   width: 52px;
   height: 52px;
   border-radius: 14px;
-  background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
-  box-shadow: 0 8px 24px rgba(13, 148, 136, 0.25);
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.25);
   flex-shrink: 0;
 }
 
@@ -310,6 +311,55 @@ function goBackToQuiz() {
   padding: 0.25rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   overflow: hidden;
+}
+
+/* ============================================================
+   RANKING EMPTY STATE
+   ============================================================ */
+.ranking-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  border: 2px dashed #cbd5e1;
+  border-radius: 16px;
+  background: #ffffff;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.ranking-empty-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.ranking-empty-icon {
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
+.ranking-empty-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 0.75rem;
+  letter-spacing: -0.02em;
+}
+
+.ranking-empty-desc {
+  font-size: 1rem;
+  color: #475569;
+  margin: 0;
+  max-width: 480px;
+  line-height: 1.6;
 }
 
 /* ============================================================

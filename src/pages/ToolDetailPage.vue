@@ -2,58 +2,42 @@
 import { computed } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { allTools } from '@/data/toolsData'
-import Navbar from '@/components/Navbar.vue'
 import TimerCountdown from '@/components/TimerCountdown.vue'
+import Stopwatch from '@/components/Stopwatch.vue'
+import ToolIcon from '@/components/ToolIcon.vue'
 
 const route = useRoute()
 
 const tool = computed(() => allTools.find((item) => item.slug === route.params.slug))
-
-const relatedTools = computed(() => {
-  if (!tool.value) return []
-  return allTools.filter((item) => item.category === tool.value!.category && item.slug !== tool.value!.slug).slice(0, 3)
-})
 </script>
 
 <template>
    <div class="tool-page" v-if="tool">
-    <section class="tool-hero">
+    <section v-if="tool.slug !== 'timer' && tool.slug !== 'stopwatch'" class="tool-hero" :class="{ 'tool-hero-compact': tool.slug === 'timer' }">
       <div class="container">
         <div class="tool-hero-content">
-          <div class="tool-icon">{{ tool.icon }}</div>
-          <h1 class="tool-hero-title">{{ tool.title }}</h1>
-          <p class="tool-hero-category">{{ tool.category }}</p>
+          <div v-if="tool.slug !== 'timer' && tool.slug !== 'stopwatch'" class="tool-icon"><ToolIcon :name="tool.icon" :size="44" /></div>
+          <h1 v-if="tool.slug !== 'timer' && tool.slug !== 'stopwatch'" class="tool-hero-title">{{ tool.title }}</h1>
+          <p v-if="tool.slug !== 'timer' && tool.slug !== 'stopwatch'" class="tool-hero-category">{{ tool.category }}</p>
         </div>
       </div>
     </section>
 
     <section class="tool-content">
       <div class="container">
-        <div class="tool-card">
+        <RouterLink v-if="tool.slug === 'timer'" to="/tools" class="btn-back tool-back-btn">← Back</RouterLink>
+
+        <div class="tool-card" v-if="tool.slug !== 'timer' && tool.slug !== 'stopwatch'">
           <h2 class="tool-section-title">About this tool</h2>
           <p class="tool-description">{{ tool.description }}</p>
         </div>
 
         <TimerCountdown v-if="tool.slug === 'timer'" />
-
-        <div class="tool-card" v-if="relatedTools.length">
-          <h2 class="tool-section-title">Related tools</h2>
-          <div class="related-tools">
-            <RouterLink
-              v-for="related in relatedTools"
-              :key="related.title"
-              :to="'/tools/' + related.slug"
-              class="related-tool-card"
-            >
-              <span class="related-tool-icon">{{ related.icon }}</span>
-              <span class="related-tool-name">{{ related.title }}</span>
-            </RouterLink>
-          </div>
-        </div>
+        <Stopwatch v-if="tool.slug === 'stopwatch'" />
       </div>
     </section>
 
-    <div class="container">
+    <div class="container" v-if="tool.slug !== 'timer' && tool.slug !== 'stopwatch'">
       <RouterLink to="/tools" class="btn-back">← Back to all tools</RouterLink>
     </div>
   </div>
@@ -102,6 +86,16 @@ const relatedTools = computed(() => {
   opacity: 0.9;
 }
 
+.tool-hero-compact {
+  padding: 24px 20px 16px;
+}
+
+.tool-hero-compact .tool-hero-title {
+  font-size: 36px;
+  margin-bottom: 0;
+  text-align: center;
+}
+
 .tool-content {
   padding: 60px 20px;
   background: linear-gradient(to bottom, #f8fafc, #f1f5f9);
@@ -129,39 +123,25 @@ const relatedTools = computed(() => {
   line-height: 1.8;
 }
 
-.related-tools {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 16px;
-}
-
-.related-tool-card {
-  display: flex;
-  flex-direction: column;
+.tool-back-btn {
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 18px;
-  border-radius: 12px;
+  padding: 8px 16px;
+  border-radius: 8px;
   text-decoration: none;
-  border: 1px solid #e2e8f0;
-  background: #f8fafc;
-  transition: all 0.2s ease;
-}
-
-.related-tool-card:hover {
-  border-color: #2563eb;
-  background: #f0f9ff;
-}
-
-.related-tool-icon {
-  font-size: 32px;
-}
-
-.related-tool-name {
   font-weight: 600;
   font-size: 14px;
-  color: #0f172a;
-  text-align: center;
+  border: 1.5px solid #e2e8f0;
+  color: #475569;
+  background: #ffffff;
+  margin-bottom: 20px;
+  transition: all 0.15s ease;
+}
+
+.tool-back-btn:hover {
+  border-color: #2563eb;
+  background: #f0f9ff;
+  color: #2563eb;
 }
 
 .btn-back {

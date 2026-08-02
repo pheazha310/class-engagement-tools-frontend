@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref } from 'vue'
+import { RouterLink } from 'vue-router'
 
 const elapsedSeconds = ref(0)
 const intervalId = ref<number | null>(null)
@@ -84,6 +85,10 @@ onUnmounted(() => {
 <template>
   <section class="stopwatch-section">
     <div class="stopwatch-card">
+      <RouterLink to="/tools" class="back-button">
+        <span class="back-icon">←</span>
+        <span class="back-text">Back</span>
+      </RouterLink>
       <div class="stopwatch-display">
         <div class="stopwatch-time">{{ formattedElapsedTime }}</div>
         <div class="stopwatch-label">Elapsed Time</div>
@@ -200,6 +205,31 @@ onUnmounted(() => {
   text-align: center;
 }
 
+.back-button {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.85rem;
+  border: 1.5px solid #e2e8f0;
+  color: #475569;
+  background: #ffffff;
+  transition: all 0.15s ease;
+  z-index: 5;
+}
+
+.back-button:hover {
+  border-color: #2563eb;
+  background: #f0f9ff;
+  color: #2563eb;
+}
+
 .fullscreen-button {
   position: absolute;
   top: 18px;
@@ -257,29 +287,42 @@ onUnmounted(() => {
 
 .stopwatch-action-row {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+  flex-wrap: nowrap;
+  gap: 8px;
   justify-content: center;
 }
 
 .btn {
   border: none;
-  border-radius: 14px;
-  padding: 14px 18px;
+  border-radius: 10px;
+  padding: 10px 18px;
   cursor: pointer;
   font-weight: 700;
-  font-size: 0.98rem;
-  min-width: 100px;
+  font-size: 0.85rem;
+  min-width: auto;
+  white-space: nowrap;
+  transition: all 0.2s ease;
 }
 
 .btn-primary {
   background: #4f46e5;
   color: white;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #6366f1;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
 }
 
 .btn-secondary {
   background: #f1f5f9;
   color: #0f172a;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #e2e8f0;
 }
 
 .btn-tertiary {
@@ -301,8 +344,8 @@ button:disabled {
     font-size: 3rem;
   }
 
-  .stopwatch-action-row {
-    grid-template-columns: 1fr;
+  .stopwatch-card {
+    padding: 24px;
   }
 }
 </style>

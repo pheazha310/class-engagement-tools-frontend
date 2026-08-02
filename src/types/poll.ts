@@ -17,6 +17,7 @@ export interface Poll {
   is_open_text?: boolean
   max_points?: number | null
   correct_option_id?: number | null
+  duration_minutes?: number | null
   started_at: string | null
   ended_at: string | null
   options: PollOption[]

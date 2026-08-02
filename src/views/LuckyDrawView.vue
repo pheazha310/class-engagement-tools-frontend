@@ -1,11 +1,19 @@
 <script setup lang="ts">
-import { ref, computed, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { RouterLink } from 'vue-router'
+import * as XLSX from 'xlsx'
 
 interface Student {
   id: number
   name: string
   initials: string
   color: string
+}
+
+const STORAGE_KEYS = {
+  students: 'lucky-draw-students',
+  picked: 'lucky-draw-picked',
+  history: 'lucky-draw-history',
 }
 
 const COLORS = [
@@ -29,24 +37,130 @@ function createStudent(name: string, index: number): Student {
 
 const students = ref<Student[]>([])
 const namesInput = ref('')
+const fileInputRef = ref<HTMLInputElement | null>(null)
 const winners = ref<Student[]>([])
 const showResult = ref(false)
 const isSpinning = ref(false)
 const spinningName = ref('')
 const inputFocused = ref(false)
 const pickLog = ref<{ students: string[]; time: Date }[]>([])
+const pickedIds = ref<Set<number>>(new Set())
+const confettiPieces = ref<{ id: number; x: number; y: number; color: string; delay: number }[]>([])
+let confettiInterval: ReturnType<typeof setInterval> | null = null
 
 let spinInterval: ReturnType<typeof setInterval> | null = null
+let audioContext: AudioContext | null = null
 
-onUnmounted(() => {
-  if (spinInterval) {
-    clearInterval(spinInterval)
-  }
+onMounted(() => {
+  loadFromStorage()
 })
 
+onUnmounted(() => {
+  if (spinInterval) clearInterval(spinInterval)
+  if (confettiInterval) clearInterval(confettiInterval)
+  if (audioContext) audioContext.close()
+})
+
+watch(students, (val) => {
+  localStorage.setItem(STORAGE_KEYS.students, JSON.stringify(val))
+}, { deep: true })
+
+watch(pickLog, (val) => {
+  localStorage.setItem(STORAGE_KEYS.history, JSON.stringify(val.map(v => ({ ...v, time: v.time.toISOString() }))))
+}, { deep: true })
+
+watch(pickedIds, (val) => {
+  localStorage.setItem(STORAGE_KEYS.picked, JSON.stringify([...val]))
+}, { deep: true })
+
+function loadFromStorage() {
+  try {
+    const savedStudents = localStorage.getItem(STORAGE_KEYS.students)
+    if (savedStudents) students.value = JSON.parse(savedStudents)
+
+    const savedPicked = localStorage.getItem(STORAGE_KEYS.picked)
+    if (savedPicked) pickedIds.value = new Set(JSON.parse(savedPicked))
+
+    const savedHistory = localStorage.getItem(STORAGE_KEYS.history)
+    if (savedHistory) {
+      pickLog.value = JSON.parse(savedHistory).map((v: any) => ({ ...v, time: new Date(v.time) }))
+    }
+  } catch {
+    // ignore parse errors
+  }
+}
+
+function getAudioContext(): AudioContext {
+  if (!audioContext || audioContext.state === 'closed') {
+    audioContext = new AudioContext()
+  }
+  return audioContext
+}
+
+function playTickSound() {
+  try {
+    const ctx = getAudioContext()
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+    osc.frequency.value = 800 + Math.random() * 400
+    osc.type = 'sine'
+    gain.gain.setValueAtTime(0.08, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05)
+    osc.start(ctx.currentTime)
+    osc.stop(ctx.currentTime + 0.05)
+  } catch {
+    // ignore audio errors
+  }
+}
+
+function playWinSound() {
+  try {
+    const ctx = getAudioContext()
+    const now = ctx.currentTime
+    const notes: number[] = [523.25, 659.25, 783.99, 1046.5]
+    notes.forEach((freq: number, i: number) => {
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      osc.frequency.value = freq
+      osc.type = 'triangle'
+      gain.gain.setValueAtTime(0.15, now + i * 0.1)
+      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.3)
+      osc.start(now + i * 0.1)
+      osc.stop(now + i * 0.1 + 0.3)
+    })
+  } catch {
+    // ignore audio errors
+  }
+}
+
+function playClickSound() {
+  try {
+    const ctx = getAudioContext()
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+    osc.frequency.value = 1200
+    osc.type = 'sine'
+    gain.gain.setValueAtTime(0.1, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08)
+    osc.start(ctx.currentTime)
+    osc.stop(ctx.currentTime + 0.08)
+  } catch {
+    // ignore audio errors
+  }
+}
+
 const isEmpty = computed(() => students.value.length === 0)
+const availableStudents = computed(() => students.value.filter(s => !pickedIds.value.has(s.id)))
+const hasAvailableStudents = computed(() => availableStudents.value.length > 0)
 
 function addAllStudents() {
+  playClickSound()
   const raw = namesInput.value.trim()
   if (!raw) return
 
@@ -63,31 +177,138 @@ function addAllStudents() {
   namesInput.value = ''
 }
 
+function triggerFileImport() {
+  fileInputRef.value?.click()
+}
+
+function handleFileImport(event: Event) {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+
+  playClickSound()
+  const reader = new FileReader()
+
+  reader.onload = (e) => {
+    try {
+      const data = e.target?.result
+      if (!data) return
+
+      let names: string[] = []
+
+      if (file.name.endsWith('.csv') || file.type === 'text/csv' || file.type === 'text/plain') {
+        const text = data as string
+        const lines = text.split(/\r?\n/)
+        names = lines
+          .map(line => line.trim())
+          .filter(line => line.length > 0 && !line.match(/^(name|student|participant|fullname|first\s*name)/i))
+      } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.type.includes('spreadsheet') || file.type.includes('excel')) {
+        const workbook = XLSX.read(data, { type: 'binary' })
+        const firstSheetName = workbook.SheetNames[0]
+        if (firstSheetName) {
+          const firstSheet = workbook.Sheets[firstSheetName]
+          if (firstSheet) {
+            const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 }) as any[][]
+            names = jsonData.flat()
+              .filter((cell: any) => cell != null && String(cell).trim() !== '')
+              .map((cell: any) => String(cell).trim())
+              .filter((name: string) => !name.match(/^(name|student|participant|fullname|first\s*name)/i))
+          }
+        }
+      } else if (file.type === 'application/json') {
+        const json = JSON.parse(data as string)
+        const arr = Array.isArray(json) ? json : [json]
+        names = arr
+          .map((item: any) => item.name || item.student || item.participant || item.fullName || item.firstName || '')
+          .filter((name: string) => name.trim().length > 0)
+      }
+
+      if (names.length > 0) {
+        const startIndex = students.value.length
+        const newStudents = names.map((name, i) => createStudent(name, startIndex + i))
+        students.value.push(...newStudents)
+      }
+    } catch (err) {
+      console.error('Failed to import file:', err)
+    } finally {
+      target.value = ''
+    }
+  }
+
+  if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.type.includes('spreadsheet') || file.type.includes('excel')) {
+    reader.readAsBinaryString(file)
+  } else {
+    reader.readAsText(file)
+  }
+}
+
 function clearAllStudents() {
+  playClickSound()
   students.value = []
   winners.value = []
   showResult.value = false
+  pickedIds.value = new Set()
+  pickLog.value = []
+  if (confettiInterval) clearInterval(confettiInterval)
+  confettiPieces.value = []
 }
 
 function removeStudent(id: number) {
   students.value = students.value.filter(s => s.id !== id)
   winners.value = winners.value.filter(s => s.id !== id)
+  pickedIds.value.delete(id)
   if (winners.value.length === 0) {
     showResult.value = false
   }
 }
 
+function resetPicked() {
+  pickedIds.value = new Set()
+}
+
+function createConfetti(winnerColor: string) {
+  const pieces: typeof confettiPieces.value = []
+  const colors = ['#6366f1', '#22d3ee', '#f59e0b', '#ec4899', '#22c55e', '#8b5cf6']
+  for (let i = 0; i < 60; i++) {
+    pieces.push({
+      id: i,
+      x: Math.random() * 100,
+      y: -10 - Math.random() * 20,
+      color: colors[Math.floor(Math.random() * colors.length)] || winnerColor,
+      delay: Math.random() * 0.5,
+    })
+  }
+  confettiPieces.value = pieces
+
+  if (confettiInterval) clearInterval(confettiInterval)
+  confettiInterval = setInterval(() => {
+    confettiPieces.value = confettiPieces.value.map(p => ({
+      ...p,
+      y: p.y + 1.5 + Math.random() * 1.5,
+      x: p.x + (Math.random() - 0.5) * 2,
+    })).filter(p => p.y < 120)
+  }, 50)
+
+  setTimeout(() => {
+    if (confettiInterval) clearInterval(confettiInterval)
+    confettiPieces.value = []
+  }, 4000)
+}
+
 async function startDraw() {
   if (isSpinning.value || isEmpty.value) return
 
-  const pool = students.value
+  const pool = availableStudents.value.length > 0 ? availableStudents.value : students.value
+  if (pool.length === 0) return
+
+  playClickSound()
   isSpinning.value = true
   showResult.value = false
   winners.value = []
   spinningName.value = ''
 
-  const spinDuration = 2000
-  const spinIntervalMs = 60
+  const spinDuration = 2500
+  const spinIntervalMs = 50
   const start = Date.now()
 
   await new Promise<void>((resolve) => {
@@ -102,6 +323,7 @@ async function startDraw() {
       const randomStudent = pool[Math.floor(Math.random() * pool.length)]
       if (randomStudent) {
         spinningName.value = randomStudent.name
+        if (Math.random() > 0.7) playTickSound()
       }
     }, spinIntervalMs)
   })
@@ -113,11 +335,15 @@ async function startDraw() {
   showResult.value = true
   spinningName.value = ''
 
+  finalWinners.forEach(w => pickedIds.value.add(w.id))
+
   pickLog.value.unshift({
     students: finalWinners.map(s => s.name),
     time: new Date(),
   })
 
+  playWinSound()
+  createConfetti(finalWinners[0]?.color || '#6366f1')
   isSpinning.value = false
 }
 
@@ -130,23 +356,28 @@ function formatTime(date: Date) {
   <div class="page">
     <div class="container">
       <header class="header">
-        <div class="header-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 2v4" />
-            <path d="M12 18v4" />
-            <path d="M2 12h4" />
-            <path d="M18 12h4" />
-            <path d="m4.93 4.93 2.83 2.83" />
-            <path d="m16.24 16.24 2.83 2.83" />
-            <path d="m4.93 19.07 2.83-2.83" />
-            <path d="m16.24 7.76 2.83-2.83" />
-            <path d="M12 6a6 6 0 1 0 0 12 6 6 0 0 0 0-12Z" />
-          </svg>
+        <div class="header__row">
+          <RouterLink to="/tools" class="header__back">← Back to all tools</RouterLink>
         </div>
-        <div>
-          <h1 class="header-title">Lucky Draw</h1>
-          <p class="header-subtitle">Add participants and draw one lucky winner with a fun spinning animation!</p>
+        <div class="header__content">
+          <div class="header-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 2v4" />
+              <path d="M12 18v4" />
+              <path d="M2 12h4" />
+              <path d="M18 12h4" />
+              <path d="m4.93 4.93 2.83 2.83" />
+              <path d="m16.24 16.24 2.83 2.83" />
+              <path d="m4.93 19.07 2.83-2.83" />
+              <path d="m16.24 7.76 2.83-2.83" />
+              <path d="M12 6a6 6 0 1 0 0 12 6 6 0 0 0 0-12Z" />
+            </svg>
+          </div>
+          <div>
+            <h1 class="header-title">Lucky Draw</h1>
+            <p class="header-subtitle">Add participants and draw one lucky winner with a fun spinning animation!</p>
+          </div>
         </div>
       </header>
 
@@ -169,6 +400,13 @@ function formatTime(date: Date) {
             @blur="inputFocused = false"
             rows="4"
           ></textarea>
+          <input
+            ref="fileInputRef"
+            type="file"
+            accept=".csv,.xlsx,.xls,.json,.txt"
+            class="input-area__file"
+            @change="handleFileImport"
+          />
           <div class="input-area__actions">
             <button
               class="btn btn--primary"
@@ -182,11 +420,22 @@ function formatTime(date: Date) {
               Add to list
             </button>
             <button
+              class="btn btn--secondary"
+              @click="triggerFileImport"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+              Import file
+            </button>
+            <button
               v-if="students.length > 0"
               class="btn btn--ghost"
               @click="clearAllStudents"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
                 <polyline points="3 6 5 6 21 6" />
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
               </svg>
@@ -201,7 +450,10 @@ function formatTime(date: Date) {
               v-for="student in students"
               :key="student.id"
               class="chip"
-              :class="{ 'chip--winner': winners.some(s => s.id === student.id) && showResult }"
+              :class="{
+                'chip--winner': winners.some(s => s.id === student.id) && showResult,
+                'chip--picked': pickedIds.has(student.id) && !winners.some(s => s.id === student.id)
+              }"
               :style="{ '--chip-color': student.color }"
             >
               <div class="chip__avatar" :style="{ background: student.color }">
@@ -215,6 +467,7 @@ function formatTime(date: Date) {
                 </svg>
               </button>
               <div v-if="winners.some(s => s.id === student.id) && showResult" class="chip__crown">👑</div>
+              <div v-else-if="pickedIds.has(student.id)" class="chip__check">✓</div>
             </div>
           </TransitionGroup>
         </div>
@@ -233,13 +486,14 @@ function formatTime(date: Date) {
         </div>
       </section>
 
-      <section class="card draw-card" :class="{ 'card--disabled': isEmpty }">
+      <section class="card draw-card" :class="{ 'card--disabled': isEmpty || !hasAvailableStudents }">
         <div class="card-heading">
           <span class="step-badge step-badge--gold">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;vertical-align:middle;"><circle cx="12" cy="12" r="10"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
             Spin the Wheel
           </span>
           <h2 class="card-title">Draw a Winner</h2>
+          <span v-if="pickedIds.size > 0" class="chip-count">{{ pickedIds.size }} picked</span>
         </div>
 
         <div class="draw-area">
@@ -282,37 +536,50 @@ function formatTime(date: Date) {
                 <path d="M12 6a6 6 0 1 0 0 12 6 6 0 0 0 0-12Z" />
               </svg>
               <div class="wheel-circle__placeholder-text">
-                {{ isEmpty ? 'Add participants' : 'Click Draw!' }}
+                {{ isEmpty ? 'Add participants' : !hasAvailableStudents ? 'All participants picked' : 'Click Draw!' }}
               </div>
             </div>
           </div>
         </div>
 
-        <button
-          class="draw-btn"
-          :class="{ 'draw-btn--spinning': isSpinning }"
-          :disabled="isSpinning || isEmpty"
-          @click="startDraw"
-        >
-          <span v-if="isSpinning" class="draw-btn__inner">
-            <span class="spinner"></span>
-            Drawing...
-          </span>
-          <span v-else class="draw-btn__inner">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 2v4" />
-              <path d="M12 18v4" />
-              <path d="M2 12h4" />
-              <path d="M18 12h4" />
-              <path d="m4.93 4.93 2.83 2.83" />
-              <path d="m16.24 16.24 2.83 2.83" />
-              <path d="m4.93 19.07 2.83-2.83" />
-              <path d="m16.24 7.76 2.83-2.83" />
+        <div class="draw-actions">
+          <button
+            class="draw-btn"
+            :class="{ 'draw-btn--spinning': isSpinning }"
+            :disabled="isSpinning || isEmpty || !hasAvailableStudents"
+            @click="startDraw"
+          >
+            <span v-if="isSpinning" class="draw-btn__inner">
+              <span class="spinner"></span>
+              Drawing...
+            </span>
+            <span v-else class="draw-btn__inner">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 2v4" />
+                <path d="M12 18v4" />
+                <path d="M2 12h4" />
+                <path d="M18 12h4" />
+                <path d="m4.93 4.93 2.83 2.83" />
+                <path d="m16.24 16.24 2.83 2.83" />
+                <path d="m4.93 19.07 2.83-2.83" />
+                <path d="m16.24 7.76 2.83-2.83" />
+              </svg>
+              Lucky Draw!
+            </span>
+          </button>
+          <button
+            v-if="pickedIds.size > 0 && !isSpinning"
+            class="draw-btn draw-btn--secondary"
+            @click="resetPicked"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="1 4 1 10 7 10" />
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
             </svg>
-            Lucky Draw!
-          </span>
-        </button>
+            Reset Picked
+          </button>
+        </div>
       </section>
 
       <section v-if="pickLog.length > 0" class="card card--history">
@@ -349,19 +616,50 @@ function formatTime(date: Date) {
           </TransitionGroup>
         </div>
       </section>
+
+      <Transition name="confetti">
+        <div v-if="confettiPieces.length > 0" class="confetti-container">
+          <div
+            v-for="piece in confettiPieces"
+            :key="piece.id"
+            class="confetti-piece"
+            :style="{
+              left: piece.x + '%',
+              top: piece.y + '%',
+              background: piece.color,
+              animationDelay: piece.delay + 's',
+            }"
+          ></div>
+        </div>
+      </Transition>
     </div>
   </div>
 </template>
 
 <style scoped>
 .page {
+  margin-top: 70px;
   min-height: 100vh;
-  background: linear-gradient(135deg, #1e3a5f, #2563eb);
+  background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 50%, #4f46e5 100%);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  padding-top: 64px;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 600px 400px at 10% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 70%),
+    radial-gradient(ellipse 500px 500px at 90% 80%, rgba(34, 211, 238, 0.1) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
 }
 
 .container {
+  position: relative;
+  z-index: 1;
   max-width: 48rem;
   margin: 0 auto;
   padding: 2.5rem 1.5rem 3rem;
@@ -372,9 +670,39 @@ function formatTime(date: Date) {
 
 .header {
   display: flex;
-  align-items: flex-start;
+  flex-direction: column;
   gap: 1rem;
   padding: 0 0.25rem;
+}
+
+.header__row {
+  display: flex;
+  align-items: center;
+}
+
+.header__content {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.header__back {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.9);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.header__back:hover {
+  border-color: #22d3ee;
+  color: #22d3ee;
 }
 
 .header-icon {
@@ -531,10 +859,15 @@ function formatTime(date: Date) {
   white-space: pre-line;
 }
 
+.input-area__file {
+  display: none;
+}
+
 .input-area__actions {
   display: flex;
   gap: 0.5rem;
   padding: 0.35rem 0.5rem 0.15rem;
+  flex-wrap: wrap;
 }
 
 .btn {
@@ -565,6 +898,25 @@ function formatTime(date: Date) {
 }
 
 .btn--primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn--secondary {
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+.btn--secondary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  border-color: #cbd5e1;
+}
+
+.btn--secondary:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
@@ -612,6 +964,18 @@ function formatTime(date: Date) {
   background: color-mix(in srgb, var(--chip-color) 15%, transparent);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--chip-color) 30%, transparent);
   padding-right: 1.4rem;
+  animation: winner-pop 0.4s ease-out;
+}
+
+@keyframes winner-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.chip--picked {
+  opacity: 0.55;
+  background: #f1f5f9;
 }
 
 .chip__crown {
@@ -619,6 +983,14 @@ function formatTime(date: Date) {
   right: 0.3rem;
   font-size: 0.75rem;
   animation: bounce-crown 1s ease-in-out infinite;
+}
+
+.chip__check {
+  position: absolute;
+  right: 0.3rem;
+  font-size: 0.65rem;
+  color: #22c55e;
+  font-weight: 700;
 }
 
 @keyframes bounce-crown {
@@ -894,6 +1266,13 @@ function formatTime(date: Date) {
   50% { transform: translateY(-3px); }
 }
 
+.draw-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 .draw-btn {
   display: flex;
   align-items: center;
@@ -935,6 +1314,22 @@ function formatTime(date: Date) {
 .draw-btn--spinning {
   background: linear-gradient(135deg, #4338ca, #3730a3);
   color: #c7d2fe;
+}
+
+.draw-btn--secondary {
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  max-width: 14rem;
+  font-size: 0.875rem;
+  padding: 0.75rem 1.5rem;
+}
+
+.draw-btn--secondary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
 }
 
 .draw-btn__inner {
@@ -1070,10 +1465,63 @@ function formatTime(date: Date) {
   transform: translateX(10px);
 }
 
+.confetti-container {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 100;
+  overflow: hidden;
+}
+
+.confetti-piece {
+  position: absolute;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 2px;
+  opacity: 0.9;
+}
+
+.confetti-enter-active {
+  transition: all 0.3s ease;
+}
+
+.confetti-leave-active {
+  transition: all 0.5s ease;
+}
+
+.confetti-enter-from {
+  opacity: 0;
+  transform: translateY(-20px) scale(0);
+}
+
+.confetti-leave-to {
+  opacity: 0;
+  transform: translateY(100px) scale(0.5);
+}
+
 @media (max-width: 640px) {
   .container {
     padding: 1.5rem 1rem 2rem;
     gap: 1rem;
+  }
+
+  .header__row {
+    justify-content: flex-start;
+  }
+
+  .header__back {
+    font-size: 0.85rem;
+    padding: 8px 16px;
+  }
+
+  .header-icon {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+
+  .header-icon svg {
+    width: 18px;
+    height: 18px;
   }
 
   .card {

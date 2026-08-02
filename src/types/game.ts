@@ -137,3 +137,28 @@ export interface LeaderboardEntry {
   participantName: string
   score: number
 }
+
+export interface GameHistory {
+  id: number
+  game_session_id: number
+  teacher_id: number
+  game_type: string
+  settings: Record<string, unknown>
+  participants: string[]
+  scores: Array<{ participant: string; score: number }>
+  total_questions: number
+  started_at: string
+  ended_at: string
+  created_at: string
+  updated_at: string
+}
+
+export interface GameHistoryResponse {
+  data: GameHistory[]
+  meta: {
+    total: number
+    per_page: number
+    current_page: number
+    last_page: number
+  }
+}

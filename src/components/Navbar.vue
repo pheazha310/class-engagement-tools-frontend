@@ -48,9 +48,8 @@ async function handleLogout() {
   await router.replace('/')
 }
 
-onMounted(async () => {
+onMounted(() => {
   window.addEventListener('scroll', handleScroll)
-  await auth.fetchUser()
 })
 
 onUnmounted(() => {
@@ -80,22 +79,10 @@ onUnmounted(() => {
           <div class="dropdown-menu" :class="{ active: activeDropdown }">
             <RouterLink to="/tools" class="dropdown-item" @click="closeMobileMenu">All Tools</RouterLink>
             <RouterLink to="/tools/category/random" class="dropdown-item" @click="closeMobileMenu">Random Tools</RouterLink>
-            <RouterLink to="/tools/category/quiz" class="dropdown-item" @click="closeMobileMenu">Quiz &amp; Assessment</RouterLink>
+            <RouterLink to="/tools/category/student-engagement" class="dropdown-item" @click="closeMobileMenu">Student Engagement</RouterLink>
             <RouterLink to="/tools/category/classroom" class="dropdown-item" @click="closeMobileMenu">Classroom Control</RouterLink>
             <RouterLink to="/tools/category/games" class="dropdown-item" @click="closeMobileMenu">Games</RouterLink>
-            <RouterLink to="/tools/category/engagement" class="dropdown-item" @click="closeMobileMenu">Engagement</RouterLink>
-            <RouterLink to="/tools/category/fun" class="dropdown-item" @click="closeMobileMenu">Fun Activities</RouterLink>
-          </div>
-        </li>
-        <li class="nav-dropdown-trigger" @mouseenter="activeParticipantsDropdown = true" @mouseleave="activeParticipantsDropdown = false">
-          <button class="nav-link dropdown-toggle" type="button" @click.prevent="activeParticipantsDropdown = !activeParticipantsDropdown">
-            Participants
-            <svg class="dropdown-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
-          </button>
-          <div class="dropdown-menu" :class="{ active: activeParticipantsDropdown }">
-            <RouterLink to="/participants/theme" class="dropdown-item" @click="closeMobileMenu">Theme</RouterLink>
+            <div class="dropdown-divider" />
           </div>
         </li>
         <li><RouterLink to="/contact" class="nav-link" :class="{ active: route.path === '/contact' }" @click="closeMobileMenu">Contact</RouterLink></li>
@@ -114,11 +101,10 @@ onUnmounted(() => {
       </ul>
 
       <div class="nav-buttons">
-        <template v-if="auth.initialized && auth.isAuthenticated">
+        <template v-if="auth.isAuthenticated">
           <ProfileDropdown />
-          <button class="btn btn-logout" type="button" @click="handleLogout">Logout</button>
         </template>
-        <template v-else-if="auth.initialized && !auth.isAuthenticated">
+        <template v-else>
           <RouterLink to="/login" class="btn btn-login">Login</RouterLink>
           <RouterLink to="/register" class="btn btn-register">Register</RouterLink>
         </template>
@@ -315,6 +301,16 @@ onUnmounted(() => {
   background: rgba(99, 102, 241, 0.06);
   color: #6366f1;
   padding-left: 18px;
+}
+
+.dropdown-item--vote {
+  color: #16a34a !important;
+  font-weight: 600;
+}
+
+.dropdown-item--vote:hover {
+  background: rgba(220, 252, 231, 0.5) !important;
+  color: #15803d !important;
 }
 
 .dropdown-divider {

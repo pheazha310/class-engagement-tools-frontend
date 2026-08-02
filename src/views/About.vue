@@ -1,264 +1,362 @@
 <script setup lang="ts">
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { RouterLink } from 'vue-router'
 import SiteFooter from '@/components/SiteFooter.vue'
+import ToolIcon from '@/components/ToolIcon.vue'
+
+const observer = ref<IntersectionObserver | null>(null)
+const mouseX = ref(0)
+const mouseY = ref(0)
+
+const countersAnimated = ref(false)
+
+const missionIcon = (title: string) => ({
+  'Increase Engagement': 'target',
+  'Simplify Teaching': 'bulb',
+  'Ensure Fairness': 'sparkles',
+  'Foster Innovation': 'rocket',
+}[title] || 'sparkles')
+
+const featureIcon = (title: string) => ({
+  'Random Selection Tools': 'wheel',
+  'Classroom Timers': 'timer',
+  'Group Management': 'users',
+  'Educational Games': 'gamepad',
+  'Teacher Dashboard': 'chart',
+}[title] || 'quiz')
+
+const handleMouseMove = (e: MouseEvent) => {
+  mouseX.value = (e.clientX / window.innerWidth) * 100
+  mouseY.value = (e.clientY / window.innerHeight) * 100
+}
+
+const animateCounters = () => {
+  if (countersAnimated.value) return
+  countersAnimated.value = true
+  const targets = document.querySelectorAll('.stat-value')
+  targets.forEach((el) => {
+    const targetText = (el as HTMLElement).textContent || ''
+    const match = targetText.match(/[\d.]+/)
+    if (!match) return
+    const targetNum = parseFloat(match[0])
+    const suffix = targetText.replace(match[0], '')
+    const duration = 1800
+    const startTime = performance.now()
+    const tick = (now: number) => {
+      const elapsed = now - startTime
+      const progress = Math.min(elapsed / duration, 1)
+      const eased = 1 - Math.pow(1 - progress, 4)
+      const value = Math.floor(eased * targetNum)
+      ;(el as HTMLElement).textContent = value + suffix
+      if (progress < 1) requestAnimationFrame(tick)
+      else (el as HTMLElement).textContent = targetText
+    }
+    requestAnimationFrame(tick)
+  })
+}
+
+onMounted(() => {
+  document.addEventListener('mousemove', handleMouseMove)
+
+  observer.value = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in-view')
+
+          if (entry.target.classList.contains('stats-grid')) animateCounters()
+        }
+      })
+    },
+    { threshold: 0.12, rootMargin: '0px 0px -50px 0px' },
+  )
+
+  document.querySelectorAll('.reveal').forEach((el) => observer.value?.observe(el))
+  
+  // Create floating particles
+  const particlesContainer = document.getElementById('hero-particles')
+  if (particlesContainer) {
+    for (let i = 0; i < 50; i++) {
+      const particle = document.createElement('div')
+      particle.className = 'hero-particle'
+      particle.style.left = Math.random() * 100 + '%'
+      particle.style.animationDelay = Math.random() * 25 + 's'
+      particle.style.animationDuration = (15 + Math.random() * 10) + 's'
+      particlesContainer.appendChild(particle)
+    }
+  }
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('mousemove', handleMouseMove)
+  observer.value?.disconnect()
+})
 </script>
 
 <template>
   <div class="about-page">
     <!-- Hero Section -->
     <section class="hero">
+      <div class="hero-bg">
+        <div class="hero-orb hero-orb-1"></div>
+        <div class="hero-orb hero-orb-2"></div>
+        <div class="hero-orb hero-orb-3"></div>
+        <div class="hero-orb hero-orb-4"></div>
+      </div>
+      
+      <div class="hero-particles" id="hero-particles"></div>
+      
+      <div class="hero-grid"></div>
+      
       <div class="hero-content">
-        <h1 class="hero-title">About Class Engagement Tools</h1>
-        <p class="hero-subtitle">
-          Empowering educators with innovative tools to create engaging, interactive, and effective learning experiences.
+        <div class="hero-badge reveal">
+          <span class="badge-dot"></span>
+          <span class="badge-text">ABOUT US</span>
+        </div>
+        
+        <h1 class="hero-title reveal">
+          <span class="title-line">Shaping the future</span>
+          <span class="title-line">
+            of
+            <span class="title-highlight">
+              <span class="highlight-text">Active Experiences.</span>
+              <span class="highlight-glow"></span>
+            </span>
+          </span>
+        </h1>
+        
+        <p class="hero-subtitle reveal">
+          We build tools that turn ordinary lessons into interactive, student-centered
+          learning experiences—available anywhere, on any device.
         </p>
+        
+        <div class="hero-buttons reveal">
+          <RouterLink to="/register" class="btn btn-primary btn-animated">
+            <span class="btn-bg"></span>
+            <span class="btn-content">
+              <span class="btn-text">Get Started Free</span>
+            </span>
+            <span class="btn-shine"></span>
+          </RouterLink>
+          <RouterLink to="/" class="btn btn-outline btn-animated">
+            <span class="btn-content">
+              <span class="btn-text">Explore Tools</span>
+            </span>
+          </RouterLink>
+        </div>
       </div>
     </section>
 
-     <!-- Platform Overview Section -->
-     <section class="overview">
-       <div class="container">
-         <div class="section-header">
-           <span class="section-eyebrow">Our Platform</span>
-           <h2 class="section-title">Built for modern classrooms</h2>
-           <p class="section-subtitle">
-             A comprehensive suite of interactive applications designed to make teaching more engaging and effective.
-           </p>
-         </div>
-         <div class="overview-content">
-           <div class="overview-text">
-             <p>
-               The Class Engagement Tools Platform is a comprehensive suite of interactive applications
-               designed specifically for modern educators. Our mission is to transform traditional
-               classroom experiences into dynamic, engaging, and student-centered learning environments.
-             </p>
-             <p>
-               We provide teachers with powerful, easy-to-use tools that increase student participation,
-               streamline classroom management, and make learning fun. From random student selection to
-               interactive quizzes, our platform covers all aspects of classroom engagement.
-             </p>
-             <p>
-               Built with educators in mind, our platform is intuitive, accessible, and works seamlessly
-               across all devices. Whether you're teaching in a traditional classroom or online, our tools
-               adapt to your needs.
-             </p>
-           </div>
-           <div class="overview-image">
-             <div class="image-placeholder">
-               <span class="placeholder-icon">🎓</span>
-               <p>Empowering Education Through Technology</p>
-             </div>
-           </div>
-         </div>
-       </div>
-     </section>
+    <!-- Overview Section -->
+    <section class="section overview-section">
+      <div class="container">
+        <div class="section-header reveal">
+          <span class="section-eyebrow">Our Platform</span>
+          <h2 class="section-title">Built for modern classrooms</h2>
+          <p class="section-subtitle">
+            A comprehensive suite of interactive applications designed to make teaching more engaging and effective.
+          </p>
+        </div>
+        <div class="overview-content">
+          <div class="overview-text">
+            <div class="text-line reveal" v-for="(p, idx) in [
+              'The Class Engagement Tools Platform is a comprehensive suite of interactive applications designed specifically for modern educators. Our mission is to transform traditional classroom experiences into dynamic, engaging, and student-centered learning environments.',
+              'We provide teachers with powerful, easy-to-use tools that increase student participation, streamline classroom management, and make learning fun. From random student selection to interactive quizzes, our platform covers all aspects of classroom engagement.',
+              'Built with educators in mind, our platform is intuitive, accessible, and works seamlessly across all devices. Whether you\'re teaching in a traditional classroom or online, our tools adapt to your needs.',
+            ]" :key="idx">
+              <p>{{ p }}</p>
+            </div>
+          </div>
+          <div class="overview-card reveal">
+            <div class="overview-card-inner">
+              <span class="overview-icon">🎓</span>
+              <div class="overview-card-title">Empowering Education Through Technology</div>
+              <div class="overview-card-rule" />
+              <div class="overview-card-cols">
+                <div class="overview-chip" v-for="c in ['Interactive', 'Accessible', 'Device-ready', 'Teacher-first']" :key="c">
+                  <span class="overview-chip-dot" />{{ c }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
-     <!-- Mission Section -->
-     <section class="mission">
-       <div class="container">
-         <div class="section-header">
-           <span class="section-eyebrow">Our Mission</span>
-           <h2 class="section-title">Driving better learning outcomes</h2>
-           <p class="section-subtitle">
-             We focus on the areas that matter most to educators and students.
-           </p>
-         </div>
-         <div class="mission-content">
-           <div class="mission-card">
-             <div class="mission-icon">🎯</div>
-             <h3>Increase Engagement</h3>
-             <p>Make every lesson interactive and captivating, ensuring students remain focused and enthusiastic about learning.</p>
-           </div>
-           <div class="mission-card">
-             <div class="mission-icon">💡</div>
-             <h3>Simplify Teaching</h3>
-             <p>Provide intuitive tools that save teachers time and reduce administrative burden, allowing more focus on actual teaching.</p>
-           </div>
-           <div class="mission-card">
-             <div class="mission-icon">🌟</div>
-             <h3>Ensure Fairness</h3>
-             <p>Create equitable learning environments where every student has equal opportunities to participate and succeed.</p>
-           </div>
-           <div class="mission-card">
-             <div class="mission-icon">🚀</div>
-             <h3>Foster Innovation</h3>
-             <p>Continuously develop new features and tools that leverage technology to enhance educational outcomes.</p>
-           </div>
-         </div>
-       </div>
-     </section>
+    <!-- Mission Section -->
+    <section class="section section--tinted mission-section">
+      <div class="container">
+        <div class="section-header reveal">
+          <span class="section-eyebrow">Our Mission</span>
+          <h2 class="section-title">Driving better learning outcomes</h2>
+          <p class="section-subtitle">We focus on the areas that matter most to educators and students.</p>
+        </div>
+        <div class="mission-grid">
+          <div class="mission-card reveal" v-for="(m, idx) in [
+            { icon: '🎯', title: 'Increase Engagement', desc: 'Make every lesson interactive and captivating, ensuring students remain focused and enthusiastic.' },
+            { icon: '💡', title: 'Simplify Teaching', desc: 'Intuitive tools that save teachers time and reduce administrative burden.' },
+            { icon: '🌟', title: 'Ensure Fairness', desc: 'Equitable learning environments where every student has equal opportunities to participate.' },
+            { icon: '🚀', title: 'Foster Innovation', desc: 'Continuously develop new features that leverage technology for better outcomes.' },
+          ]" :key="idx" :style="{ transitionDelay: `${idx * 0.08}s` }">
+            <div class="mission-card-top">
+              <span class="mission-icon"><ToolIcon :name="missionIcon(m.title)" :size="30" /></span>
+              <div class="mission-number">{{ String(idx + 1).padStart(2, '0') }}</div>
+            </div>
+            <h3 class="mission-card-title">{{ m.title }}</h3>
+            <p class="mission-card-desc">{{ m.desc }}</p>
+          </div>
+        </div>
+      </div>
+    </section>
 
-     <!-- Key Features Section -->
-     <section class="features">
-       <div class="container">
-         <div class="section-header">
-           <span class="section-eyebrow">Key Features</span>
-           <h2 class="section-title">Everything you need in one place</h2>
-           <p class="section-subtitle">
-             Discover what makes our platform the perfect companion for modern educators.
-           </p>
-         </div>
-         <div class="features-grid">
-           <div class="feature-card">
-             <div class="feature-icon">🎡</div>
-             <h3>Random Selection Tools</h3>
-             <p>Fair and fun ways to select students with spinning wheels and random pickers.</p>
-           </div>
-           <div class="feature-card">
-             <div class="feature-icon">⏱️</div>
-             <h3>Classroom Timers</h3>
-             <p>Countdowns, stopwatches, and Pomodoro sessions to manage classroom time effectively.</p>
-           </div>
-           <div class="feature-card">
-             <div class="feature-icon">👥</div>
-             <h3>Group Management</h3>
-             <p>Create balanced groups quickly and share them with your class instantly.</p>
-           </div>
-           <div class="feature-card">
-             <div class="feature-icon">🗳️</div>
-             <h3>Live Polling & Voting</h3>
-             <p>Collect instant feedback with interactive polls that work on any device.</p>
-           </div>
-           <div class="feature-card">
-             <div class="feature-icon">🎮</div>
-             <h3>Educational Games</h3>
-             <p>Add friendly competition with math challenges, vocabulary games, quizzes, and more.</p>
-           </div>
-           <div class="feature-card">
-             <div class="feature-icon">📊</div>
-             <h3>Teacher Dashboard</h3>
-             <p>Organize classes, save lists, and track activity history in one centralized location.</p>
-           </div>
-         </div>
-       </div>
-     </section>
+    <!-- Features Section -->
+    <section class="section features-section">
+      <div class="container">
+        <div class="section-header reveal">
+          <span class="section-eyebrow">Key Features</span>
+          <h2 class="section-title">Everything you need in one place</h2>
+          <p class="section-subtitle">Discover what makes our platform the perfect companion for modern educators.</p>
+        </div>
+        <div class="features-grid">
+          <div class="feature-card reveal" v-for="(f, idx) in [
+            { icon: '🎡', title: 'Random Selection Tools', desc: 'Fair and fun ways to select students with spinning wheels and random pickers.' },
+            { icon: '⏱️', title: 'Classroom Timers', desc: 'Countdowns, stopwatches, and Pomodoro sessions to manage classroom time.' },
+            { icon: '👥', title: 'Group Management', desc: 'Create balanced groups quickly and share them with your class instantly.' },
+            { icon: '🎮', title: 'Educational Games', desc: 'Add friendly competition with quizzes, vocabulary games, and more.' },
+            { icon: '📊', title: 'Teacher Dashboard', desc: 'Organize classes, save lists, and track activity history in one place.' },
+          ]" :key="f.title" :style="{ transitionDelay: `${idx * 0.08}s` }">
+            <div class="feature-card-icon"><ToolIcon :name="featureIcon(f.title)" :size="32" /></div>
+            <h3 class="feature-card-title">{{ f.title }}</h3>
+            <p class="feature-card-desc">{{ f.desc }}</p>
+          </div>
+        </div>
+      </div>
+    </section>
 
-     <!-- Team Section -->
-     <section class="team">
-       <div class="container">
-         <div class="section-header">
-           <span class="section-eyebrow">Our Team</span>
-           <h2 class="section-title">The people behind the platform</h2>
-           <p class="section-subtitle">
-             We're a passionate group of educators, developers, and designers dedicated to transforming education.
-           </p>
-         </div>
-         <div class="team-grid">
-           <div class="team-card">
-             <div class="team-avatar">
-               <img src="@/assets/images/Sophea.jpg" alt="Sophea Phal" class="avatar-image" />
-             </div>
-             <h3 class="team-name">Sophea Phal</h3>
-             <p class="team-role">Scrum</p>
-             <p class="team-bio">Database Management</p>
-           </div>
-           <div class="team-card">
-             <div class="team-avatar">
-               <img src="@/assets/images/oun.jpg" alt="Sophea Sophorn" class="avatar-image" />
-             </div>
-             <h3 class="team-name">Sophea Sophorn</h3>
-             <p class="team-role">Member</p>
-             <p class="team-bio">Responsible for Backend Development</p>
-           </div>
-           <div class="team-card">
-             <div class="team-avatar">
-               <img src="@/assets/images/Me.jpg" alt="Sreykeo Keun" class="avatar-image" />
-             </div>
-             <h3 class="team-name">Sreykeo Keun</h3>
-             <p class="team-role">Member</p>
-             <p class="team-bio">Responsible for Frontend Development and Quality Assurance</p>
-           </div>
-           <div class="team-card">
-             <div class="team-avatar">
-               <img src="@/assets/images/San.jpg" alt="San Svit" class="avatar-image" />
-             </div>
-             <h3 class="team-name">San Svit</h3>
-             <p class="team-role">Member</p>
-             <p class="team-bio">Responsible for Frontend Development</p>
-           </div>
-           <div class="team-card">
-             <div class="team-avatar">
-               <img src="@/assets/images/Mary.jpg" alt="Mary Sao" class="avatar-image" />
-             </div>
-             <h3 class="team-name">Mary Sao</h3>
-             <p class="team-role">Member</p>
-             <p class="team-bio">Responsible for Frontend Development</p>
-           </div>
-           <div class="team-card">
-             <div class="team-avatar">
-               <img src="@/assets/images/Vanna.jpg" alt="Vanna Len" class="avatar-image" />
-             </div>
-             <h3 class="team-name">Vanna Len</h3>
-             <p class="team-role">Member</p>
-             <p class="team-bio">Responsible for Backend Development</p>
-           </div>
-           <div class="team-card">
-             <div class="team-avatar">
-               <img src="@/assets/images/Nita.jpg" alt="Chroun Nita" class="avatar-image" />
-             </div>
-             <h3 class="team-name">Chroun Nita</h3>
-             <p class="team-role">Member</p>
-             <p class="team-bio">Responsible for Frontend Development and Quality Assurance</p>
-           </div>
-         </div>
-       </div>
-     </section>
+    <!-- Stats Section -->
+    <section class="section section--tinted stats-section">
+      <div class="container">
+        <div class="stats-grid reveal">
+          <div class="stat-card" v-for="s in [
+            { value: '10K+', label: 'Active Teachers' },
+            { value: '50K+', label: 'Students Engaged' },
+            { value: '15+', label: 'Interactive Tools' },
+            { value: '100+', label: 'Countries Reached' },
+          ]" :key="s.label">
+            <div class="stat-value">{{ s.value }}</div>
+            <div class="stat-label">{{ s.label }}</div>
+          </div>
+        </div>
+      </div>
+    </section>
 
-     <!-- Stats Section -->
-     <section class="stats">
-       <div class="container">
-         <div class="stats-grid">
-           <div class="stat-item">
-             <div class="stat-number">10K+</div>
-             <div class="stat-label">Active Teachers</div>
-           </div>
-           <div class="stat-item">
-             <div class="stat-number">50K+</div>
-             <div class="stat-label">Students Engaged</div>
-           </div>
-           <div class="stat-item">
-             <div class="stat-number">15+</div>
-             <div class="stat-label">Interactive Tools</div>
-           </div>
-           <div class="stat-item">
-             <div class="stat-number">100+</div>
-             <div class="stat-label">Countries Reached</div>
-           </div>
-         </div>
-       </div>
-     </section>
+    <!-- Team Section -->
+    <section class="section team-section">
+      <div class="container">
+        <div class="section-header reveal">
+          <span class="section-eyebrow">Our Team</span>
+          <h2 class="section-title">The people behind the platform</h2>
+          <p class="section-subtitle">A passionate group of educators, developers, and designers.</p>
+        </div>
+        <div class="team-grid">
+          <div class="team-card reveal" v-for="(member, idx) in [
+            { img: 'Sophea.jpg', name: 'Sophea Phal', role: 'Scrum', bio: 'Database Management' },
+            { img: 'oun.jpg', name: 'Sophea Sophorn', role: 'Member', bio: 'Backend Development' },
+            { img: 'Me.jpg', name: 'Sreykeo Keun', role: 'Member', bio: 'Frontend Development and QA' },
+            { img: 'San.jpg', name: 'San Svit', role: 'Member', bio: 'Frontend Development' },
+            { img: 'Mary.jpg', name: 'Mary Sao', role: 'Member', bio: 'Frontend Development' },
+            { img: 'Vanna.jpg', name: 'Vanna Len', role: 'Member', bio: 'Backend Development' },
+            { img: 'Nita.jpg', name: 'Chroun Nita', role: 'Member', bio: 'Frontend Development and QA' },
+          ]" :key="member.name" :style="{ transitionDelay: `${idx * 0.07}s` }">
+            <div class="team-avatar">
+              <img :src="`/src/assets/images/${member.img}`" :alt="member.name" loading="lazy" />
+            </div>
+            <h3 class="team-name">{{ member.name }}</h3>
+            <p class="team-role">{{ member.role }}</p>
+            <p class="team-bio">{{ member.bio }}</p>
+          </div>
+        </div>
+      </div>
+    </section>
 
-     <!-- Call-to-Action Section -->
-     <section class="cta">
-       <div class="container">
-         <h2 class="cta-title">Ready to Transform Your Classroom?</h2>
-         <p class="cta-subtitle">
-           Join thousands of educators who are already using our platform to create engaging learning experiences.
-         </p>
-         <div class="cta-buttons">
-           <RouterLink to="/register" class="btn btn-primary btn-large">Get Started Free</RouterLink>
-           <RouterLink to="/" class="btn btn-secondary btn-large">Explore Tools</RouterLink>
-         </div>
-       </div>
-     </section>
+    <!-- FAQ Section -->
+    <section class="section section--tinted faq-section">
+      <div class="container">
+        <div class="section-header reveal">
+          <span class="section-eyebrow">FAQ</span>
+          <h2 class="section-title">Frequently Asked Questions</h2>
+        </div>
+        <div class="faq-list reveal">
+          <div class="faq-item" v-for="(faq, idx) in [
+            { q: 'How quickly will I receive a response?', a: 'We typically respond to all inquiries within 24 hours during business days. For urgent matters, please call us directly.' },
+            { q: 'Do you offer technical support?', a: 'Yes! We provide comprehensive technical support for all our users. Contact us through the form or email support@classtools.com.' },
+            { q: 'Can I schedule a demo?', a: 'Absolutely! Send us a message mentioning you\'re interested in a demo, and our team will schedule a personalized walkthrough.' },
+            { q: 'Do you offer training for educators?', a: 'Yes, we provide free training resources and webinars for educators. Contact us to learn about upcoming sessions.' },
+          ]" :key="idx">
+            <details class="faq-details">
+              <summary class="faq-summary">
+                <span>{{ faq.q }}</span>
+                <svg class="faq-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+              </summary>
+              <div class="faq-body">{{ faq.a }}</div>
+            </details>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta reveal">
+      <div class="cta-orb cta-orb--1" />
+      <div class="cta-orb cta-orb--2" />
+      <div class="container">
+        <h2 class="cta-title">Ready to Transform Your Classroom?</h2>
+        <p class="cta-subtitle">
+          Join thousands of educators who are already using our platform to create engaging learning experiences.
+        </p>
+        <div class="cta-actions">
+          <RouterLink to="/register" class="btn btn-primary btn-large">Get Started Free</RouterLink>
+          <RouterLink to="/" class="btn btn-ghost-light btn-large">Explore Tools</RouterLink>
+        </div>
+      </div>
+      <div class="cta-grid" />
+    </section>
 
     <SiteFooter />
   </div>
 </template>
 
 <style scoped>
-/* Reset and Base Styles */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+:root {
+  --about-primary: #001f9e;
+  --about-primary-soft: #eaf0ff;
+  --about-accent: #3b82f6;
+  --about-ink: #0f172a;
+  --about-muted: #64748b;
+  --about-line: #e2e8f0;
+  --about-surface: #ffffff;
+  --about-surface-soft: #f8fafc;
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal.in-view {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .about-page {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  line-height: 1.6;
-  color: #1f2937;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: var(--about-ink);
   background: #ffffff;
+  overflow-x: hidden;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .container {
@@ -267,319 +365,875 @@ import SiteFooter from '@/components/SiteFooter.vue'
   padding: 0 24px;
 }
 
-/* Typography */
+.section {
+  padding: 110px 20px;
+  position: relative;
+}
+
+.section--tinted {
+  background: linear-gradient(to bottom, #f8fafc, #f1f5f9);
+}
+
 .section-header {
   text-align: center;
-  max-width: 700px;
-  margin: 0 auto 56px;
+  max-width: 720px;
+  margin: 0 auto 64px;
 }
 
 .section-eyebrow {
   display: inline-block;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #2563eb;
-  background: #eff6ff;
-  padding: 6px 14px;
+  color: var(--about-primary);
+  background: var(--about-primary-soft);
+  padding: 7px 16px;
   border-radius: 999px;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
+  animation: fadeDown 0.5s ease forwards;
 }
 
 .section-title {
-  font-size: 36px;
-  font-weight: 800;
-  color: #0f172a;
-  margin-bottom: 16px;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
+  font-size: 40px;
+  font-weight: 830;
+  color: var(--about-ink);
+  margin-bottom: 18px;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
 }
 
 .section-subtitle {
-  color: #64748b;
+  color: var(--about-muted);
   font-size: 17px;
   line-height: 1.7;
 }
 
-/* Buttons */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 14px 28px;
-  border-radius: 10px;
+  border-radius: 12px;
   text-decoration: none;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 15px;
   border: none;
   cursor: pointer;
   transition: all 0.25s ease;
-}
-
-.btn-primary {
-  background: white;
-  color: #2563eb;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
-}
-
-.btn-primary:hover {
-  background: #f8faff;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.35);
-}
-
-.btn-secondary {
-  background: transparent;
-  color: white;
-  border: 2px solid rgba(255, 255, 255, 0.9);
-}
-
-.btn-secondary:hover {
-  background: white;
-  color: #2563eb;
-  transform: translateY(-2px);
+  position: relative;
+  z-index: 1;
 }
 
 .btn-large {
   padding: 16px 32px;
   font-size: 16px;
-  border-radius: 12px;
+  border-radius: 14px;
 }
 
-/* Hero Section */
+.btn-primary {
+  background: linear-gradient(135deg, var(--about-primary) 0%, #2d4ec4 100%);
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(0, 31, 158, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 32px rgba(0, 31, 158, 0.4);
+}
+
+.btn-ghost {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(6px);
+}
+
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.22);
+  transform: translateY(-3px);
+}
+
+.btn-ghost-light {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+}
+
+.btn-ghost-light:hover {
+  background: rgba(255, 255, 255, 0.22);
+  transform: translateY(-3px);
+}
+
+.btn-animated {
+  overflow: hidden;
+}
+
+.btn-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+
+.btn-animated:hover .btn-bg {
+  transform: translateX(100%);
+}
+
+.btn-outline {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.btn-outline:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-3px);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Hero */
 .hero {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  position: relative;
+  background: linear-gradient(135deg, #001f9e 0%, #2547bc 50%, #3b5bf6 100%);
   color: white;
-  padding: 140px 20px 100px;
+  padding: 160px 20px 140px;
   text-align: center;
+  overflow: hidden;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.4;
+  animation: orbFloat 20s ease-in-out infinite;
+}
+
+.hero-orb--1 {
+  width: 500px;
+  height: 500px;
+  background: rgba(59, 130, 246, 0.6);
+  top: -200px;
+  left: -150px;
+  animation-delay: 0s;
+}
+
+.hero-orb--2 {
+  width: 400px;
+  height: 400px;
+  background: rgba(139, 92, 246, 0.5);
+  bottom: -150px;
+  right: -100px;
+  animation-delay: -7s;
+  animation-direction: reverse;
+}
+
+.hero-orb--3 {
+  width: 350px;
+  height: 350px;
+  background: rgba(251, 191, 36, 0.4);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation-delay: -14s;
+  animation: orbPulse 15s ease-in-out infinite;
+}
+
+@keyframes orbFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(50px, -50px) scale(1.15); }
+  66% { transform: translate(-30px, 30px) scale(0.9); }
+}
+
+@keyframes orbPulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; }
+  50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.5; }
+}
+
+@keyframes gridDrift {
+  from { transform: translate(0, 0); }
+  to { transform: translate(60px, 60px); }
+}
+
+@keyframes fadeDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.hero-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.hero-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  animation: particleFloat 25s linear infinite;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+@keyframes particleFloat {
+  from { 
+    transform: translateY(100vh) translateX(0) scale(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+    transform: translateY(90vh) translateX(10px) scale(1);
+  }
+  90% {
+    opacity: 1;
+    transform: translateY(10vh) translateX(-10px) scale(1);
+  }
+  to { 
+    transform: translateY(-100px) translateX(20px) scale(0);
+    opacity: 0;
+  }
+}
+
+.hero-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black 40%, transparent 100%);
+  pointer-events: none;
+  animation: gridMove 30s linear infinite;
+}
+
+@keyframes gridMove {
+  from { transform: translate(0, 0); }
+  to { transform: translate(60px, 60px); }
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 999px;
+  backdrop-filter: blur(10px);
+  margin-bottom: 28px;
+  animation: fadeInDown 0.8s ease forwards;
+}
+
+.hero-badge-dot {
+  width: 8px;
+  height: 8px;
+  background: #10b981;
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  50% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+}
+
+.hero-badge-text {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+}
+
+.hero-title {
+  font-size: 72px;
+  font-weight: 900;
+  margin-bottom: 32px;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  color: #ffffff;
+  text-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
+}
+
+.hero-title-line {
+  display: block;
+}
+
+.hero-title-highlight {
+  position: relative;
+  display: inline-block;
+  background: linear-gradient(135deg, #bfdbfe 0%, #ffffff 100%);
+  color: #001f9e;
+  padding: 8px 24px;
+  border-radius: 20px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+  transform: skewX(-2deg);
+  isolation: isolate;
+}
+
+.hero-highlight-text {
+  position: relative;
+  z-index: 2;
+  display: inline-block;
+  transform: skewX(2deg);
+  font-size: 76px;
+  font-weight: 900;
+}
+
+.hero-highlight-glow {
+  position: absolute;
+  inset: -8px;
+  background: linear-gradient(135deg, #bfdbfe 0%, #ffffff 100%);
+  filter: blur(20px);
+  opacity: 0.7;
+  z-index: -1;
+  animation: glowPulse 3s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.05); }
+}
+
+.hero-subtitle {
+  font-size: 20px;
+  line-height: 1.7;
+  max-width: 700px;
+  margin: 0 auto 44px;
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+.hero-actions {
+  display: inline-flex;
+  gap: 20px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 60px;
+}
+
+.btn-glow {
   position: relative;
   overflow: hidden;
 }
 
-.hero::before {
-  content: '';
+.btn-shine {
   position: absolute;
   inset: 0;
-  background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd"><g fill="%23ffffff" fill-opacity="0.08"><path d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/></g></g></svg>');
-  opacity: 0.4;
-  pointer-events: none;
-}
-
-.hero-content {
-  max-width: 800px;
-  margin: 0 auto;
-  position: relative;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
   z-index: 1;
 }
 
-.hero-title {
-  font-size: 48px;
-  font-weight: 800;
-  margin-bottom: 20px;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
+.btn-primary:hover .btn-shine {
+  transform: translateX(100%);
 }
 
-.hero-subtitle {
-  font-size: 18px;
-  opacity: 0.92;
-  line-height: 1.7;
-  max-width: 640px;
-  margin: 0 auto 36px;
+.btn-content {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
 }
 
-/* Overview Section */
-.overview {
-  padding: 100px 20px;
-  background: #ffffff;
+.btn-icon {
+  font-size: 20px;
+  position: relative;
+  z-index: 2;
 }
 
+.btn-label {
+  position: relative;
+  z-index: 2;
+}
+
+.btn-glass {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.btn-glass:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-3px);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.scroll-indicator {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  animation: fadeIn 1s ease 1s backwards;
+  z-index: 2;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.scroll-mouse {
+  width: 28px;
+  height: 44px;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  border-radius: 14px;
+  position: relative;
+  backdrop-filter: blur(10px);
+}
+
+.scroll-wheel {
+  width: 4px;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 2px;
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: scrollAnim 2s ease-in-out infinite;
+}
+
+@keyframes scrollAnim {
+  0%, 100% { transform: translateX(-50%) translateY(0); opacity: 1; }
+  50% { transform: translateX(-50%) translateY(10px); opacity: 0.3; }
+}
+
+.scroll-text {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.8);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+/* Overview */
 .overview-content {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 56px;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 72px;
   align-items: center;
 }
 
 .overview-text p {
   color: #475569;
-  font-size: 16px;
-  margin-bottom: 18px;
-  line-height: 1.8;
+  font-size: 16.5px;
+  margin-bottom: 20px;
+  line-height: 1.85;
 }
 
-.overview-image {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.text-line p {
+  margin-bottom: 0;
 }
 
-.image-placeholder {
-  width: 100%;
-  max-width: 420px;
-  aspect-ratio: 1;
-  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
-  border-radius: 24px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+.overview-card {
+  perspective: 1400px;
+}
+
+.overview-card-inner {
+  background: linear-gradient(135deg, #001f9e 0%, #2547bc 100%);
+  border-radius: 28px;
+  padding: 40px 32px;
   color: white;
-  text-align: center;
-  padding: 48px;
-  box-shadow: 0 24px 48px rgba(37, 99, 235, 0.25);
+  box-shadow: 0 30px 64px rgba(0, 31, 158, 0.32);
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.6s ease;
+  position: relative;
+  overflow: hidden;
 }
 
-.placeholder-icon {
-  font-size: 88px;
+
+.overview-card:hover .overview-card-inner {
+  transform: rotateY(8deg) rotateX(2deg) translateY(-8px);
+  box-shadow: 0 40px 80px rgba(0, 31, 158, 0.4);
+}
+
+.overview-icon {
+  font-size: 64px;
+  display: block;
+  margin-bottom: 16px;
+  animation: iconFloat 3s ease-in-out infinite;
+}
+
+@keyframes iconFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.overview-card-title {
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 16px;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+
+.overview-card-rule {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.2);
   margin-bottom: 20px;
 }
 
-.image-placeholder p {
-  font-size: 18px;
-  font-weight: 600;
-  line-height: 1.5;
+.overview-card-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.overview-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 700;
   opacity: 0.95;
+  letter-spacing: 0.01em;
 }
 
-/* Mission Section */
-.mission {
-  padding: 100px 20px;
-  background: linear-gradient(to bottom, #f8fafc, #f1f5f9);
+.overview-chip-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #93c5fd;
+  box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.3);
+  animation: dotPulse 2s ease-in-out infinite;
 }
 
-.mission-content {
+@keyframes dotPulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.25); }
+  50% { box-shadow: 0 0 0 6px rgba(147, 197, 253, 0.08); }
+}
+
+/* Mission */
+.mission-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 24px;
-  margin-top: 8px;
+  gap: 22px;
+  margin-top: 12px;
 }
 
 .mission-card {
   background: white;
-  border-radius: 16px;
-  padding: 32px 24px;
-  text-align: center;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  border: 1px solid #e2e8f0;
-  transition: all 0.3s ease;
+  border-radius: 22px;
+  padding: 28px 24px;
+  text-align: left;
+  border: 1px solid var(--about-line);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.mission-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--about-primary), var(--about-accent));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .mission-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.1);
+  transform: translateY(-8px);
+  box-shadow: 0 22px 42px rgba(0, 31, 158, 0.14);
   border-color: #cbd5e1;
 }
 
+.mission-card:hover::before {
+  transform: scaleX(1);
+}
+
+.mission-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
 .mission-icon {
-  font-size: 44px;
-  margin-bottom: 16px;
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #f5f7ff 0%, #e5ecff 55%, #f5edff 100%);
+  border: 1px solid rgba(129, 140, 248, 0.12);
+  border-radius: 18px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), 0 8px 18px rgba(99, 102, 241, .1);
+  transition: transform 0.35s ease;
 }
 
-.mission-card h3 {
+.mission-card:hover .mission-icon {
+  transform: scale(1.15) rotate(-5deg);
+}
+
+.mission-number {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--about-muted);
+  opacity: 0.4;
+  letter-spacing: 0.05em;
+}
+
+.mission-card-title {
   font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 12px;
-  color: #0f172a;
+  font-weight: 800;
+  margin-bottom: 10px;
+  color: var(--about-ink);
+  letter-spacing: -0.01em;
 }
 
-.mission-card p {
-  color: #64748b;
-  font-size: 14px;
+.mission-card-desc {
+  color: var(--about-muted);
+  font-size: 13.5px;
   line-height: 1.7;
 }
 
-/* Features Section */
-.features {
-  padding: 100px 20px;
-  background: #ffffff;
+/* Features */
+.features-section {
+  background: white;
 }
 
 .features-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-  margin-top: 8px;
+  gap: 22px;
+  margin-top: 12px;
 }
 
 .feature-card {
-  background: #ffffff;
-  border-radius: 16px;
-  padding: 32px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  transition: all 0.3s ease;
+  background: white;
+  border-radius: 22px;
+  padding: 28px;
+  border: 1px solid var(--about-line);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
 }
 
 .feature-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.1);
+  transform: translateY(-12px) scale(1.03);
+  box-shadow: 0 28px 56px rgba(0, 31, 158, 0.18);
   border-color: #cbd5e1;
 }
 
-.feature-icon {
-  font-size: 40px;
+.feature-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.06), rgba(139, 92, 246, 0.06));
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.feature-card:hover::before {
+  opacity: 1;
+}
+
+.feature-card-icon {
+  width: 64px;
+  height: 64px;
   margin-bottom: 18px;
-  display: block;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #f5f7ff 0%, #e5ecff 55%, #f5edff 100%);
+  border: 2px solid rgba(129, 140, 248, 0.2);
+  border-radius: 18px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), 0 8px 18px rgba(99, 102, 241, .15), 0 0 0 0 rgba(99, 102, 241, 0.4);
+  position: relative;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
 }
 
-.feature-card h3 {
+.feature-card:hover .feature-card-icon {
+  transform: scale(1.15) translateY(-4px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), 0 12px 24px rgba(99, 102, 241, .25), 0 0 0 8px rgba(99, 102, 241, 0.1);
+}
+
+.feature-card-title {
   font-size: 17px;
-  font-weight: 700;
+  font-weight: 800;
   margin-bottom: 10px;
-  color: #0f172a;
+  color: var(--about-ink);
+  position: relative;
+  letter-spacing: -0.01em;
 }
 
-.feature-card p {
-  color: #64748b;
+.feature-card-desc {
+  color: var(--about-muted);
   font-size: 14px;
-  line-height: 1.7;
+  line-height: 1.75;
+  position: relative;
 }
 
-/* Team Section */
-.team {
-  padding: 100px 20px;
-  background: #ffffff;
+/* Stats */
+.stats-section {
+  position: relative;
+  overflow: hidden;
 }
 
+.stats-section::before {
+  content: '';
+  position: absolute;
+  top: -100px;
+  right: -100px;
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.06) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 28px;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 22px;
+  padding: 36px 24px;
+  text-align: center;
+  border: 1px solid var(--about-line);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(0, 31, 158, 0.03), rgba(59, 130, 246, 0.03));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-10px) scale(1.05);
+  box-shadow: 0 24px 48px rgba(0, 31, 158, 0.15);
+  border-color: #cbd5e1;
+}
+
+.stat-card:hover::after {
+  opacity: 1;
+}
+
+.stat-value {
+  font-size: 48px;
+  font-weight: 830;
+  color: var(--about-primary);
+  letter-spacing: -0.03em;
+  margin-bottom: 8px;
+  position: relative;
+  letter-spacing: -0.02em;
+}
+
+.stat-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--about-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  position: relative;
+}
+
+/* Team */
 .team-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 24px;
-  margin-top: 8px;
+  gap: 22px;
+  margin-top: 12px;
 }
 
 .team-card {
   background: white;
-  border-radius: 16px;
+  border-radius: 22px;
   padding: 32px 24px;
   text-align: center;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  border: 1px solid #e2e8f0;
-  transition: all 0.3s ease;
+  border: 1px solid var(--about-line);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.team-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--about-primary), var(--about-accent));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .team-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.1);
+  transform: translateY(-8px);
+  box-shadow: 0 22px 42px rgba(0, 31, 158, 0.12);
   border-color: #cbd5e1;
 }
 
+.team-card:hover::before {
+  transform: scaleX(1);
+}
+
 .team-avatar {
-  width: 96px;
-  height: 96px;
+  width: 100px;
+  height: 100px;
   margin: 0 auto 18px;
   border-radius: 50%;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
-  padding: 3px;
+  background: linear-gradient(135deg, var(--about-primary-soft), #dbeafe);
+  padding: 4px;
+  transition: transform 0.35s ease;
 }
 
-.avatar-image {
+.team-card:hover .team-avatar {
+  transform: scale(1.1) rotate(3deg);
+}
+
+.team-avatar img {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -587,111 +1241,194 @@ import SiteFooter from '@/components/SiteFooter.vue'
   display: block;
 }
 
-.avatar-icon {
-  font-size: 44px;
-}
-
 .team-name {
   font-size: 17px;
-  font-weight: 700;
-  margin-bottom: 6px;
-  color: #0f172a;
+  font-weight: 800;
+  margin-bottom: 5px;
+  color: var(--about-ink);
 }
 
 .team-role {
-  font-size: 13px;
-  font-weight: 600;
-  color: #2563eb;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--about-primary);
   margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .team-bio {
-  color: #64748b;
-  font-size: 13px;
+  color: var(--about-muted);
+  font-size: 13.5px;
   line-height: 1.6;
 }
 
-/* Stats Section */
-.stats {
-  padding: 80px 20px;
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-  color: white;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 24px;
-  text-align: center;
-}
-
-.stat-item {
-  padding: 24px 16px;
-}
-
-.stat-number {
-  font-size: 44px;
-  font-weight: 800;
-  margin-bottom: 8px;
-  letter-spacing: -0.02em;
-}
-
-.stat-label {
-  font-size: 15px;
-  opacity: 0.9;
-  font-weight: 500;
-}
-
-/* Call-to-Action Section */
-.cta {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 100px 20px;
-  text-align: center;
+/* FAQ */
+.faq-section {
   position: relative;
+}
+
+.faq-list {
+  max-width: 820px;
+  margin: 0 auto;
+  display: grid;
+  gap: 14px;
+}
+
+.faq-details {
+  background: white;
+  border-radius: 18px;
+  border: 1px solid var(--about-line);
+  padding: 4px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.faq-details[open] {
+  border-color: #cbd5e1;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+  background: linear-gradient(135deg, #fafbff, #f8fafc);
+}
+
+.faq-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 18px 22px;
+  list-style: none;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--about-ink);
+  border-radius: 14px;
+  transition: background 0.2s ease;
+}
+
+.faq-summary:hover {
+  background: rgba(0, 31, 158, 0.02);
+}
+
+.faq-summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq-chevron {
+  color: var(--about-muted);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+
+.faq-details[open] .faq-chevron {
+  transform: rotate(180deg);
+  color: var(--about-primary);
+}
+
+.faq-body {
+  padding: 0 22px 20px;
+  color: var(--about-muted);
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+/* CTA */
+.cta {
+  position: relative;
+  background: linear-gradient(135deg, #001f9e 0%, #2547bc 50%, #3b5bf6 100%);
+  color: white;
+  padding: 120px 20px;
+  text-align: center;
   overflow: hidden;
 }
 
-.cta::before {
-  content: '';
+.cta-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  opacity: 0.22;
+}
+
+.cta-orb--1 {
+  width: 420px;
+  height: 420px;
+  background: #ffffff;
+  top: -120px;
+  left: -80px;
+  animation: orbFloat 10s ease-in-out infinite alternate;
+}
+
+.cta-orb--2 {
+  width: 360px;
+  height: 360px;
+  background: #93c5fd;
+  bottom: -120px;
+  right: -60px;
+  animation: orbFloat 12s ease-in-out infinite alternate-reverse;
+}
+
+.cta-grid {
   position: absolute;
   inset: 0;
-  background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd"><g fill="%23ffffff" fill-opacity="0.08"><path d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/></g></g></svg>');
-  opacity: 0.4;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse 70% 55% at 50% 50%, black 40%, transparent 100%);
   pointer-events: none;
 }
 
 .cta-title {
-  font-size: 38px;
-  font-weight: 800;
-  margin-bottom: 18px;
   position: relative;
+  font-size: 40px;
+  font-weight: 830;
+  margin-bottom: 18px;
   letter-spacing: -0.02em;
 }
 
 .cta-subtitle {
-  font-size: 17px;
-  margin-bottom: 32px;
-  opacity: 0.95;
   position: relative;
+  font-size: 17px;
   max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
+  margin: 0 auto 36px;
+  color: rgba(255, 255, 255, 0.9);
   line-height: 1.7;
 }
 
-.cta-buttons {
-  display: flex;
+.cta-actions {
+  position: relative;
+  display: inline-flex;
   gap: 16px;
+  align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  position: relative;
 }
 
-/* Responsive Design */
 @media (max-width: 1024px) {
-  .mission-content {
+  .mission-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .overview-content {
+    gap: 52px;
+  }
+}
+
+@media (max-width: 860px) {
+  .hero {
+    padding: 110px 20px 100px;
+  }
+
+  .hero-title {
+    font-size: 36px;
+  }
+
+  .section-title {
+    font-size: 30px;
+  }
+
+  .overview-content {
+    grid-template-columns: 1fr;
   }
 
   .features-grid {
@@ -701,102 +1438,57 @@ import SiteFooter from '@/components/SiteFooter.vue'
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  .team-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .section {
+    padding: 80px 18px;
+  }
 }
 
-@media (max-width: 768px) {
-  .hero {
-    padding: 120px 20px 80px;
-  }
-
+@media (max-width: 640px) {
   .hero-title {
-    font-size: 34px;
-  }
-
-  .hero-subtitle {
-    font-size: 16px;
-  }
-
-  .section-title {
-    font-size: 28px;
-  }
-
-  .overview {
-    padding: 72px 20px;
-  }
-
-  .overview-content {
-    grid-template-columns: 1fr;
-    gap: 40px;
-  }
-
-  .mission {
-    padding: 72px 20px;
-  }
-
-  .mission-content {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-
-  .features {
-    padding: 72px 20px;
+    font-size: 32px;
   }
 
   .features-grid {
     grid-template-columns: 1fr;
   }
 
-  .team {
-    padding: 72px 20px;
+  .mission-grid {
+    grid-template-columns: 1fr;
   }
 
   .team-grid {
     grid-template-columns: 1fr;
-    max-width: 400px;
+    max-width: 420px;
     margin-left: auto;
     margin-right: auto;
   }
 
-  .stats {
-    padding: 64px 20px;
-  }
-
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
+    gap: 18px;
   }
 
-  .stat-number {
-    font-size: 36px;
-  }
-
-  .cta {
-    padding: 72px 20px;
-  }
-
-  .cta-title {
-    font-size: 28px;
-  }
-
-  .cta-buttons {
+  .hero-actions {
     flex-direction: column;
-    align-items: center;
-    gap: 12px;
+    align-items: stretch;
   }
 
   .btn-large {
     width: 100%;
-    max-width: 320px;
-  }
-}
-
-@media (min-width: 769px) and (max-width: 1024px) {
-  .overview-content {
-    gap: 40px;
   }
 
-  .team-grid {
-    grid-template-columns: repeat(2, 1fr);
+  .cta-title {
+    font-size: 32px;
+  }
+
+  .cta-actions {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 </style>

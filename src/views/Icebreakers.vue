@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
+import Navbar from '@/components/Navbar.vue'
+import ToolIcon from '@/components/ToolIcon.vue'
 
 const activities = [
   {
     id: 1,
     title: 'Two Truths and One Lie',
     description: 'The classic social game reimagined for the digital classroom. Students share three statements about themselves and classmates guess which one is false.',
-    icon: '🎯',
+    icon: 'gamepad',
     color: '#6366f1',
     colorDark: '#4f46e5',
     bgColor: '#eef2ff',
@@ -16,25 +17,16 @@ const activities = [
     id: 2,
     title: 'Would You Rather',
     description: 'Provocative and fun dilemmas to spark lively classroom debate. Perfect for breaking the ice and getting to know your students better.',
-    icon: '⚖️',
+    icon: 'brain',
     color: '#8b5cf6',
     colorDark: '#7c3aed',
     bgColor: '#f5f3ff',
   },
   {
-    id: 3,
-    title: 'Spin the Question',
-    description: 'A virtual wheel of thought-provoking questions to spark conversation and help students share about themselves in a fun way.',
-    icon: '🔄',
-    color: '#06b6d4',
-    colorDark: '#0891b2',
-    bgColor: '#ecfeff',
-  },
-  {
     id: 4,
     title: 'Random Challenge Generator',
     description: 'Quick 30-60 second challenges to boost energy and focus. Great for transitions between activities or waking up sleepy classes.',
-    icon: '⚡',
+    icon: 'timer',
     color: '#f59e0b',
     colorDark: '#d97706',
     bgColor: '#fffbeb',
@@ -43,57 +35,28 @@ const activities = [
     id: 5,
     title: 'Mystery Box',
     description: 'Hidden objects or prompts that reveal themselves based on student choice. Creates anticipation and excitement in the classroom.',
-    icon: '📦',
+    icon: 'book',
     color: '#ec4899',
     colorDark: '#db2777',
     bgColor: '#fdf2f8',
   },
 ]
-
-const stats = [
-  { value: '12.4k', label: 'Activities Launched This Term' },
-  { value: '94%', label: 'Engagement Rate Average' },
-  { value: '15 Min', label: 'Average Session Time' },
-]
 </script>
 
 <template>
   <div class="icebreakers-page">
-    <!-- Navigation Bar -->
-    <nav class="navbar">
-      <div class="nav-container">
-        <div class="nav-logo">
-          <RouterLink to="/" class="logo-link">
-            <img src="@/assets/photo_logo.jpg" alt="Graduation" class="image" />
-          </RouterLink>
-        </div>
-
-        <ul class="nav-menu">
-          <li><RouterLink to="/" class="nav-link">Home</RouterLink></li>
-          <li><RouterLink to="/about" class="nav-link">About</RouterLink></li>
-          <li><RouterLink to="/" class="nav-link">Tools</RouterLink></li>
-          <li><RouterLink to="/contact" class="nav-link">Contact</RouterLink></li>
-        </ul>
-
-        <div class="nav-buttons">
-          <RouterLink to="/login" class="btn btn-login">Login</RouterLink>
-          <RouterLink to="/register" class="btn btn-register">Register</RouterLink>
-        </div>
-      </div>
-    </nav>
+    <Navbar />
 
     <!-- Module Header -->
     <section class="module-header">
       <div class="container">
         <div class="header-content">
-          <div class="module-badge">
-            <span class="module-number">Module 8</span>
-          </div>
           <h1 class="module-title">Icebreaker Activities</h1>
           <p class="module-description">
             Quickly engage your students with these fun and interactive classroom icebreakers.
             Choose an activity to get started!
           </p>
+          <RouterLink to="/tools" class="btn-back">← Back to all tools</RouterLink>
         </div>
       </div>
     </section>
@@ -109,77 +72,48 @@ const stats = [
             :style="{ backgroundColor: activity.bgColor }"
           >
             <div class="activity-icon" :style="{ backgroundColor: activity.color }">
-              <span class="icon-emoji">{{ activity.icon }}</span>
+              <ToolIcon :name="activity.icon" :size="36" />
             </div>
             <div class="activity-content">
               <h3 class="activity-title">{{ activity.title }}</h3>
               <p class="activity-description">{{ activity.description }}</p>
-              <button class="launch-btn" :style="{ backgroundColor: activity.color }">
+              <RouterLink
+                v-if="activity.id === 1"
+                to="/tools/icebreakers/two-truths-one-lie"
+                class="launch-btn"
+                :style="{ backgroundColor: activity.color }"
+              >
                 Launch
-              </button>
+              </RouterLink>
+              <RouterLink
+                v-else-if="activity.id === 2"
+                to="/tools/icebreakers/would-you-rather"
+                class="launch-btn"
+                :style="{ backgroundColor: activity.color }"
+              >
+                Launch
+              </RouterLink>
+              <RouterLink
+                v-else-if="activity.id === 4"
+                to="/tools/icebreakers/random-challenge-generator"
+                class="launch-btn"
+                :style="{ backgroundColor: activity.color }"
+              >
+                Launch
+              </RouterLink>
+              <RouterLink
+                v-else-if="activity.id === 5"
+                to="/tools/icebreakers/mystery-box"
+                class="launch-btn"
+                :style="{ backgroundColor: activity.color }"
+              >
+                Launch
+              </RouterLink>
             </div>
           </div>
         </div>
       </div>
     </section>
-
-    <!-- Stats Section -->
-    <section class="stats-section">
-      <div class="container">
-        <div class="stats-grid">
-          <div v-for="stat in stats" :key="stat.label" class="stat-card">
-            <div class="stat-value">{{ stat.value }}</div>
-            <div class="stat-label">{{ stat.label }}</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="footer">
-      <div class="container">
-        <div class="footer-content">
-          <div class="footer-section">
-            <div class="footer-logo">
-              <span class="logo-icon">🎓</span>
-              <span class="logo-text">ClassTools</span>
-            </div>
-            <p class="footer-description">Empowering educators with innovative classroom engagement tools.</p>
-          </div>
-
-          <div class="footer-section">
-            <h4 class="footer-title">Product</h4>
-            <ul class="footer-links">
-              <li><RouterLink to="/">Features</RouterLink></li>
-              <li><RouterLink to="/">Tools</RouterLink></li>
-              <li><RouterLink to="/">Pricing</RouterLink></li>
-            </ul>
-          </div>
-
-          <div class="footer-section">
-            <h4 class="footer-title">Company</h4>
-            <ul class="footer-links">
-              <li><RouterLink to="/about">About</RouterLink></li>
-              <li><RouterLink to="/contact">Contact</RouterLink></li>
-              <li><RouterLink to="/">Careers</RouterLink></li>
-            </ul>
-          </div>
-
-          <div class="footer-section">
-            <h4 class="footer-title">Support</h4>
-            <ul class="footer-links">
-              <li><RouterLink to="/">Help Center</RouterLink></li>
-              <li><RouterLink to="/">Documentation</RouterLink></li>
-              <li><RouterLink to="/">Privacy Policy</RouterLink></li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="footer-bottom">
-          <p>&copy; 2024 ClassTools. All rights reserved.</p>
-        </div>
-      </div>
-    </footer>
   </div>
 </template>
 
@@ -190,13 +124,8 @@ const stats = [
   box-sizing: border-box;
 }
 
-.image {
-  width: 180px;
-  height: auto;
-  display: block;
-}
-
 .icebreakers-page {
+  margin-top: 60px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   line-height: 1.6;
   color: #1f2937;
@@ -210,93 +139,11 @@ const stats = [
   padding: 0 20px;
 }
 
-/* Buttons */
-.btn {
-  display: inline-block;
-  padding: 12px 24px;
-  border-radius: 8px;
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 16px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.btn-login {
-  background: transparent;
-  color: #6366f1;
-  border: 1px solid #6366f1;
-}
-
-.btn-login:hover {
-  background: #6366f1;
-  color: white;
-}
-
-.btn-register {
-  background: #6366f1;
-  color: white;
-}
-
-.btn-register:hover {
-  background: #4f46e5;
-}
-
-/* Navigation Bar */
-.navbar {
-  background: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-}
-
-.nav-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 16px 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.nav-logo {
-  display: flex;
-  align-items: center;
-}
-
-.logo-link {
-  text-decoration: none;
-}
-
-.nav-menu {
-  display: flex;
-  list-style: none;
-  gap: 32px;
-}
-
-.nav-link {
-  color: #6b7280;
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.3s ease;
-}
-
-.nav-link:hover {
-  color: #6366f1;
-}
-
-.nav-buttons {
-  display: flex;
-  gap: 12px;
-}
-
 /* Module Header */
 .module-header {
   background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
   color: white;
-  padding: 80px 20px;
+  padding: 50px 20px;
   text-align: center;
 }
 
@@ -309,29 +156,49 @@ const stats = [
   display: inline-block;
   background: rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(10px);
-  padding: 8px 20px;
+  padding: 6px 16px;
   border-radius: 20px;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .module-number {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
 
 .module-title {
-  font-size: 48px;
+  font-size: 42px;
   font-weight: 800;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
   line-height: 1.2;
 }
 
 .module-description {
-  font-size: 18px;
+  font-size: 16px;
   opacity: 0.9;
   line-height: 1.6;
+  margin-bottom: 8px;
+}
+
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 13px;
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.9);
+  transition: all 0.2s ease;
+  margin-top: 12px;
+}
+
+.btn-back:hover {
+  border-color: #22d3ee;
+  color: #22d3ee;
 }
 
 /* Activities Section */
@@ -341,22 +208,28 @@ const stats = [
 
 .activities-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .activity-card {
   border-radius: 16px;
-  padding: 32px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   display: flex;
   flex-direction: column;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  min-height: 240px;
+  max-width: 280px;
+  justify-self: center;
 }
 
 .activity-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  transform: translateY(-6px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
 }
 
 .activity-icon {
@@ -366,12 +239,53 @@ const stats = [
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 20px;
-  color: white;
+  margin-bottom: 16px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+  animation: iconFloat 3s ease-in-out infinite;
+  background: white;
 }
 
-.icon-emoji {
-  font-size: 32px;
+.activity-icon::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.4));
+  opacity: 0.3;
+  border-radius: 20px;
+}
+
+.activity-icon::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.6) 0%, transparent 60%);
+  opacity: 0.8;
+  border-radius: 20px;
+}
+
+@keyframes iconFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(3deg); }
+}
+
+.activity-card:hover .activity-icon {
+  transform: translateY(-10px) scale(1.12) rotate(-5deg);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
+  animation-play-state: paused;
+}
+
+.tool-icon {
+  position: relative;
+  z-index: 2;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.25));
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.activity-card:hover .tool-icon {
+  transform: scale(1.1) rotate(-8deg);
 }
 
 .activity-content {
@@ -381,107 +295,61 @@ const stats = [
 }
 
 .activity-title {
-  font-size: 22px;
+  font-size: 17px;
   font-weight: 700;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   color: #1f2937;
+  line-height: 1.3;
 }
 
 .activity-description {
   color: #4b5563;
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: 13px;
+  line-height: 1.7;
   margin-bottom: 20px;
   flex: 1;
 }
 
-.launch-btn {
-  padding: 12px 24px;
+.launch-btn,
+.results-btn {
+  padding: 10px 18px;
   border: none;
   border-radius: 8px;
   color: white;
   font-weight: 600;
-  font-size: 16px;
+  font-size: 13px;
   cursor: pointer;
   transition: all 0.3s ease;
   align-self: flex-start;
+  text-decoration: none;
+  display: inline-block;
+  margin-top: auto;
 }
 
-.launch-btn:hover {
+.launch-btn:hover,
+.results-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 1200px) {
+  .activities-grid {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 600px;
+  }
+}
+
+@media (max-width: 768px) {
+  .activities-grid {
+    grid-template-columns: 1fr;
+    max-width: 400px;
+  }
 }
 
 /* Stats Section */
 .stats-section {
   padding: 60px 20px 80px;
   background: white;
-}
-
-/* Footer */
-.footer {
-  background: #1f2937;
-  color: white;
-  padding: 60px 20px 20px;
-}
-
-.footer-content {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
-  gap: 48px;
-  margin-bottom: 40px;
-}
-
-.footer-logo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 20px;
-  font-weight: 700;
-  margin-bottom: 16px;
-}
-
-.logo-icon {
-  font-size: 24px;
-}
-
-.footer-description {
-  color: #9ca3af;
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-.footer-title {
-  font-size: 16px;
-  font-weight: 600;
-  margin-bottom: 16px;
-}
-
-.footer-links {
-  list-style: none;
-}
-
-.footer-links li {
-  margin-bottom: 8px;
-}
-
-.footer-links a {
-  color: #9ca3af;
-  text-decoration: none;
-  font-size: 14px;
-  transition: color 0.3s ease;
-}
-
-.footer-links a:hover {
-  color: white;
-}
-
-.footer-bottom {
-  border-top: 1px solid #374151;
-  padding-top: 20px;
-  text-align: center;
-  color: #9ca3af;
-  font-size: 14px;
 }
 
 .stats-grid {
@@ -515,10 +383,6 @@ const stats = [
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .nav-menu {
-    display: none;
-  }
-
   .module-title {
     font-size: 32px;
   }
@@ -538,23 +402,9 @@ const stats = [
   .stat-value {
     font-size: 28px;
   }
-
-  .footer-content {
-    grid-template-columns: 1fr;
-    gap: 32px;
-  }
 }
 
 @media (max-width: 480px) {
-  .nav-buttons {
-    gap: 8px;
-  }
-
-  .btn {
-    padding: 10px 16px;
-    font-size: 14px;
-  }
-
   .module-header {
     padding: 60px 20px;
   }

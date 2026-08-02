@@ -50,7 +50,7 @@ function handleSpinComplete(participant: Participant) {
 </script>
 
 <template>
-  <div class="page" :style="{ background: selectedTheme.backgroundColor }">
+  <div class="page" style="background: #f9fafb;">
     <Navbar />
 
     <div class="back-wrapper">
@@ -124,14 +124,14 @@ function handleSpinComplete(participant: Participant) {
 .title {
   font-size: 32px;
   font-weight: 800;
-  color: #fff;
+  color: #1e293b;
   margin: 0;
   text-align: center;
 }
 
 .subtitle {
   font-size: 16px;
-  color: #888;
+  color: #64748b;
   margin: 0;
   text-align: center;
 }
@@ -139,9 +139,9 @@ function handleSpinComplete(participant: Participant) {
 .read-only-badge {
   font-size: 12px;
   font-weight: 700;
-  color: #888;
-  background: #1f1f38;
-  border: 1px solid #2a2a45;
+  color: #4f46e5;
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
   padding: 4px 12px;
   border-radius: 999px;
   text-transform: uppercase;
@@ -159,9 +159,9 @@ function handleSpinComplete(participant: Participant) {
 }
 
 .alert-error {
-  color: #ff6b6b;
-  background: #2a1010;
-  border: 1px solid #5a1f1f;
+  color: #dc2626;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
 }
 
 .loading-state {
@@ -175,8 +175,8 @@ function handleSpinComplete(participant: Participant) {
 .loading-spinner {
   width: 20px;
   height: 20px;
-  border: 2px solid #2a2a45;
-  border-top-color: #4ecdc4;
+  border: 2px solid #e2e8f0;
+  border-top-color: #4f46e5;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -188,7 +188,7 @@ function handleSpinComplete(participant: Participant) {
 }
 
 .loading-text {
-  color: #888;
+  color: #64748b;
   font-size: 14px;
 }
 
@@ -213,8 +213,8 @@ function handleSpinComplete(participant: Participant) {
 }
 
 .participant-list {
-  background: #1a1a2e;
-  border: 1px solid #252540;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 16px;
   padding: 16px;
   display: flex;
@@ -226,7 +226,7 @@ function handleSpinComplete(participant: Participant) {
   margin: 0;
   font-size: 14px;
   font-weight: 700;
-  color: #888;
+  color: #475569;
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -243,9 +243,9 @@ function handleSpinComplete(participant: Participant) {
 .participant-item {
   padding: 10px 12px;
   border-radius: 8px;
-  background: #141428;
-  border: 1px solid #252540;
-  color: #fff;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #1e293b;
   font-size: 14px;
 }
 
@@ -257,14 +257,16 @@ function handleSpinComplete(participant: Participant) {
   text-decoration: none;
   font-weight: 600;
   font-size: 14px;
-  border: 1.5px solid rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.9);
+  border: 1.5px solid #e2e8f0;
+  color: #475569;
+  background: #ffffff;
   transition: all 0.2s ease;
 }
 
 .btn-back:hover {
-  border-color: #22d3ee;
-  color: #22d3ee;
+  border-color: #4f46e5;
+  color: #4f46e5;
+  background: #eef2ff;
 }
 
 @media (max-width: 900px) {

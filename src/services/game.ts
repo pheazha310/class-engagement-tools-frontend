@@ -1,4 +1,4 @@
-import type { AnswerSubmission, GameSessionPayload, GameSessionResponse, Question } from '@/types/game'
+import type { AnswerSubmission, GameHistory, GameHistoryResponse, GameSessionPayload, GameSessionResponse, Question } from '@/types/game'
 
 export interface JoinGameSessionPayload {
   name: string
@@ -171,4 +171,65 @@ export async function fetchLeaderboard(
   }
 
   return response.json()
+}
+
+export async function fetchGameHistories(): Promise<GameHistoryResponse> {
+  const response = await fetch(getApiUrl('/api/game-histories'), {
+    method: 'GET',
+    headers: {
+      Accept: 'application/json',
+    },
+    credentials: 'include',
+  })
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}))
+    throw new Error(data.message || `Failed to load game history: ${response.status}`)
+  }
+
+  return response.json()
+}
+
+export async function fetchGameHistoryById(
+  id: number,
+): Promise<{ data: GameHistory }> {
+  const response = await fetch(getApiUrl(`/api/game-histories/${encodeURIComponent(String(id))}`), {
+    method: 'GET',
+    headers: {
+      Accept: 'application/json',
+    },
+    credentials: 'include',
+  })
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}))
+    throw new Error(data.message || `Failed to load game history: ${response.status}`)
+  }
+
+  return response.json()
+}
+
+export async function exportGameHistory(
+  id: number,
+  format: 'csv' | 'pdf',
+): Promise<void> {
+  const response = await fetch(getApiUrl(`/api/game-histories/${encodeURIComponent(String(id))}/export/${encodeURIComponent(format)}`), {
+    method: 'GET',
+    credentials: 'include',
+  })
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}))
+    throw new Error(data.message || `Failed to export game history: ${response.status}`)
+  }
+
+  const blob = await response.blob()
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `game-history-${id}.${format}`
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
 }
