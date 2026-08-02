@@ -6,6 +6,7 @@ import ParticipantListEditor from '@/components/ParticipantListEditor.vue'
 import WheelThemePicker from '@/components/WheelThemePicker.vue'
 import type { Participant, WheelTheme } from '@/types/wheel'
 import { wheelThemes, getThemeById, defaultThemeId } from '@/types/wheel'
+import HeroImage from '@/assets/images/classroom-illustration.png'
 
 const route = useRoute()
 
@@ -142,7 +143,7 @@ function exitProjectorMode() {
 </script>
 
 <template>
-  <div class="page" :class="{ 'projector-mode': projectorMode }" :style="{ background: selectedTheme.backgroundColor }">
+  <div class="page" :class="{ 'projector-mode': projectorMode }" style="background: #f9fafb;">
     <div class="container">
       <div class="page-header">
         <RouterLink to="/tools" class="btn-back">← Back to all tools</RouterLink>
@@ -244,16 +245,31 @@ function exitProjectorMode() {
 .title {
   font-size: 32px;
   font-weight: 800;
-  color: #fff;
+  color: #1e293b;
   margin: 0;
   text-align: center;
 }
 
 .subtitle {
   font-size: 16px;
-  color: #888;
+  color: #64748b;
   margin: 0;
   text-align: center;
+}
+
+.page-banner {
+  width: 100%;
+  max-width: 1200px;
+  height: auto;
+  border-radius: 16px;
+  display: block;
+  margin: 0 auto;
+}
+
+@media (max-width: 900px) {
+  .page-banner {
+    border-radius: 0;
+  }
 }
 
 .btn-projector {
@@ -264,19 +280,20 @@ function exitProjectorMode() {
   width: 100%;
   max-width: 720px;
   height: 56px;
-  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  border: 1.5px solid #e2e8f0;
   border-radius: 14px;
-  background: rgba(15, 23, 42, 0.82);
-  color: #fff;
+  background: #ffffff;
+  color: #1e293b;
   font-size: 16px;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .btn-projector:hover {
-  background: rgba(15, 23, 42, 0.94);
-  border-color: rgba(255, 255, 255, 0.22);
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .icon-projector {
@@ -292,14 +309,16 @@ function exitProjectorMode() {
   text-decoration: none;
   font-weight: 600;
   font-size: 14px;
-  border: 1.5px solid rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.9);
+  border: 1.5px solid #e2e8f0;
+  color: #475569;
   transition: all 0.2s ease;
+  background: #ffffff;
 }
 
 .btn-back:hover {
-  border-color: #22d3ee;
-  color: #22d3ee;
+  border-color: #4f46e5;
+  color: #4f46e5;
+  background: #eef2ff;
 }
 
 @media (max-width: 900px) {
@@ -349,6 +368,12 @@ function exitProjectorMode() {
 
 .page.projector-mode .wheel-controls {
   display: none;
+}
+
+@media (max-width: 900px) {
+  .page {
+    padding: 16px;
+  }
 }
 </style>
 

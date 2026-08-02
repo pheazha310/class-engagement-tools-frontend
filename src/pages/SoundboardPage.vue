@@ -71,6 +71,7 @@ const localPlayCount = ref<Map<string, number>>(new Map())
 // Manually pinned sound IDs (always shown in Favorites)
 const pinnedIds = ref<Set<string>>(new Set())
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function togglePin(soundId: string) {
   const next = new Set(pinnedIds.value)
   if (next.has(soundId)) {
@@ -139,6 +140,7 @@ const favoriteSounds = computed(() => {
 const favoriteOrder = ref<string[]>([])
 const dragIndex = ref<number | null>(null)
 const dragOverIndex = ref<number | null>(null)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let touchStartY = 0
 let touchDragIndex: number | null = null
 
@@ -522,6 +524,7 @@ function getNowPlayingTime(): string {
   if (!sound?.duration_seconds) return ''
   const total = sound.duration_seconds
   const elapsed = Math.floor(total * (progress.value / 100))
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const remaining = Math.ceil(total * (1 - progress.value / 100))
   if (progress.value >= 99) return `${total}s`
   return `${elapsed}s / ${total}s`
@@ -691,16 +694,17 @@ async function toggleHistory() {
           </Transition>
         </div>
 
-        <!-- No results state (search with no matches) -->
-        <div v-if="filteredSounds.length === 0 && searchQuery.length > 0" class="sb-search__empty">
-          <div class="sb-search__empty-icon">🔍</div>
-          <p class="sb-search__empty-text">No sounds match "{{ searchQuery }}"</p>
-          <p class="sb-search__empty-hint">Try a different search term or browse categories</p>
-          <button class="sb-btn sb-btn--ghost" @click="searchQuery = ''">Clear search</button>
-        </div>
-        <template v-else>
-          <!-- Favorites section (top of page) — drag-and-drop reorderable -->
-          <div v-if="orderedFavorites.length > 0" class="sb-favorites">
+         <!-- No results state (search with no matches) -->
+         <div v-if="filteredSounds.length === 0 && searchQuery.length > 0" class="sb-search__empty">
+           <div class="sb-search__empty-icon">🔍</div>
+           <p class="sb-search__empty-text">No sounds match "{{ searchQuery }}"</p>
+           <p class="sb-search__empty-hint">Try a different search term or browse categories</p>
+           <button class="sb-btn sb-btn--ghost" @click="searchQuery = ''">Clear search</button>
+         </div>
+         <template v-else>
+           <!-- Favorites section (top of page) — drag-and-drop reorderable -->
+           <TransitionGroup name="fade" appear>
+             <div v-if="orderedFavorites.length > 0" class="sb-favorites" key="favorites">
           <div class="sb-favorites__header">
             <h2 class="sb-favorites__title">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none" class="sb-favorites__star">
@@ -848,10 +852,11 @@ async function toggleHistory() {
                 :style="{ '--progress-pct': progress + '%' }"
               >
                 <span class="sb-sound-btn__elapsed">{{ getElapsedTime(sound) }}</span>
-              </div>
-            </button>
+          </div>
+        </button>
           </div>
         </div>
+        </TransitionGroup>
 
         <!-- Categories -->
         <div v-for="[category, categorySounds] in categories" :key="category" class="sb-category">
@@ -862,16 +867,17 @@ async function toggleHistory() {
             </h3>
             <span class="sb-category__count">{{ categorySounds.length }} sounds</span>
           </div>
-          <div class="sb-grid">
-            <button
-              v-for="sound in categorySounds"
-              :key="sound.id"
-              class="sb-sound-btn"
-              :class="{ 'sb-sound-btn--playing': isSoundPlaying(sound.id) }"
-              :style="{ '--accent': getCategoryColor(category) }"
-              @click="handlePlay(sound)"
-              :aria-label="'Play ' + sound.name"
-            >
+          <TransitionGroup name="list" appear>
+            <div class="sb-grid" :key="category">
+              <button
+                v-for="sound in categorySounds"
+                :key="sound.id"
+                class="sb-sound-btn"
+                :class="{ 'sb-sound-btn--playing': isSoundPlaying(sound.id), 'sb-sound-btn--was-playing': !isPlaying && currentSound?.id === sound.id }"
+                :style="{ '--accent': getCategoryColor(category) }"
+                @click="handlePlay(sound)"
+                :aria-label="'Play ' + sound.name"
+              >
               <div class="sb-sound-btn__icon-wrap">
                 <span class="sb-sound-btn__icon">{{ sound.icon || '🔊' }}</span>
                 <div v-if="isSoundPlaying(sound.id)" class="sb-sound-btn__wave">
@@ -956,6 +962,7 @@ async function toggleHistory() {
               </div>
             </button>
           </div>
+        </TransitionGroup>
         </div>
 
         <!-- Empty state -->
@@ -1159,7 +1166,18 @@ async function toggleHistory() {
   right: -10%;
   width: clamp(250px, 40vw, 400px);
   height: clamp(250px, 40vw, 400px);
-  background: radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(59,130,246,0.2) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.sb-header::after {
+  content: '';
+  position: absolute;
+  bottom: -30%;
+  left: -5%;
+  width: clamp(200px, 30vw, 350px);
+  height: clamp(200px, 30vw, 350px);
+  background: radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 70%);
   pointer-events: none;
 }
 
@@ -1186,7 +1204,12 @@ async function toggleHistory() {
   gap: 0.5rem;
 }
 
-.sb-header__icon { font-size: clamp(1.1rem, 3vw, 1.4rem); }
+.sb-header__icon { font-size: clamp(1.2rem, 3vw, 1.6rem); animation: float 3s ease-in-out infinite; }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
 
 .sb-header__desc {
   margin: 0.35rem 0 0;
@@ -1292,7 +1315,17 @@ async function toggleHistory() {
   background: #F9FAFB;
   border: 1px solid #E5E7EB;
   border-radius: 8px;
+  transition: all 0.15s;
+  cursor: default;
   animation: fade-in 0.3s ease-out;
+}
+
+@media (hover: hover) {
+  .sb-history__item:hover {
+    border-color: #D1D5DB;
+    background: #F3F4F6;
+    transform: translateY(-1px);
+  }
 }
 
 .sb-history__icon { font-size: 1rem; }
@@ -1388,16 +1421,16 @@ async function toggleHistory() {
   align-items: center;
   gap: 0.5rem;
   background: white;
-  border: 1px solid #E5E7EB;
-  border-radius: 12px;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 14px;
   padding: 0.1rem 0.1rem 0.1rem 0.85rem;
-  transition: all 0.2s;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  transition: all 0.25s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
 }
 
 .sb-search__inner:focus-within {
   border-color: #3B82F6;
-  box-shadow: 0 0 0 3px rgba(59,130,246,0.15), 0 2px 6px rgba(0,0,0,0.06);
+  box-shadow: 0 0 0 4px rgba(59,130,246,0.12), 0 4px 12px rgba(0,0,0,0.08);
 }
 
 .sb-search__icon {
@@ -1465,14 +1498,16 @@ async function toggleHistory() {
 /* ═══════════════════════════════════
    Category Section
    ═══════════════════════════════════ */
-.sb-content { display: flex; flex-direction: column; gap: clamp(1.25rem, 3vw, 2rem); }
+.sb-content { display: flex; flex-direction: column; gap: clamp(1.5rem, 3vw, 2rem); }
 
 .sb-category__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  margin-bottom: clamp(0.6rem, 1.5vw, 1rem);
+  margin-bottom: clamp(0.75rem, 1.5vw, 1rem);
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #E5E7EB;
 }
 
 .sb-category__title {
@@ -1485,16 +1520,27 @@ async function toggleHistory() {
   margin: 0;
 }
 
-.sb-category__emoji { font-size: clamp(1rem, 2.5vw, 1.2rem); }
+.sb-category__emoji {
+  font-size: clamp(1.1rem, 2.5vw, 1.3rem);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%);
+  border-radius: 10px;
+  flex-shrink: 0;
+}
 
 .sb-category__count {
   font-size: clamp(0.72rem, 1.2vw, 0.8rem);
-  font-weight: 500;
-  color: #9CA3AF;
+  font-weight: 600;
+  color: #6B7280;
   background: #F3F4F6;
-  padding: 0.2rem 0.6rem;
+  padding: 0.25rem 0.6rem;
   border-radius: 999px;
   white-space: nowrap;
+  letter-spacing: 0.01em;
 }
 
 /* ═══════════════════════════════════
@@ -1576,12 +1622,30 @@ async function toggleHistory() {
   touch-action: manipulation;
 }
 
-/* Touch devices: no hover lift, but subtle scale */
+.sb-sound-btn::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  background: var(--accent, #3B82F6);
+  border-radius: 0 3px 3px 0;
+  opacity: 0;
+  transform: scaleY(0);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 @media (hover: hover) {
   .sb-sound-btn:hover:not(:disabled) {
     border-color: var(--accent, #3B82F6);
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 4px 8px rgba(0,0,0,0.04);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.03);
+  }
+
+  .sb-sound-btn:hover:not(:disabled)::before {
+    opacity: 1;
+    transform: scaleY(1);
   }
 }
 
@@ -1594,7 +1658,7 @@ async function toggleHistory() {
   }
 }
 
-.sb-sound-btn:active:not(:disabled) { transform: translateY(-2px) scale(0.97); }
+.sb-sound-btn:active:not(:disabled) { transform: translateY(-1px) scale(0.98); }
 
 .sb-sound-btn:disabled { cursor: not-allowed; opacity: 0.7; }
 
@@ -1602,7 +1666,12 @@ async function toggleHistory() {
   border-color: var(--accent, #3B82F6) !important;
   background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%) !important;
   box-shadow: 0 0 0 2px var(--accent, #3B82F6), 0 12px 28px rgba(0,0,0,0.1) !important;
-  transform: translateY(-4px) scale(1.02);
+  transform: translateY(-2px) scale(1.01);
+}
+
+.sb-sound-btn--playing::before {
+  opacity: 1;
+  transform: scaleY(1);
 }
 
 .sb-sound-btn--was-playing {
@@ -1610,7 +1679,10 @@ async function toggleHistory() {
   background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%) !important;
 }
 
-/* Icon */
+.sb-sound-btn--was-playing::before {
+  opacity: 1;
+  transform: scaleY(1);
+}
 .sb-sound-btn__icon-wrap {
   position: relative;
   width: var(--icon-wrap);
@@ -2792,6 +2864,12 @@ async function toggleHistory() {
 .bar-up-enter-from { transform: translateY(100%); opacity: 0; }
 .bar-up-leave-to { transform: translateY(100%); opacity: 0; }
 
+.list-enter-active { transition: all 0.3s ease-out; }
+.list-leave-active { transition: all 0.2s ease; }
+.list-enter-from { opacity: 0; transform: translateY(12px); }
+.list-leave-to { opacity: 0; transform: scale(0.95); }
+.list-move { transition: transform 0.3s ease; }
+
 /* ═══════════════════════════════════
    Responsive Overrides
    ═══════════════════════════════════ */
@@ -2971,6 +3049,10 @@ async function toggleHistory() {
     box-shadow: 0 1px 3px rgba(0,0,0,0.2);
   }
 
+  .sb-sound-btn::before {
+    background: var(--accent, #60A5FA);
+  }
+
   .sb-sound-btn__name {
     color: #F1F5F9;
   }
@@ -2984,8 +3066,28 @@ async function toggleHistory() {
     background: linear-gradient(135deg, #064E3B 0%, #065F46 100%) !important;
   }
 
+  .sb-sound-btn--playing::before {
+    background: #34D399 !important;
+  }
+
   .sb-sound-btn--was-playing {
     background: linear-gradient(135deg, #064E3B 0%, #065F46 100%) !important;
+  }
+
+  .sb-sound-btn--was-playing::before {
+    background: #34D399 !important;
+  }
+
+  .sb-category__emoji {
+    background: linear-gradient(135deg, #1E1B4B 0%, #312E81 100%);
+  }
+
+  @media (hover: hover) {
+    .sb-sound-btn:hover:not(:disabled) {
+      border-color: var(--accent, #60A5FA) !important;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3), 0 0 8px rgba(96,165,250,0.1) !important;
+      background: #253347 !important;
+    }
   }
 
   .sb-category__count {

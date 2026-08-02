@@ -236,6 +236,11 @@ const routes: RouteRecordRaw[] = [
     component: MultipleStudentPickerView,
   },
   {
+    path: '/image-picker',
+    name: 'image-picker',
+    component: () => import('@/pages/ImagePicker.vue'),
+  },
+  {
     path: '/lucky-draw',
     name: 'lucky-draw',
     component: LuckyDrawView,

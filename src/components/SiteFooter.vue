@@ -92,7 +92,7 @@ onUnmounted(() => {
 
       <div class="site-footer-bottom">
         <div class="site-footer-bottom-content">
-          <p class="site-footer-copyright">&copy; 2024 ClassTools. All rights reserved.</p>
+          <p class="site-footer-copyright">&copy; 2026 ClassTools. All rights reserved.</p>
           <div class="site-footer-bottom-links">
             <RouterLink to="/">Privacy Policy</RouterLink>
             <span class="link-separator" aria-hidden="true">•</span>

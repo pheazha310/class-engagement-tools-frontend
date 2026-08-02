@@ -162,7 +162,7 @@ onBeforeUnmount(() => {
 </script>
 
   <template>
-    <div class="wheel-wrapper" :class="{ 'projector-full': projectorMode }" :style="{ background: theme.backgroundColor }">
+    <div class="wheel-wrapper" :class="{ 'projector-full': projectorMode }">
         <div class="wheel-container" @click="spin">
           <svg
             :viewBox="`0 0 ${size} ${size}`"
@@ -212,10 +212,6 @@ onBeforeUnmount(() => {
         <button
           class="spin-button"
           :disabled="spinning || participants.length === 0"
-          :style="{
-            background: `linear-gradient(135deg, ${theme.buttonGradient[0]}, ${theme.buttonGradient[1]})`,
-            boxShadow: `0 4px 15px ${theme.buttonShadow}`,
-          }"
           @click="spin"
         >
           <span class="spin-button-icon" aria-hidden="true">
@@ -237,7 +233,7 @@ onBeforeUnmount(() => {
           class="winner-popup"
           @click.self="closePopup"
         >
-          <div class="winner-popup-card" :style="{ background: theme.wheelBackground, border: `1px solid ${theme.sliceStroke}` }">
+          <div class="winner-popup-card">
             <div class="winner-popup-header" :style="{ background: theme.pointerColor }">
               <span class="winner-popup-title">We have a winner!</span>
               <button type="button" class="winner-popup-close" @click="closePopup" aria-label="Close">
@@ -245,7 +241,7 @@ onBeforeUnmount(() => {
               </button>
             </div>
             <div class="winner-popup-body">
-              <div class="winner-popup-name" :style="{ color: theme.textColor }">{{ selected.name }}</div>
+              <div class="winner-popup-name">{{ selected.name }}</div>
             </div>
             <div class="winner-popup-footer">
               <button type="button" class="winner-popup-close-text" @click="closePopup">Close</button>
@@ -267,6 +263,35 @@ onBeforeUnmount(() => {
   max-width: 520px;
   margin: 0 auto;
   padding: 24px;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.wheel-wrapper.projector-full {
+  max-width: 100%;
+  padding: 0;
+  height: 100vh;
+  width: 100vw;
+  justify-content: center;
+  align-items: center;
+  background: #ffffff;
+  border: none;
+  box-shadow: none;
+}
+
+.wheel-wrapper.projector-full .wheel-controls {
+  display: none;
+}
+
+.wheel-wrapper.projector-full .wheel-container {
+  max-width: 90vmin;
+}
+
+.wheel-wrapper.projector-full .wheel-svg {
+  width: 90vmin;
+  height: 90vmin;
 }
 
 .wheel-wrapper.projector-full {
@@ -325,38 +350,17 @@ onBeforeUnmount(() => {
   font-size: 18px;
   font-weight: 700;
   color: #fff;
-  background: linear-gradient(135deg, #e94560, #c0392b);
+  background: linear-gradient(135deg, #4f46e5, #4338ca);
   border: none;
   border-radius: 50px;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
-  box-shadow: 0 4px 15px rgba(233, 69, 96, 0.4);
-}
-
-.spin-button-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.18);
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-}
-
-.spin-button-icon svg {
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
-  margin-left: 2px;
-}
-
-.spin-button-text {
-  letter-spacing: 0.02em;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
 }
 
 .spin-button:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(233, 69, 96, 0.5);
+  background: linear-gradient(135deg, #4338ca, #3730a3);
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
 }
 
 .spin-button:active:not(:disabled) {
@@ -364,13 +368,13 @@ onBeforeUnmount(() => {
 }
 
 .spin-button:disabled {
-  background: #555;
+  background: #c7d2fe;
   cursor: not-allowed;
   box-shadow: none;
 }
 
 .error-message {
-  color: #e74c3c;
+  color: #dc2626;
   font-size: 14px;
   text-align: center;
 }
@@ -382,7 +386,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(3px);
   animation: fadeIn 0.25s ease;
 }
@@ -390,10 +394,12 @@ onBeforeUnmount(() => {
 .winner-popup-card {
   width: 100%;
   max-width: 420px;
-  border-radius: 12px;
+  border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
   animation: scaleIn 0.3s ease;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
 }
 
 .winner-popup-header {
@@ -401,7 +407,7 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  background: #e53935;
+  background: #4f46e5;
 }
 
 .winner-popup-title {
@@ -427,7 +433,7 @@ onBeforeUnmount(() => {
 }
 
 .winner-popup-close:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.35);
 }
 
 .winner-popup-body {
@@ -442,6 +448,7 @@ onBeforeUnmount(() => {
   font-weight: 800;
   text-align: center;
   word-break: break-word;
+  color: #1e293b;
 }
 
 .winner-popup-footer {
@@ -454,8 +461,8 @@ onBeforeUnmount(() => {
 
 .winner-popup-close-text {
   background: transparent;
-  border: none;
-  color: #ddd;
+  border: 1px solid #e2e8f0;
+  color: #475569;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
@@ -465,26 +472,26 @@ onBeforeUnmount(() => {
 }
 
 .winner-popup-close-text:hover {
-  background: #2a2a45;
+  background: #f1f5f9;
 }
 
 .winner-popup-remove {
   padding: 10px 18px;
   border: none;
   border-radius: 10px;
-  background: #3b82f6;
+  background: #4f46e5;
   color: #fff;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
   transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
 }
 
 .winner-popup-remove:hover {
-  background: #2563eb;
+  background: #4338ca;
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.45);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
 }
 
 .popup-enter-from,

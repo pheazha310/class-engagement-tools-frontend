@@ -55,9 +55,10 @@ function select(theme: WheelTheme) {
   max-width: 420px;
   margin: 0 auto;
   padding: 18px;
-  background: #141428;
+  background: #ffffff;
   border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
 .theme-picker-header {
@@ -69,7 +70,7 @@ function select(theme: WheelTheme) {
 .theme-picker-title {
   font-size: 14px;
   font-weight: 700;
-  color: #ddd;
+  color: #334155;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -77,8 +78,8 @@ function select(theme: WheelTheme) {
 .theme-picker-selected {
   font-size: 12px;
   font-weight: 700;
-  color: #4ecdc4;
-  background: #1f1f38;
+  color: #4f46e5;
+  background: #eef2ff;
   padding: 3px 10px;
   border-radius: 999px;
 }
@@ -95,9 +96,9 @@ function select(theme: WheelTheme) {
   gap: 10px;
   padding: 14px;
   border-radius: 14px;
-  border: 2px solid #2a2a45;
-  background: #1a1a2e;
-  color: #fff;
+  border: 2px solid #e2e8f0;
+  background: #f8fafc;
+  color: #0f172a;
   cursor: pointer;
   transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
   min-width: 0;
@@ -105,21 +106,21 @@ function select(theme: WheelTheme) {
 
 .theme-card:hover:not(:disabled) {
   transform: translateY(-2px);
-  border-color: #3a3a5a;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .theme-card--active {
-  border-color: #4ecdc4;
-  box-shadow: 0 0 0 2px rgba(78, 205, 196, 0.3), 0 8px 24px rgba(78, 205, 196, 0.25);
-  background: #1f1f3a;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2), 0 4px 12px rgba(79, 70, 229, 0.12);
+  background: #eef2ff;
 }
 
 .theme-name {
   font-size: 13px;
   font-weight: 700;
   text-align: center;
-  color: #f5f5f5;
+  color: #1e293b;
   letter-spacing: 0.02em;
 }
 
@@ -127,8 +128,8 @@ function select(theme: WheelTheme) {
   width: 16px;
   height: 16px;
   border-radius: 5px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
   transition: transform 0.15s;
 }
 

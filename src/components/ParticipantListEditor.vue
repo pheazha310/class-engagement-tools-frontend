@@ -277,9 +277,10 @@ async function handleFileChange(event: Event) {
   max-width: 420px;
   margin: 0 auto;
   padding: 20px;
-  background: #141428;
+  background: #ffffff;
   border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
 .add-row {
@@ -292,13 +293,18 @@ async function handleFileChange(event: Event) {
   flex: 1;
   padding: 12px 14px;
   border-radius: 10px;
-  border: 2px solid #2a2a45;
-  background: #0f0f1e;
-  color: #f5f5f5;
+  border: 2px solid #cbd5e1;
+  background: #ffffff;
+  color: #1e293b;
   font-size: 15px;
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
   min-height: 44px;
+}
+
+.add-row input[type='text']:focus {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
 }
 
 .bulk-row {
@@ -311,9 +317,9 @@ async function handleFileChange(event: Event) {
   flex: 1;
   padding: 12px 14px;
   border-radius: 10px;
-  border: 2px solid #2a2a45;
-  background: #0f0f1e;
-  color: #f5f5f5;
+  border: 2px solid #cbd5e1;
+  background: #ffffff;
+  color: #1e293b;
   font-size: 14px;
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
@@ -322,8 +328,17 @@ async function handleFileChange(event: Event) {
   font-family: inherit;
 }
 
+.bulk-input:focus {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+
 .bulk-input::placeholder {
   color: #6b7280;
+}
+
+.bulk-input::placeholder {
+  color: #94a3b8;
 }
 
 .btn {
@@ -347,43 +362,40 @@ async function handleFileChange(event: Event) {
 }
 
 .btn-add {
-  background: linear-gradient(135deg, #4ecdc4, #2fa89e);
-  color: #0f172a;
-  font-weight: 800;
-  box-shadow: 0 4px 12px rgba(78, 205, 196, 0.4);
-  letter-spacing: 0.02em;
+  background: #4f46e5;
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
 }
 
 .btn-add:hover:not(:disabled) {
-  background: linear-gradient(135deg, #5de0d7, #36b8ad);
-  box-shadow: 0 6px 18px rgba(78, 205, 196, 0.5);
+  background: #4338ca;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
 }
 
 .btn-import {
-  background: linear-gradient(135deg, #45b7d1, #2d8aac);
-  color: #0f172a;
-  font-weight: 800;
-  box-shadow: 0 4px 12px rgba(69, 183, 209, 0.4);
-  letter-spacing: 0.02em;
+  background: #6366f1;
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
 }
 
 .btn-import:hover:not(:disabled) {
-  background: linear-gradient(135deg, #56c8df, #379cbf);
-  box-shadow: 0 6px 18px rgba(69, 183, 209, 0.5);
+  background: #4f46e5;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
 }
 
 .btn-bulk {
-  background: linear-gradient(135deg, #f39c12, #d68910);
-  color: #0f172a;
-  font-weight: 800;
-  box-shadow: 0 4px 12px rgba(243, 156, 18, 0.4);
-  letter-spacing: 0.02em;
+  background: #4f46e5;
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
   white-space: nowrap;
 }
 
 .btn-bulk:hover:not(:disabled) {
-  background: linear-gradient(135deg, #f5b041, #e67e22);
-  box-shadow: 0 6px 18px rgba(243, 156, 18, 0.5);
+  background: #4338ca;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
 }
 
 .btn-bulk:disabled {
@@ -396,25 +408,25 @@ async function handleFileChange(event: Event) {
 }
 
 .warning {
-  color: #f39c12;
+  color: #c2950b;
   font-size: 13px;
   line-height: 1.4;
 }
 
 .success {
-  color: #4ecdc4;
+  color: #0e7c5e;
   font-size: 13px;
   line-height: 1.4;
 }
 
 .error {
-  color: #e74c3c;
+  color: #c0392b;
   font-size: 13px;
   line-height: 1.4;
 }
 
 .preview {
-  border-top: 1px solid #2a2a45;
+  border-top: 1px solid #e2e8f0;
   padding-top: 14px;
 }
 
@@ -428,14 +440,14 @@ async function handleFileChange(event: Event) {
 .preview-title {
   font-size: 14px;
   font-weight: 700;
-  color: #ddd;
+  color: #334155;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
 
 .preview-count {
-  background: #1f1f38;
-  color: #4ecdc4;
+  background: #eef2ff;
+  color: #4f46e5;
   font-size: 12px;
   font-weight: 700;
   padding: 3px 10px;
@@ -459,19 +471,19 @@ async function handleFileChange(event: Event) {
   justify-content: space-between;
   gap: 12px;
   padding: 12px 14px;
-  background: #1a1a2e;
+  background: #ffffff;
   border-radius: 12px;
-  border: 1px solid #2a2a45;
+  border: 1px solid #e2e8f0;
   transition: background 0.2s, border-color 0.2s;
 }
 
 .participant-list li:hover {
-  background: #22223a;
-  border-color: #3a3a5a;
+  background: #f8fafc;
+  border-color: #cbd5e1;
 }
 
 .participant-name {
-  color: #f5f5f5;
+  color: #1e293b;
   font-size: 14px;
   font-weight: 600;
   word-break: break-word;
@@ -485,9 +497,9 @@ async function handleFileChange(event: Event) {
   align-items: center;
   justify-content: center;
   border-radius: 8px;
-  border: 1px solid #ff6b6b44;
-  background: #2a1010;
-  color: #ff6b6b;
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #dc2626;
   font-size: 20px;
   line-height: 1;
   cursor: pointer;
@@ -495,14 +507,14 @@ async function handleFileChange(event: Event) {
 }
 
 .btn-remove:hover {
-  background: #ff6b6b22;
-  color: #ff4c4c;
-  border-color: #ff6b6b;
-  box-shadow: 0 0 10px rgba(255, 107, 107, 0.3);
+  background: #fee2e2;
+  color: #b91c1c;
+  border-color: #fca5a5;
+  box-shadow: 0 0 8px rgba(220, 38, 38, 0.2);
 }
 
 .empty {
-  color: #9999bb;
+  color: #94a3b8;
   font-size: 14px;
   margin: 0;
   text-align: center;
@@ -524,7 +536,7 @@ async function handleFileChange(event: Event) {
 .list-title-input {
   background: transparent;
   border: none;
-  color: #ddd;
+  color: #334155;
   font-size: 14px;
   font-weight: 700;
   text-transform: uppercase;
@@ -537,6 +549,6 @@ async function handleFileChange(event: Event) {
 }
 
 .list-title-input:focus {
-  border-bottom: 1px solid #4ecdc4;
+  border-bottom: 1px solid #4f46e5;
 }
 </style>

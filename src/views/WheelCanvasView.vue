@@ -92,7 +92,7 @@ function goBack() {
 </script>
 
 <template>
-  <div class="wheel-view" :class="{ 'projector-mode': projectorMode }" :style="{ background: selectedTheme.backgroundColor }">
+  <div class="wheel-view" :class="{ 'projector-mode': projectorMode }" style="background: #f9fafb;">
     <header class="wheel-header">
       <button class="icon-btn" type="button" @click="goBack" aria-label="Back">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -146,17 +146,18 @@ function goBack() {
   height: 44px;
   place-items: center;
   border-radius: 12px;
-  border: 1.5px solid rgba(255, 255, 255, 0.18);
-  background: rgba(15, 23, 42, 0.62);
-  color: #fff;
+  border: 1.5px solid #e2e8f0;
+  background: #ffffff;
+  color: #1e293b;
   cursor: pointer;
   backdrop-filter: blur(10px);
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .icon-btn:hover {
-  background: rgba(15, 23, 42, 0.82);
-  border-color: rgba(255, 255, 255, 0.32);
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .icon-btn svg {
